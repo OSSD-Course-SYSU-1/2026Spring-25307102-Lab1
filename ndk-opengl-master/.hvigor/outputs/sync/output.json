@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "ohos-module-entry": {
+    "SELECT_TARGET": "default",
+    "MODULE_BUILD_DIR": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build",
+    "TARGETS": {
+      "default": {
+        "SOURCE_ROOT": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\src\\main",
+        "RESOURCES_PATH": [
+          "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\src\\main\\resources"
+        ],
+        "BUILD_PATH": {
+          "OUTPUT_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\outputs\\default",
+          "INTERMEDIA_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates",
+          "JS_ASSETS_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\loader_out\\default",
+          "JS_LITE_ASSETS_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\loader_out_lite\\default",
+          "RES_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\res\\default",
+          "RES_PROFILE_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\res\\default\\resources\\base\\profile",
+          "ETS_SUPER_VISUAL_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\cache\\default\\default@CompileArkTS\\esmodule",
+          "JS_SUPER_VISUAL_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\cache\\default\\default@CompileJS\\jsbundle",
+          "WORKER_LOADER": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\loader\\default\\loader.json",
+          "MANIFEST_JSON": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\manifest\\default",
+          "OUTPUT_METADATA_JSON": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\hap_metadata\\default\\output_metadata.json",
+          "SOURCE_MAP_DIR": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\source_map\\default"
+        },
+        "BUILD_OPTION": {
+          "debuggable": true
+        }
+      }
+    },
+    "BUILD_OPTION": {
+      "default-default": {
+        "debuggable": true,
+        "copyFrom": "default",
+        "externalNativeOptions": {
+          "path": "./src/main/cpp/CMakeLists.txt",
+          "arguments": "",
+          "cppFlags": "",
+          "abiFilters": [
+            "arm64-v8a",
+            "x86_64"
+          ]
+        }
+      }
+    },
+    "BUILD_PROFILE_OPT": {
+      "apiType": "stageMode",
+      "buildOption": {
+        "externalNativeOptions": {
+          "path": "./src/main/cpp/CMakeLists.txt",
+          "arguments": "",
+          "cppFlags": "",
+          "abiFilters": [
+            "arm64-v8a",
+            "x86_64"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "name": "default"
+        }
+      ]
+    },
+    "BUILD_CACHE_DIR": ""
+  },
+  "ohos-project": {
+    "SELECT_PRODUCT_NAME": "default",
+    "MODULE_BUILD_DIR": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\build",
+    "BUNDLE_NAME": "com.samples.ndkopengl",
+    "VERSION_CODE": 1000000,
+    "VERSION_NAME": "1.0.0",
+    "BUILD_PATH": {
+      "OUTPUT_PATH": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\build\\outputs\\default"
+    },
+    "MODULES": [
+      {
+        "name": "entry",
+        "srcPath": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry",
+        "targets": [
+          {
+            "name": "default",
+            "applyToProducts": [
+              "default"
+            ]
+          }
+        ],
+        "belongProjectPath": "D:\\HUAWEI\\Lab2\\ndk-opengl-master"
+      }
+    ],
+    "PROFILE_OPT": {
+      "app": {
+        "products": [
+          {
+            "name": "default",
+            "signingConfig": "default",
+            "compatibleSdkVersion": "5.0.5(17)",
+            "targetSdkVersion": "5.0.5(17)",
+            "runtimeOS": "HarmonyOS"
+          }
+        ],
+        "buildModeSet": [
+          {
+            "name": "debug"
+          },
+          {
+            "name": "release"
+          }
+        ]
+      },
+      "modules": [
+        {
+          "name": "entry",
+          "srcPath": "./entry",
+          "targets": [
+            {
+              "name": "default",
+              "applyToProducts": [
+                "default"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "CONFIG_PROPERTIES": {
+      "enableSignTask": true,
+      "skipNativeIncremental": false,
+      "hvigor.keepDependency": true
+    },
+    "OVERALL_PROJECT_PATHS": [
+      "D:\\HUAWEI\\Lab2\\ndk-opengl-master"
+    ],
+    "BUILD_CACHE_DIR": ""
+  }
+}

@@ -1,0 +1,92 @@
+# ============================================================================
+# Pull Request Check Workflow
+# ============================================================================
+# Lightweight checks for pull requests to provide fast feedback
+# ============================================================================
+
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: pr-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Quick validation checks
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR Title
+        if: github.event.pull_request.draft == false
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $TITLE"
+          
+          # Check for conventional commit format
+          if [[ "$TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?:\ .+ ]]; then
+            echo "✅ PR title follows conventional commit format"
+          else
+            echo "⚠️ PR title should follow conventional commit format: type(scope): description"
+            echo "   Example: feat(render): add damping rotation support"
+          fi
+
+      - name: Check Changed Files
+        id: changes
+        run: |
+          # Get list of changed files
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          echo "Changed files:"
+          echo "$FILES"
+          
+          # Count file types
+          CPP_COUNT=$(echo "$FILES" | grep -c "\.cpp$\|\.h$" || echo "0")
+          ETS_COUNT=$(echo "$FILES" | grep -c "\.ets$" || echo "0")
+          CONFIG_COUNT=$(echo "$FILES" | grep -c "\.json5$\|\.json$\|CMakeLists.txt$" || echo "0")
+          
+          echo "cpp_files=$CPP_COUNT" >> $GITHUB_OUTPUT
+          echo "ets_files=$ETS_COUNT" >> $GITHUB_OUTPUT
+          echo "config_files=$CONFIG_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Quick Build Check
+        run: |
+          echo "### File Change Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| C++ Files | ${{ steps.changes.outputs.cpp_files }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ArkTS Files | ${{ steps.changes.outputs.ets_files }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Config Files | ${{ steps.changes.outputs.config_files }} |" >> $GITHUB_STEP_SUMMARY
+
+  # Size check
+  size-check:
+    name: Size Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Bundle Size
+        run: |
+          echo "Checking project size..."
+          
+          # Calculate sizes
+          CPP_SIZE=$(find entry/src/main/cpp -name "*.cpp" -o -name "*.h" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}')
+          ETS_SIZE=$(find entry/src/main/ets -name "*.ets" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}')
+          
+          echo "### Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Lines of Code |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|---------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| C++ Code | ${CPP_SIZE:-0} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ArkTS Code | ${ETS_SIZE:-0} |" >> $GITHUB_STEP_SUMMARY

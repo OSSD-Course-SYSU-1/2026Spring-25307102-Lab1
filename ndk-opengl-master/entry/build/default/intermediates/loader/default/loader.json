@@ -1,0 +1,26 @@
+{
+  "modulePathMap": {
+    "entry": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry"
+  },
+  "compileMode": "esmodule",
+  "projectRootPath": "D:\\HUAWEI\\Lab2\\ndk-opengl-master",
+  "nodeModulesPath": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\loader_out\\default\\node_modules",
+  "byteCodeHarInfo": {},
+  "declarationEntry": [],
+  "moduleName": "entry",
+  "hspNameOhmMap": {},
+  "harNameOhmMap": {},
+  "packageManagerType": "ohpm",
+  "compileEntry": [],
+  "otherCompileFiles": [],
+  "dynamicImportLibInfo": {},
+  "routerMap": [],
+  "hspResourcesMap": {},
+  "updateVersionInfo": {},
+  "customizedHar": false,
+  "anBuildOutPut": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\loader_out\\default\\an\\arm64-v8a",
+  "anBuildMode": "type",
+  "patchConfig": {
+    "changedFileList": "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\patch\\default\\changedFileList.json"
+  }
+}

@@ -1,0 +1,3 @@
+D:/HUAWEI/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/arm64-v8a/CMakeFiles/tetrahedron_napi.dir
+D:/HUAWEI/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/HUAWEI/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/arm64-v8a/CMakeFiles/rebuild_cache.dir

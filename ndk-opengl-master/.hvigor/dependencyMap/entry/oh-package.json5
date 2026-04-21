@@ -1,0 +1,1 @@
+{"license":"","devDependencies":{"@types/libtetrahedron_napi.so":"file:./src/main/cpp/type/libentry"},"author":"AlgoIdeas","name":"entry","description":"Please describe the basic information.","main":"1.0.0","version":"1.0.0","dependencies":{}}

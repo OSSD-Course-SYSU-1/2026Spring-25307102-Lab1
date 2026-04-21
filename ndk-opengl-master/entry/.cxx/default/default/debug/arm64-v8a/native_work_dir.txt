@@ -1,0 +1,1 @@
+D:\HUAWEI\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\arm64-v8a

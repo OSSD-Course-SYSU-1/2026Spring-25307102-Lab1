@@ -1,0 +1,41 @@
+{
+  "lockVersion": "1.0",
+  "settings": {
+    "resolveConflict": true,
+    "resolveConflictStrict": false,
+    "installAll": true
+  },
+  "overrides": {},
+  "overrideDependencyMap": {},
+  "modules": {
+    ".": {
+      "name": "",
+      "dependencies": {},
+      "devDependencies": {},
+      "dynamicDependencies": {},
+      "maskedByOverrideDependencyMap": false
+    },
+    "entry": {
+      "name": "entry",
+      "dependencies": {},
+      "devDependencies": {
+        "@types/libtetrahedron_napi.so": {
+          "specifier": "file:entry/src/main/cpp/type/libentry",
+          "version": "file:entry/src/main/cpp/type/libentry"
+        }
+      },
+      "dynamicDependencies": {},
+      "maskedByOverrideDependencyMap": false
+    }
+  },
+  "packages": {
+    "@types/libtetrahedron_napi.so@file:entry/src/main/cpp/type/libentry": {
+      "storePath": "entry/src/main/cpp/type/libentry",
+      "dependencies": {},
+      "dynamicDependencies": {},
+      "dev": true,
+      "dynamic": false,
+      "maskedByOverrideDependencyMap": false
+    }
+  }
+}

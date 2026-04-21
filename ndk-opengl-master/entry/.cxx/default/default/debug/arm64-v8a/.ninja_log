@@ -1,0 +1,12 @@
+# ninja log v6
+91	1086	7984677668075371	CMakeFiles/tetrahedron_napi.dir/tetrahedron.cpp.o	3398cb8c0283837d
+130	1127	7984677668465372	CMakeFiles/tetrahedron_napi.dir/frame_handle.cpp.o	69a1a8feb127af12
+201	1205	7984677669175362	CMakeFiles/tetrahedron_napi.dir/napi_util.cpp.o	5b5730d8a3fdc8f5
+3	1224	7984677667195361	CMakeFiles/tetrahedron_napi.dir/module.cpp.o	6f0b21ee024282e0
+49	1322	7984677667655349	CMakeFiles/tetrahedron_napi.dir/app_napi.cpp.o	75fad785120169a0
+165	1331	7984677668815370	CMakeFiles/tetrahedron_napi.dir/napi_manager.cpp.o	c6fb4af822799052
+1332	1557	7984677680478251	D:/HUAWEI/Lab2/ndk-opengl-master/entry/build/default/intermediates/cmake/default/obj/arm64-v8a/libtetrahedron_napi.so	e8defbdb529ee792
+11	787	7984690861479410	CMakeFiles/tetrahedron_napi.dir/app_napi.cpp.o	75fad785120169a0
+7	577	7984693212002709	CMakeFiles/tetrahedron_napi.dir/tetrahedron.cpp.o	3398cb8c0283837d
+42	591	7984693212352705	CMakeFiles/tetrahedron_napi.dir/frame_handle.cpp.o	69a1a8feb127af12
+591	760	7984693217850945	D:/HUAWEI/Lab2/ndk-opengl-master/entry/build/default/intermediates/cmake/default/obj/arm64-v8a/libtetrahedron_napi.so	e8defbdb529ee792

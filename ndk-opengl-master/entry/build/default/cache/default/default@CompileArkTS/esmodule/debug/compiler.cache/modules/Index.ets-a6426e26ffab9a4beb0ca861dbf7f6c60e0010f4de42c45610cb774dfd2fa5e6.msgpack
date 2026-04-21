@@ -1,0 +1,678 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚ:”if (!("finalizeConstruction" in ViewPU.prototype)) {
+    Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
+}
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { LengthMetrics } from "@ohos.arkui.node";
+import hilog from "@ohos.hilog";
+import { Logger } from '../utils/Logger';
+import tetrahedron_napi from 'libtetrahedron_napi.so';
+import { RotationType } from '../utils/Constants';
+// [Start get_safeAreaPixel]
+function getTop(avoidArea) {
+    let result = 0;
+    if (avoidArea !== undefined) {
+        if (avoidArea.area.topRect.height) {
+            result = avoidArea.area.topRect.top + avoidArea.area.topRect.height;
+        }
+    }
+    else {
+        hilog.error(0x0000, '3D', 'Can not get TopSafeAreaPixel, avoidArea visible false');
+    }
+    return result;
+}
+function getBottom(avoidArea, windowHeight) {
+    let result = 0;
+    if (avoidArea !== undefined) {
+        if (avoidArea.area.bottomRect.height) {
+            result = windowHeight - avoidArea.area.bottomRect.top;
+        }
+    }
+    else {
+        hilog.error(0x0000, '3D', 'Can not get BottomSafeAreaPixel, avoidArea visible false');
+    }
+    return result;
+}
+function getLeft(avoidArea) {
+    let result = 0;
+    if (avoidArea !== undefined) {
+        if (avoidArea.area.leftRect.width) {
+            result = avoidArea.area.leftRect.left + avoidArea.area.leftRect.width;
+        }
+    }
+    else {
+        hilog.error(0x0000, '3D', 'Can not get LeftSafeAreaPixel, avoidArea visible false');
+    }
+    return result;
+}
+function getRight(avoidArea, windowWidth) {
+    let result = 0;
+    if (avoidArea !== undefined) {
+        if (avoidArea.area.rightRect.width) {
+            result = windowWidth - avoidArea.area.rightRect.left;
+        }
+    }
+    else {
+        hilog.error(0x0000, '3D', 'Can not get RightSafeAreaPixel, avoidArea visible false');
+    }
+    return result;
+}
+class Index extends ViewPU {
+    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
+        super(parent, __localStorage, elmtId, extraInfo);
+        if (typeof paramsLambda === "function") {
+            this.paramsGenerator_ = paramsLambda;
+        }
+        this.__angleArray = new ObservedPropertyObjectPU(new Array(), this, "angleArray");
+        this.__enableRotate = new ObservedPropertySimplePU(false, this, "enableRotate");
+        this.__cutoutAreas = new ObservedPropertyObjectPU({
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            heightBreakpoint: 0,
+            widthBreakpoint: 0
+        }, this, "cutoutAreas");
+        this.__localPadding = new ObservedPropertyObjectPU({ top: LengthMetrics.vp(0), start: LengthMetrics.vp(0) }, this, "localPadding");
+        this.__heightBreakpoint = this.createStorageLink('currentHeightBreakpoint', HeightBreakpoint.HEIGHT_SM, "heightBreakpoint");
+        this.__widthBreakpoint = this.createStorageLink('currentWidthBreakpoint', WidthBreakpoint.WIDTH_XS, "widthBreakpoint");
+        this.__avoidAreas = this.createStorageLink('cutout', undefined, "avoidAreas");
+        this.__windowHeight = this.createStorageLink('windowHeight', 0, "windowHeight");
+        this.__windowWidth = this.createStorageLink('windowWidth', 0, "windowWidth");
+        this.xComponentId = 'tetrahedron';
+        this.panOption = new PanGestureOptions({ direction: PanDirection.All });
+        this.setInitiallyProvidedValue(params);
+        this.declareWatch("heightBreakpoint", this.breakPointChange);
+        this.declareWatch("widthBreakpoint", this.breakPointChange);
+        this.declareWatch("avoidAreas", this.cutoutChange);
+        this.finalizeConstruction();
+    }
+    setInitiallyProvidedValue(params) {
+        if (params.angleArray !== undefined) {
+            this.angleArray = params.angleArray;
+        }
+        if (params.enableRotate !== undefined) {
+            this.enableRotate = params.enableRotate;
+        }
+        if (params.cutoutAreas !== undefined) {
+            this.cutoutAreas = params.cutoutAreas;
+        }
+        if (params.localPadding !== undefined) {
+            this.localPadding = params.localPadding;
+        }
+        if (params.xComponentId !== undefined) {
+            this.xComponentId = params.xComponentId;
+        }
+        if (params.panOption !== undefined) {
+            this.panOption = params.panOption;
+        }
+    }
+    updateStateVars(params) {
+    }
+    purgeVariableDependenciesOnElmtId(rmElmtId) {
+        this.__angleArray.purgeDependencyOnElmtId(rmElmtId);
+        this.__enableRotate.purgeDependencyOnElmtId(rmElmtId);
+        this.__cutoutAreas.purgeDependencyOnElmtId(rmElmtId);
+        this.__localPadding.purgeDependencyOnElmtId(rmElmtId);
+        this.__heightBreakpoint.purgeDependencyOnElmtId(rmElmtId);
+        this.__widthBreakpoint.purgeDependencyOnElmtId(rmElmtId);
+        this.__avoidAreas.purgeDependencyOnElmtId(rmElmtId);
+        this.__windowHeight.purgeDependencyOnElmtId(rmElmtId);
+        this.__windowWidth.purgeDependencyOnElmtId(rmElmtId);
+    }
+    aboutToBeDeleted() {
+        this.__angleArray.aboutToBeDeleted();
+        this.__enableRotate.aboutToBeDeleted();
+        this.__cutoutAreas.aboutToBeDeleted();
+        this.__localPadding.aboutToBeDeleted();
+        this.__heightBreakpoint.aboutToBeDeleted();
+        this.__widthBreakpoint.aboutToBeDeleted();
+        this.__avoidAreas.aboutToBeDeleted();
+        this.__windowHeight.aboutToBeDeleted();
+        this.__windowWidth.aboutToBeDeleted();
+        SubscriberManager.Get().delete(this.id__());
+        this.aboutToBeDeletedInternal();
+    }
+    get angleArray() {
+        return this.__angleArray.get();
+    }
+    set angleArray(newValue) {
+        this.__angleArray.set(newValue);
+    }
+    get enableRotate() {
+        return this.__enableRotate.get();
+    }
+    set enableRotate(newValue) {
+        this.__enableRotate.set(newValue);
+    }
+    get cutoutAreas() {
+        return this.__cutoutAreas.get();
+    }
+    set cutoutAreas(newValue) {
+        this.__cutoutAreas.set(newValue);
+    }
+    get localPadding() {
+        return this.__localPadding.get();
+    }
+    set localPadding(newValue) {
+        this.__localPadding.set(newValue);
+    }
+    get heightBreakpoint() {
+        return this.__heightBreakpoint.get();
+    }
+    set heightBreakpoint(newValue) {
+        this.__heightBreakpoint.set(newValue);
+    }
+    get widthBreakpoint() {
+        return this.__widthBreakpoint.get();
+    }
+    set widthBreakpoint(newValue) {
+        this.__widthBreakpoint.set(newValue);
+    }
+    get avoidAreas() {
+        return this.__avoidAreas.get();
+    }
+    set avoidAreas(newValue) {
+        this.__avoidAreas.set(newValue);
+    }
+    get windowHeight() {
+        return this.__windowHeight.get();
+    }
+    set windowHeight(newValue) {
+        this.__windowHeight.set(newValue);
+    }
+    get windowWidth() {
+        return this.__windowWidth.get();
+    }
+    set windowWidth(newValue) {
+        this.__windowWidth.set(newValue);
+    }
+    // [EndExclude breakPoint2Native]
+    // Breakpoint change, triggering value transfer.
+    breakPointChange() {
+        this.cutoutAreas.heightBreakpoint = this.heightBreakpoint;
+        this.cutoutAreas.widthBreakpoint = this.widthBreakpoint;
+        // Encapsulate the Native method and pass in a breakpoint.
+        tetrahedron_napi.objectPassing(this.cutoutAreas);
+    }
+    // [EndExclude padding]
+    // [EndExclude get_avoidAreas]
+    // [StartExclude breakPoint2Native]
+    cutoutChange() {
+        let topPX = getTop(this.avoidAreas);
+        let rightPX = getRight(this.avoidAreas, this.windowWidth);
+        let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
+        let leftPX = getLeft(this.avoidAreas);
+        // [StartExclude padding]
+        // [StartExclude get_avoidAreas]
+        this.cutoutAreas = {
+            top: topPX,
+            right: rightPX,
+            bottom: bottomPX,
+            left: leftPX,
+            heightBreakpoint: this.heightBreakpoint,
+            widthBreakpoint: this.widthBreakpoint
+        };
+        // [EndExclude padding]
+        this.localPadding = {
+            top: LengthMetrics.px(topPX),
+            end: LengthMetrics.px(rightPX),
+            bottom: LengthMetrics.px(bottomPX),
+            start: LengthMetrics.px(leftPX)
+        };
+        // ArkTS2Native
+        tetrahedron_napi.objectPassing(this.cutoutAreas);
+        // [EndExclude get_avoidAreas]
+    }
+    // [End get_avoidAreas]
+    // [StartExclude padding]
+    async aboutToAppear() {
+        Logger.info('aboutToAppear');
+        this.angleArray[0] = 30;
+        this.angleArray[1] = 45;
+        let topPX = getTop(this.avoidAreas);
+        let rightPX = getRight(this.avoidAreas, this.windowWidth);
+        let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
+        let leftPX = getLeft(this.avoidAreas);
+        this.cutoutAreas = {
+            top: topPX,
+            right: rightPX,
+            bottom: bottomPX,
+            left: leftPX,
+            heightBreakpoint: this.heightBreakpoint,
+            widthBreakpoint: this.widthBreakpoint
+        };
+        this.localPadding = {
+            top: LengthMetrics.px(topPX),
+            end: LengthMetrics.px(rightPX),
+            bottom: LengthMetrics.px(bottomPX),
+            start: LengthMetrics.px(leftPX)
+        };
+        tetrahedron_napi.objectPassing(this.cutoutAreas);
+    }
+    // [EndExclude padding]
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            // [StartExclude padding]
+            Stack.create({ alignContent: Alignment.Bottom });
+            // [StartExclude padding]
+            Stack.padding(ObservedObject.GetRawObject(this.localPadding));
+        }, Stack);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Gesture.create(GesturePriority.Low);
+            PanGesture.create(this.panOption);
+            PanGesture.onActionStart(() => {
+                Logger.info('Gesture onActionStart');
+            });
+            PanGesture.onActionUpdate((event) => {
+                tetrahedron_napi.setRotate(RotationType.STOP);
+                this.enableRotate = false;
+                this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+                Logger.info('Gesture onActionUpdate : offSet ' + event.offsetX + ',' + event.offsetY);
+            });
+            PanGesture.onActionEnd(() => {
+                Logger.info('Gesture onActionEnd');
+            });
+            PanGesture.pop();
+            Gesture.pop();
+            Column.height('100%');
+            Column.justifyContent(FlexAlign.SpaceBetween);
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.justifyContent(FlexAlign.SpaceAround);
+            Column.alignItems(HorizontalAlign.Center);
+            Column.height('100%');
+            Column.width('100%');
+            Column.backgroundColor(Color.White);
+            Column.borderRadius(24);
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            XComponent.create({
+                id: this.xComponentId,
+                type: XComponentType.SURFACE,
+                libraryname: 'tetrahedron_napi'
+            }, "com.samples.ndkopengl/entry");
+            XComponent.onLoad(() => {
+                Logger.info('onLoad');
+            });
+            XComponent.id('tetrahedron');
+            XComponent.onDestroy(() => {
+                Logger.info('onDestroy');
+            });
+            XComponent.id('xComponent');
+            XComponent.backgroundColor(Color.White);
+        }, XComponent);
+        Column.pop();
+        Column.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create({ space: 12 });
+            Row.hitTestBehavior(HitTestMode.Transparent);
+            Row.padding({
+                left: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
+                right: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
+                bottom: 50
+            });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Button.createWithLabel(this.enableRotate ? { "id": 16777222, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" } : { "id": 16777220, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" }, { type: ButtonType.Capsule, stateEffect: true });
+            Button.fontSize(16);
+            Button.onClick(() => {
+                if (this.enableRotate) {
+                    tetrahedron_napi.setRotate(RotationType.STOP);
+                    this.enableRotate = false;
+                }
+                else {
+                    tetrahedron_napi.setRotate(RotationType.AUTO);
+                    this.enableRotate = true;
+                }
+            });
+            Button.layoutWeight(1);
+        }, Button);
+        Button.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Button.createWithLabel({ "id": 16777221, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" }, { type: ButtonType.Capsule, stateEffect: true });
+            Button.fontSize(16);
+            Button.onClick(() => {
+                this.enableRotate = false;
+                tetrahedron_napi.setRotate(RotationType.DAMPING);
+            });
+            Button.layoutWeight(1);
+        }, Button);
+        Button.pop();
+        Row.pop();
+        // [StartExclude padding]
+        Stack.pop();
+    }
+    rerender() {
+        this.updateDirtyElements();
+    }
+    static getEntryName() {
+        return "Index";
+    }
+}
+registerNamedRoute(() => new Index(undefined, {}), "", { bundleName: "com.samples.ndkopengl", moduleName: "entry", pagePath: "pages/Index", pageFullPath: "entry/src/main/ets/pages/Index", integratedHsp: "false", moduleType: "followWithHap" });
+//# sourceMappingURL=Index.js.mapÂ•Ùc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsÙDD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsÙ% hvigor_ignore_libtetrahedron_napi.soÙGD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsÙCD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\pages\Index.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath§checker¬shouldEmitJs¥entryÃÂÙ&D:\HUAWEI\Lab2\ndk-opengl-master\entryÙ D:\HUAWEI\Lab2\ndk-opengl-master¥entry¥1.0.0Ô  Ù&D:\HUAWEI\Lab2\ndk-opengl-master\entryÔrCÜ ®¬getNodeCount²getIdentifierCount®getSymbolCount¬getTypeCountµgetInstantiationCountµgetRelationCacheSizes±isUndefinedSymbol±isArgumentsSymbol¯isUnknownSymbol¯getMergedSymbol®getDiagnostics´getGlobalDiagnostics´getRecursionIdentity¶getUnmatchedProperties¹getTypeOfSymbolAtLocation¯getTypeOfSymbolÙ(getSymbolsOfParameterPropertyDeclaration·getDeclaredTypeOfSymbol³getPropertiesOfType±getPropertyOfTypeÙ"getPrivateIdentifierPropertyOfType·getTypeOfPropertyOfType²getIndexInfoOfType³getIndexInfosOfTypeºgetIndexInfosOfIndexSymbol³getSignaturesOfType²getIndexTypeOfType¬getIndexType¬getBaseTypes¸getBaseTypeOfLiteralType®getWidenedType³getTypeFromTypeNode°getParameterTypeÙ$getParameterIdentifierNameAtPosition¸getPromisedTypeOfPromise®getAwaitedType¸getReturnTypeOfSignature®isNullableType¯getNullableType²getNonNullableType²getNonOptionalType°getTypeArguments®typeToTypeNodeÙ$indexInfoToIndexSignatureDeclaration¿signatureToSignatureDeclaration²symbolToEntityName²symbolToExpression¬symbolToNodeÙ!symbolToTypeParameterDeclarations¼symbolToParameterDeclarationºtypeParameterToDeclaration±getSymbolsInScope³getSymbolAtLocation·getIndexInfosAtLocationÙ!getShorthandAssignmentValueSymbolÙ#getExportSpecifierLocalTargetSymbol·getExportSymbolOfSymbol±getTypeAtLocationºgetTypeAtLocationForLinterÙ tryGetTypeAtLocationWithoutCheckºgetTypeOfAssignmentPatternÙ*getPropertySymbolOfDestructuringAssignment±signatureToString¬typeToString®symbolToStringµtypePredicateToString®writeSignature©writeType«writeSymbol²writeTypePredicate¼getAugmentedPropertiesOfType®getRootSymbols²getSymbolOfExpando±getContextualTypeÙ(getContextualTypeForObjectLiteralElementÙ#getContextualTypeForArgumentAtIndexÙ getContextualTypeForJsxAttribute²isContextSensitiveÙ!getTypeOfPropertyOfContextualTypeµgetFullyQualifiedNameÙ#tryGetResolvedSignatureWithoutCheck´getResolvedSignatureÙ/getResolvedSignatureForStringLiteralCompletionsÙ$getResolvedSignatureForSignatureHelpµgetExpandedParameters¹hasEffectiveRestParameterºcontainsArgumentsReference°getConstantValueµisValidPropertyAccessÙ#isValidPropertyAccessForCompletions»getSignatureFromDeclarationºisImplementationOfOverload¹getImmediateAliasedSymbol°getAliasedSymbol¯getEmitResolver²getExportsOfModule¿getExportsAndPropertiesOfModuleÙ forEachExportAndPropertyOfModule¯getSymbolWalker±getAmbientModules¹getJsxIntrinsicTagNamesAt³isOptionalParameter»tryGetMemberInModuleExportsÙ(tryGetMemberInModuleExportsAndProperties´tryFindAmbientModuleÙ(tryFindAmbientModuleWithoutAugmentations¯getApparentType¬getUnionType²isTypeAssignableTo³createAnonymousType¯createSignature¬createSymbol¯createIndexInfoªgetAnyType­getStringType­getNumberType±createPromiseType¯createArrayType¹getElementTypeOfArrayType®getBooleanType¬getFalseType«getTrueType«getVoidType°getUndefinedType«getNullType¯getESSymbolType¬getNeverType¯getOptionalType®getPromiseType²getPromiseLikeType´getAsyncIterableType²isSymbolAccessible«isArrayType«isTupleType¯isArrayLikeTypeÙ#isTypeInvalidDueToUnionDiscriminantºgetExactOptionalProperties¿getAllPossiblePropertiesOfTypesÙ(getSuggestedSymbolForNonexistentPropertyÙ#getSuggestionForNonexistentPropertyÙ,getSuggestedSymbolForNonexistentJSXAttributeÙ&getSuggestedSymbolForNonexistentSymbolÙ!getSuggestionForNonexistentSymbolÙ&getSuggestedSymbolForNonexistentModuleÙ!getSuggestionForNonexistentExportÙ+getSuggestedSymbolForNonexistentClassMember·getBaseConstraintOfType»getDefaultFromTypeParameter«resolveName¯getJsxNamespaceµgetJsxFragmentFactory¸getAccessibleSymbolChain»getTypePredicateOfSignature¹resolveExternalModuleName»resolveExternalModuleSymbol°tryGetThisTypeAt¹getTypeArgumentConstraint¸getSuggestionDiagnostics¸runWithCancellationTokenÙ3getLocalTypeParametersOfClassOrInterfaceOrTypeAlias´isDeclarationVisible´isPropertyAccessible»getTypeOnlyAliasDeclaration¿getMemberOverrideModifierStatusÙ!isTypeParameterPossiblyReferenced²getConstEnumRelate´clearConstEnumRelateµdeleteConstEnumRelateÙ$getTypeArgumentsForResolvedSignatureµgetCheckedSourceFilesÙ"collectHaveTsNoCheckFilesForLinter·clearQualifiedNameCache®isStaticRecord²isStaticSourceFileÔ  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  ÃÃÚ#
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { LengthMetrics, window } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { Logger } from '../utils/Logger';
+import tetrahedron_napi from 'libtetrahedron_napi.so';
+import { RotationType } from '../utils/Constants';
+
+interface Areas {
+  top: number,
+  right: number,
+  bottom: number,
+  left: number,
+  heightBreakpoint: number,
+  widthBreakpoint: number
+}
+
+// [Start get_safeAreaPixel]
+function getTop(avoidArea: window.AvoidAreaOptions | undefined): number {
+  let result: number = 0;
+  if (avoidArea !== undefined) {
+    if (avoidArea.area.topRect.height) {
+      result = avoidArea.area.topRect.top + avoidArea.area.topRect.height;
+    }
+  } else {
+    hilog.error(0x0000, '3D', 'Can not get TopSafeAreaPixel, avoidArea visible false');
+  }
+  return result;
+}
+
+function getBottom(avoidArea: window.AvoidAreaOptions | undefined, windowHeight: number): number {
+  let result: number = 0;
+  if (avoidArea !== undefined) {
+    if (avoidArea.area.bottomRect.height) {
+      result = windowHeight - avoidArea.area.bottomRect.top;
+    }
+  } else {
+    hilog.error(0x0000, '3D', 'Can not get BottomSafeAreaPixel, avoidArea visible false');
+  }
+  return result;
+}
+
+function getLeft(avoidArea: window.AvoidAreaOptions | undefined): number {
+  let result: number = 0;
+  if (avoidArea !== undefined) {
+    if (avoidArea.area.leftRect.width) {
+      result = avoidArea.area.leftRect.left + avoidArea.area.leftRect.width;
+    }
+  } else {
+    hilog.error(0x0000, '3D', 'Can not get LeftSafeAreaPixel, avoidArea visible false');
+  }
+  return result;
+}
+
+function getRight(avoidArea: window.AvoidAreaOptions | undefined, windowWidth: number): number {
+  let result: number = 0;
+  if (avoidArea !== undefined) {
+    if (avoidArea.area.rightRect.width) {
+      result = windowWidth - avoidArea.area.rightRect.left;
+    }
+  } else {
+    hilog.error(0x0000, '3D', 'Can not get RightSafeAreaPixel, avoidArea visible false');
+  }
+  return result;
+}
+// [End get_safeAreaPixel]
+
+// [Start breakPoint2Native]
+@Entry
+@Component
+struct Index {
+  // [StartExclude breakPoint2Native]
+  @State angleArray: Array<number> = new Array<number>();
+  @State enableRotate: boolean = false;
+  // [EndExclude breakPoint2Native]
+  // Define the variables passed into the Native side.
+  @State cutoutAreas: Areas = {
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    heightBreakpoint: 0,
+    widthBreakpoint: 0
+  };
+  // [StartExclude breakPoint2Native]
+  // [Start padding]
+  @State localPadding: LocalizedPadding = { top: LengthMetrics.vp(0), start: LengthMetrics.vp(0) };
+  // [StartExclude padding]
+  // [EndExclude breakPoint2Native]
+  // Watching the changes in horizontal and vertical breakpoint values.
+  @StorageLink('currentHeightBreakpoint') @Watch('breakPointChange') heightBreakpoint: HeightBreakpoint =
+    HeightBreakpoint.HEIGHT_SM;
+  @StorageLink('currentWidthBreakpoint') @Watch('breakPointChange') widthBreakpoint: WidthBreakpoint =
+    WidthBreakpoint.WIDTH_XS;
+  // [StartExclude breakPoint2Native]
+  // [EndExclude padding]
+  // [Start get_avoidAreas]
+  @StorageLink('cutout') @Watch('cutoutChange') avoidAreas: window.AvoidAreaOptions | undefined = undefined;
+  // [StartExclude padding]
+  @StorageLink('windowHeight') windowHeight: number = 0;
+  @StorageLink('windowWidth') windowWidth: number = 0;
+  // [StartExclude get_avoidAreas]
+  private xComponentId = 'tetrahedron';
+  private panOption: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.All });
+  // [EndExclude breakPoint2Native]
+
+  // Breakpoint change, triggering value transfer.
+  breakPointChange() {
+    this.cutoutAreas.heightBreakpoint = this.heightBreakpoint;
+    this.cutoutAreas.widthBreakpoint = this.widthBreakpoint;
+    // Encapsulate the Native method and pass in a breakpoint.
+    tetrahedron_napi.objectPassing(this.cutoutAreas);
+  }
+  // [EndExclude padding]
+  // [EndExclude get_avoidAreas]
+  // [StartExclude breakPoint2Native]
+  cutoutChange() {
+    let topPX = getTop(this.avoidAreas);
+    let rightPX = getRight(this.avoidAreas, this.windowWidth);
+    let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
+    let leftPX = getLeft(this.avoidAreas);
+
+    // [StartExclude padding]
+    // [StartExclude get_avoidAreas]
+    this.cutoutAreas = {
+      top: topPX,
+      right: rightPX,
+      bottom: bottomPX,
+      left: leftPX,
+      heightBreakpoint: this.heightBreakpoint,
+      widthBreakpoint: this.widthBreakpoint
+    };
+    // [EndExclude padding]
+
+    this.localPadding = {
+      top: LengthMetrics.px(topPX),
+      end: LengthMetrics.px(rightPX),
+      bottom: LengthMetrics.px(bottomPX),
+      start: LengthMetrics.px(leftPX)
+    }
+    // ArkTS2Native
+    tetrahedron_napi.objectPassing(this.cutoutAreas);
+    // [EndExclude get_avoidAreas]
+  }
+  // [End get_avoidAreas]
+
+  // [StartExclude padding]
+  async aboutToAppear() {
+    Logger.info('aboutToAppear');
+    this.angleArray[0] = 30;
+    this.angleArray[1] = 45;
+
+    let topPX = getTop(this.avoidAreas);
+    let rightPX = getRight(this.avoidAreas, this.windowWidth);
+    let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
+    let leftPX = getLeft(this.avoidAreas);
+
+    this.cutoutAreas = {
+      top: topPX,
+      right: rightPX,
+      bottom: bottomPX,
+      left: leftPX,
+      heightBreakpoint: this.heightBreakpoint,
+      widthBreakpoint: this.widthBreakpoint
+    };
+
+    this.localPadding = {
+      top: LengthMetrics.px(topPX),
+      end: LengthMetrics.px(rightPX),
+      bottom: LengthMetrics.px(bottomPX),
+      start: LengthMetrics.px(leftPX)
+    }
+
+    tetrahedron_napi.objectPassing(this.cutoutAreas);
+  }
+  // [EndExclude padding]
+
+  build() {
+    // [StartExclude padding]
+    Stack({ alignContent: Alignment.Bottom }) {
+      Column() {
+        Column() {
+          XComponent({
+            id: this.xComponentId,
+            type: XComponentType.SURFACE,
+            libraryname: 'tetrahedron_napi'
+          })
+            .onLoad(() => {
+              Logger.info('onLoad');
+            })
+            .id('tetrahedron')
+            .onDestroy(() => {
+              Logger.info('onDestroy');
+            })
+            .id('xComponent')
+            .backgroundColor(Color.White)
+        }
+        .justifyContent(FlexAlign.SpaceAround)
+        .alignItems(HorizontalAlign.Center)
+        .height('100%')
+        .width('100%')
+        .backgroundColor(Color.White)
+        .borderRadius(24)
+      }
+      .gesture(
+        PanGesture(this.panOption)
+          .onActionStart(() => {
+            Logger.info('Gesture onActionStart');
+          })
+          .onActionUpdate((event: GestureEvent) => {
+            tetrahedron_napi.setRotate(RotationType.STOP);
+            this.enableRotate = false;
+            this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+            Logger.info('Gesture onActionUpdate : offSet ' + event.offsetX + ',' + event.offsetY);
+          })
+          .onActionEnd(() => {
+            Logger.info('Gesture onActionEnd');
+          })
+      )
+      .height('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+
+      Row({ space: 12 }) {
+        Button(this.enableRotate ? $r('app.string.btn_stop_rotation') : $r('app.string.btn_auto_rotation'),
+          { type: ButtonType.Capsule, stateEffect: true })
+          .fontSize(16)
+          .onClick(() => {
+            if (this.enableRotate) {
+              tetrahedron_napi.setRotate(RotationType.STOP);
+              this.enableRotate = false;
+            } else {
+              tetrahedron_napi.setRotate(RotationType.AUTO);
+              this.enableRotate = true;
+            }
+          })
+          .layoutWeight(1)
+
+        Button($r('app.string.btn_damping_rotation'), { type: ButtonType.Capsule, stateEffect: true })
+          .fontSize(16)
+          .onClick(() => {
+            this.enableRotate = false;
+            tetrahedron_napi.setRotate(RotationType.DAMPING);
+          })
+          .layoutWeight(1)
+      }
+      .hitTestBehavior(HitTestMode.Transparent)
+      .padding({
+        left: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
+        right: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
+        bottom: 50
+      })
+    }
+    // [EndExclude padding]
+    .padding(this.localPadding)
+  }
+  // [End padding]
+  // [EndExclude breakPoint2Native]
+}
+// [End breakPoint2Native]
+ÀÔrD•°@ohos.arkui.node«@ohos.hilog¶libtetrahedron_napi.so¯../utils/Logger²../utils/ConstantsÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÔrF‘¯hostModulesInfo‘ÔrG’²hostDependencyName®hostModuleName°@ohos.arkui.node¥entryÃªoh-resolveÂEAÃÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsF“G«@ohos.hilog¥entryG«@ohos.hilog¥entryG«@ohos.hilog¥entryÃªoh-resolveÂEAÃÙ% hvigor_ignore_libtetrahedron_napi.soF‘G¶libtetrahedron_napi.so¥entryÃªoh-resolveÂEAÂÙDD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂEAÂÙGD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsAÃªoh-resolveÂ“ÔrH–§version¤fileªsourceRoot§sources¥names¨mappings¨Index.js ‘©Index.etsÜg‘”    ‘” ˜”   ” 	”	 	” ” ” &”0 2”1 3–”   ” 	” ” ” 3”  4˜”   ” ”	 	” ” ” ”( (”) )–”   ” ” ” ”5 5”6 6˜”   ” ”	 	” ” ” ”1 1”2 2’”   ” •”   ”	 	” ” ” >–”  ”  ”  ”  ”  ”  –” !” !” !” !” !”! !š” "” "” "” "” "” "”" "”# "”) "%”+ "'Ü ” #” #” #” #” #”# #”$ #”+ #%”, #&”/ #)”2 #,”; #5”< #6”Ì@ #:”ÌA #;”ÌH #ÌB”ÌI #ÌC”ÌO #ÌI”ÌP #ÌJ‘”	 $‘” %‘”	 %	œ” &” &	” &
+” &” &” &” &”  &”" &”ÌY &ÌU”ÌZ &ÌV”Ì[ &ÌW‘” '”” (” (	” (” (’”  ) ” )—”  + ”	 +	” +” +” +ÌA” +ÌC”* +ÌW–” ,” ,” ,” ,” ,” ,–” -” -” -” -” -”! -š” .” .” .” .” .” .”% .!”& ."”, .(”. .*” /” /” /”! /”$ /”- /'”. /(”2 /,”3 /-”= /7”> /8”ÌA /;”ÌB /<‘”	 0‘” 1‘”	 1	œ” 2” 2	” 2
+” 2” 2” 2” 2”  2”" 2”Ì\ 2ÌX”Ì] 2ÌY”Ì^ 2ÌZ‘” 3”” 4” 4	” 4” 4’”  5 ” 5•”  7 ”	 7	” 7” 7” 7?–” 8” 8” 8” 8” 8” 8–” 9” 9” 9” 9” 9”! 9š” :” :” :” :” :” :”# :”$ : ”) :%”+ :'Ü ” ;” ;” ;” ;” ;”# ;”$ ;”, ;&”- ;'”1 ;+”4 ;.”= ;7”> ;8”ÌB ;<”ÌC ;=”ÌK ;ÌE”ÌL ;ÌF”ÌQ ;ÌK”ÌR ;ÌL‘”	 <‘” =‘”	 =	œ” >” >	” >
+” >” >” >” >”  >”" >”ÌZ >ÌV”Ì[ >ÌW”Ì\ >ÌX‘” ?”” Ì@” Ì@	” Ì@” Ì@’”  ÌA ” ÌA—”  ÌC ”	 ÌC	” ÌC” ÌC” ÌCÌ@” ÌCÌB”( ÌCÌU–” ÌD” ÌD” ÌD” ÌD” ÌD” ÌD–” ÌE” ÌE” ÌE” ÌE” ÌE”! ÌEš” ÌF” ÌF” ÌF” ÌF” ÌF” ÌF”$ ÌF ”% ÌF!”* ÌF&”, ÌF(” ÌG” ÌG” ÌG”  ÌG”# ÌG”, ÌG&”- ÌG'”1 ÌG+”2 ÌG,”; ÌG5”< ÌG6”Ì@ ÌG:”ÌA ÌG;‘”	 ÌH‘” ÌI‘”	 ÌI	œ” ÌJ” ÌJ	” ÌJ
+” ÌJ” ÌJ” ÌJ” ÌJ”  ÌJ”" ÌJ”Ì[ ÌJÌW”Ì\ ÌJÌX”Ì] ÌJÌY‘” ÌK”” ÌL” ÌL	” ÌL” ÌL’”  ÌM ” ÌM’” ÌS” ÌS‘” ÌQ ””9 ÌU%”= ÌU)”ÌB ÌU.”ÌD ÌU8’”; ÌV!”Ì@ ÌV&‘”: ÌY”” ÌZ” ÌZ” ÌZ	” ÌZ
+”” Ì[” Ì[	” Ì[” Ì[”” Ì\” Ì\
+” Ì\” Ì\”” Ì]” Ì]” Ì]
+” Ì]”” Ì^” Ì^” Ì^” Ì^”” Ì_” Ì_” Ì_” Ì_‘”	 Ì`Ü ”; Ìc*”= Ìc,”Ì@ Ìc/”ÌB Ìc1”ÌO Ìc>”ÌP Ìc?”ÌR ÌcÌA”ÌS ÌcÌB”ÌT ÌcÌC”ÌU ÌcÌD”ÌW ÌcÌF”Ì\ ÌcÌK”Ì^ ÌcÌM”Ìk ÌcÌZ”Ìl ÌcÌ[”Ìn ÌcÌ]”Ìo ÌcÌ^”Ìp ÌcÌ_”Ìq ÌcÌ`”Ìs ÌcÌb–”9 Ìg”ÌR Ìg(”ÌT Ìh”Ìd Ìh”Ìe Ìh”Ìn Ìh–”8 Ìi”ÌP Ìi'”ÌR Ìj”Ìa Ìj”Ìb Ìj”Ìj Ìj””3 Ìn”; Ìn”= ÌnÌb”ÌF ÌnÌk””5 Ìp”ÌC Ìp”ÌE Ìp6”ÌF Ìp7””4 Ìq”ÌA Ìq”ÌC Ìq4”ÌD Ìq5’” Ìs”) Ìs&œ” Ìt)” Ìt-”. Ìt>”/ Ìt?”1 ÌtÌA”: ÌtÌJ”< ÌtÌL”ÌH ÌtÌX”ÌI ÌtÌY”ÌL ÌtÌ\”ÌN ÌtÌ^”ÌO ÌtÌ_‘” ÌM’” ÌU	” ÌU’” ÌU	” ÌU’” ÌV	” ÌV’” ÌV	” ÌV’” ÌY	” ÌY’” ÌY	” ÌY’” Ìc	” Ìc’” Ìc	” Ìc’” ÌgÌE” ÌgÌU’” ÌgÌE” ÌgÌU’” ÌiÌD” ÌiÌS’” ÌiÌD” ÌiÌS’” Ìn0” Ìn:’” Ìn0” Ìn:’” Ìp” Ìp+’” Ìp” Ìp+’” Ìq” Ìq)’” Ìq” Ìq)’” Ìu”% Ìu#’” Ìw”4 Ìw2’” Ìx” Ìx›” Ìy” Ìy” Ìy	” Ìy” Ìy”) Ìy%”, Ìy(”0 Ìy,”1 Ìy-”ÌA Ìy=”ÌB Ìy>›” Ìz” Ìz” Ìz	” Ìz” Ìz”( Ìz$”+ Ìz'”/ Ìz+”0 Ìz,”? Ìz;”Ì@ Ìz<’” Ì{”ÌB Ì{>š” Ì|” Ì|” Ì|”& Ì|"”' Ì|#”+ Ì|'”, Ì|(”7 Ì|3”8 Ì|4”9 Ì|5’” Ì}” Ì}’” Ì~” Ì~’” Ì”" Ì ’” Ì€”' Ì€%’” Ì” Ì›” Ì‚” Ì‚” Ì‚” Ì‚” Ì‚” Ì‚” Ì‚”  Ì‚”* Ì‚&”+ Ì‚'”, Ì‚(Ÿ” Ìƒ” Ìƒ” Ìƒ” Ìƒ” Ìƒ” Ìƒ”# Ìƒ”$ Ìƒ ”. Ìƒ*”0 Ìƒ,”4 Ìƒ0”5 Ìƒ1”Ì@ Ìƒ<”ÌA Ìƒ=”ÌB Ìƒ>Ÿ” Ì„” Ì„” Ì„” Ì„”  Ì„”! Ì„”% Ì„!”& Ì„"”0 Ì„,”2 Ì„.”6 Ì„2”7 Ì„3”ÌC Ì„?”ÌD Ì„Ì@”ÌE Ì„ÌA›” Ì…” Ì…” Ì…” Ì…” Ì…” Ì…”! Ì…”" Ì…”, Ì…(”- Ì…)”. Ì…*’” Ì‡”! Ì‡’” Ìˆ”( Ìˆ$•” Ì‰” Ì‰” Ì‰	” Ì‰” Ì‰”” ÌŠ” ÌŠ	” ÌŠ” ÌŠ”” Ì‹” Ì‹” Ì‹” Ì‹”” ÌŒ” ÌŒ” ÌŒ” ÌŒ”” Ì” Ì
+” Ì” Ì–” Ì” Ì” Ì”" Ì”# Ì”3 Ì-–” Ì” Ì” Ì”! Ì”" Ì”1 Ì+’”	 Ì”
+ Ì’” Ì‘” Ì‘•” Ì“” Ì“” Ì“	” Ì“” Ì“™” Ì”” Ì”	” Ì”” Ì”” Ì””! Ì””" Ì””' Ì”!”( Ì”"™” Ì•” Ì•	” Ì•” Ì•” Ì•”! Ì•”" Ì•”) Ì•#”* Ì•$™” Ì–” Ì–” Ì–”! Ì–”" Ì–”$ Ì–”% Ì–”- Ì–'”. Ì–(™” Ì—” Ì—” Ì—”  Ì—”! Ì—”# Ì—”$ Ì—”* Ì—$”+ Ì—%’”	 Ì˜”
+ Ì˜’” Ì™” Ì™š” Ìš” Ìš” Ìš”& Ìš"”' Ìš#”+ Ìš'”, Ìš(”7 Ìš3”8 Ìš4”9 Ìš5’” Ì›”& Ì›"’” Ìœ” Ìœ’” Ì” Ì’” ÌŸ” ÌŸ”” Ì ”	 Ì ”
+ Ì ” Ì ˜” Ì¡” Ì¡
+” Ì¡” Ì¡” Ì¡”# Ì¡”$ Ì¡ ”% Ì¡!š” Ì¢” Ì¢” Ì¢	” Ì¢” Ì¢” Ì¢” Ì¢” Ì¢” Ì¢”  Ì¢š” Ì£” Ì£” Ì£	” Ì£” Ì£” Ì£” Ì£” Ì£” Ì£”  Ì£›” Ì¥” Ì¥” Ì¥” Ì¥” Ì¥” Ì¥” Ì¥”  Ì¥”* Ì¥&”+ Ì¥'”, Ì¥(Ÿ” Ì¦” Ì¦” Ì¦” Ì¦” Ì¦” Ì¦”# Ì¦”$ Ì¦ ”. Ì¦*”0 Ì¦,”4 Ì¦0”5 Ì¦1”Ì@ Ì¦<”ÌA Ì¦=”ÌB Ì¦>Ÿ” Ì§” Ì§” Ì§” Ì§”  Ì§”! Ì§”% Ì§!”& Ì§"”0 Ì§,”2 Ì§.”6 Ì§2”7 Ì§3”ÌC Ì§?”ÌD Ì§Ì@”ÌE Ì§ÌA›” Ì¨” Ì¨” Ì¨” Ì¨” Ì¨” Ì¨”! Ì¨”" Ì¨”, Ì¨(”- Ì¨)”. Ì¨*•” Ìª” Ìª” Ìª	” Ìª” Ìª”” Ì«” Ì«	” Ì«” Ì«”” Ì¬” Ì¬” Ì¬” Ì¬”” Ì­” Ì­” Ì­” Ì­”” Ì®” Ì®
+” Ì®” Ì®–” Ì¯” Ì¯” Ì¯”" Ì¯”# Ì¯”3 Ì¯-–” Ì°” Ì°” Ì°”! Ì°”" Ì°”1 Ì°+’”	 Ì±”
+ Ì±•” Ì³” Ì³” Ì³	” Ì³” Ì³™” Ì´” Ì´	” Ì´” Ì´” Ì´”! Ì´”" Ì´”' Ì´!”( Ì´"™” Ìµ” Ìµ	” Ìµ” Ìµ” Ìµ”! Ìµ”" Ìµ”) Ìµ#”* Ìµ$™” Ì¶” Ì¶” Ì¶”! Ì¶”" Ì¶”$ Ì¶”% Ì¶”- Ì¶'”. Ì¶(™” Ì·” Ì·” Ì·”  Ì·”! Ì·”# Ì·”$ Ì·”* Ì·$”+ Ì·%’”	 Ì¸”
+ Ì¸š” Ìº” Ìº” Ìº”& Ìº"”' Ìº#”+ Ìº'”, Ìº(”7 Ìº3”8 Ìº4”9 Ìº5’” Ì»” Ì»’” Ì¼” Ì¼‘” Ì¾’” Ì¿”% Ì¿š” ÌÀ” ÌÀ	” ÌÀ
+” ÌÀ”' ÌÀ”) ÌÀ”2 ÌÀ#”3 ÌÀ$”9 ÌÀ*”; ÌÀ,’” Ì¿”% Ì¿˜” ÌÀ” ÌÀ	” Í
+” Í
+”6 Í
+”: Í
+”; Í
+”ÌG Í
+’” ÌÁ” ÌÁ–” ÌÚ” ÌÚ” ÌÚ”" ÌÚ”# ÌÚ”, ÌÚ!—” ÌÚ” ÌÚ” ÌÛ”$ ÌÛ”% ÌÛ”( ÌÛ”* ÌÛ˜” ÌÜ” ÌÜ” ÌÜ” ÌÜ” ÌÜ”3 ÌÜ/”4 ÌÜ0”5 ÌÜ1’” Ìİ
+” Ìİ™” ÌÚ” ÌÚ” ÌŞ”% ÌŞ”& ÌŞ”' ÌŞ”, ÌŞ.”. ÌŞ0”0 ÌŞ2š” Ìß”  Ìß”! Ìß”* Ìß&”+ Ìß'”7 Ìß3”8 Ìß4”< Ìß8”= Ìß9”> Ìß:—” Ìà” Ìà” Ìà”! Ìà”$ Ìà ”) Ìà%”* Ìà&Ü ” Ìá” Ìá” Ìá” Ìá”" Ìá”2 Ìá.”3 Ìá/”> Ìá:”? Ìá;”ÌD ÌáÌ@”ÌE ÌáÌA”ÌL ÌáÌH”ÌN ÌáÌJ”ÌS ÌáÌO”ÌT ÌáÌP”Ì[ ÌáÌW”Ì\ ÌáÌX”Ì] ÌáÌYÜ ” Ìâ” Ìâ” Ìâ” Ìâ” Ìâ”> Ìâ:”ÌA Ìâ=”ÌF ÌâÌB”ÌG ÌâÌC”ÌN ÌâÌJ”ÌQ ÌâÌM”ÌT ÌâÌP”ÌW ÌâÌS”Ì\ ÌâÌX”Ì] ÌâÌY”Ìd ÌâÌ`”Ìe ÌâÌa”Ìf ÌâÌb’” Ìã
+” Ìã—” ÌÚ” ÌÚ” Ìä”" Ìä”# Ìä”& Ìä”( Ìä˜” Ìå” Ìå” Ìå” Ìå” Ìå”1 Ìå-”2 Ìå.”3 Ìå/’” Ìæ
+” Ìæ’” ÌÚ” ÌÚ–” ÌÁ” ÌÁ” Ìè” Ìè” Ìè”  Ìè˜” ÌÁ” ÌÁ” Ìé”! Ìé”" Ìé”+ Ìé”, Ìé ”8 Ìé,’” ÌÂ” ÌÂ˜” ÌÂ” ÌÂ” ÌÒ	”! ÌÒ”" ÌÒ”+ ÌÒ!”, ÌÒ"”7 ÌÒ-˜” ÌÂ” ÌÂ” ÌÓ	” ÌÓ” ÌÓ”- ÌÓ#”. ÌÓ$”4 ÌÓ*–” ÌÂ” ÌÂ” ÌÔ	” ÌÔ” ÌÔ”  ÌÔ–” ÌÂ” ÌÂ” ÌÕ	” ÌÕ” ÌÕ” ÌÕ˜” ÌÂ” ÌÂ” ÌÖ	”" ÌÖ”# ÌÖ”( ÌÖ”) ÌÖ”. ÌÖ$–” ÌÂ” ÌÂ” Ì×	” Ì×”  Ì×”" Ì×“” ÌÃ
+” ÌÃ” ÌÃ–” ÌÄ” ÌÄ” ÌÄ” ÌÄ” ÌÄ”% ÌÄ!–” ÌÅ” ÌÅ” ÌÅ”$ ÌÅ ”% ÌÅ!”, ÌÅ(”” ÌÆ” ÌÆ” ÌÆ”/ ÌÆ+‘” ÌÇ—” ÌÃ
+” ÌÃ” ÌÈ” ÌÈ” ÌÈ”! ÌÈ”# ÌÈ˜” ÌÉ” ÌÉ” ÌÉ” ÌÉ” ÌÉ”$ ÌÉ"”% ÌÉ#”& ÌÉ$’” ÌÊ” ÌÊ–” ÌÃ
+” ÌÃ” ÌË” ÌË” ÌË”' ÌË—” ÌÃ
+” ÌÃ” ÌÌ”  ÌÌ”! ÌÌ”$ ÌÌ”& ÌÌ˜” ÌÍ” ÌÍ” ÌÍ” ÌÍ” ÌÍ”' ÌÍ%”( ÌÍ&”) ÌÍ'’” ÌÎ” ÌÎ–” ÌÃ
+” ÌÃ” ÌÏ” ÌÏ” ÌÏ”& ÌÏ˜” ÌÃ
+” ÌÃ” ÌĞ”& ÌĞ”' ÌĞ”, ÌĞ"”- ÌĞ#”2 ÌĞ(’” ÌÂ” ÌÂ’” ÌÁ” ÌÁ˜” Ìë” Ìë	” Ìë
+” Ìë” Ìë”  Ìë”" Ìë”$ Ìë˜” Ìë” Ìë	” Í” Í”  Í”+ Í"”, Í#”7 Í.•” Ìë” Ìë	” Í” Í” ÍÜ ” Í” Í” Í” Í” Í”* Í"”/ Í'”> Í6”? Í7”ÌG Í?”ÌH ÍÌ@”ÌI ÍÌA”ÌJ ÍÌB”ÌL ÍÌD”ÌM ÍÌE”ÌN ÍÌF”ÌO ÍÌG”ÌQ ÍÌIÜ ” Í” Í” Í” Í” Í”+ Í#”0 Í(”? Í7”Ì@ Í8”ÌH ÍÌ@”ÌI ÍÌA”ÌJ ÍÌB”ÌK ÍÌC”ÌM ÍÌE”ÌN ÍÌF”ÌO ÍÌG”ÌP ÍÌH”ÌR ÍÌJ”” Í” Í” Í” Í‘” ÍÜ ” Ìì” Ìì”# Ìì”' Ìì”( Ìì”4 Ìì ”5 Ìì!”6 Ìì"”Ì£ ÌìÌF”Ì¤ ÌìÌG”Í ÌìÌj”Í Ìí
+”Í Ìí”Í Ìí”Í Ìí”Í$ Ìí”Í% Ìí”Í, Ìí$”Í. Ìí&”Í9 Ìí1”Í; Ìí3”Í? Ìí7”ÍA Ìí9–” Ìì” Ìì” Ìî” Ìî” Ìî” Ìî—” Ìì” Ìì” Ìï” Ìï” Ìï” Ìï”  Ìï–” Ìğ” Ìğ” Ìğ” Ìğ”% Ìğ!”' Ìğ#š” Ìñ”$ Ìñ”% Ìñ”. Ìñ(”/ Ìñ)”; Ìñ5”< Ìñ6”Ì@ Ìñ:”ÌA Ìñ;”ÌB Ìñ<—” Ìò” Ìò” Ìò”% Ìò”( Ìò"”- Ìò'”. Ìò(‘” Ìó‘” Ìóš” Ìô”$ Ìô”% Ìô”. Ìô(”/ Ìô)”; Ìô5”< Ìô6”Ì@ Ìô:”ÌA Ìô;”ÌB Ìô<—” Ìõ” Ìõ” Ìõ”% Ìõ”( Ìõ"”, Ìõ&”- Ìõ'‘” Ìö’” Ì÷
+” Ì÷–” Ìì” Ìì” Ìø” Ìø”  Ìø”! Ìø’” Ìì” Ìì” Ìú” Ìú”Ì Ìú6”Ì’ Ìú8”Ì– Ìú<”Ì˜ Ìú>”Ì¢ ÌúÌH”Ì£ ÌúÌI”Ìª ÌúÌP”Ì¬ ÌúÌR”Ì· ÌúÌ]”Ì¹ ÌúÌ_”Ì½ ÌúÌc”Ì¿ ÌúÌe–” Ìú” Ìú” Ìû” Ìû” Ìû” Ìû—” Ìú” Ìú” Ìü” Ìü” Ìü” Ìü”  Ìü—” Ìı” Ìı” Ìı”! Ìı”$ Ìı ”) Ìı%”* Ìı&š” Ìş”  Ìş”! Ìş”* Ìş&”+ Ìş'”7 Ìş3”8 Ìş4”? Ìş;”Ì@ Ìş<”ÌA Ìş=’” Ìÿ
+” Ìÿ–” Ìú” Ìú” Í ” Í ”  Í ”! Í ’” Ìú” Ìú’” Ìë” Ìë	’” Ì¿”! Ì¿’” ÌÀ” ÌÀ	‘” ÍÔrI–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜp‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ì ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌĞ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  Ìİ ‘”  ÌŞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìğ ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìı ‘”  Ìş ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ÔrJ’§missing¦pluginÃ¦genAbcÂÔ  ÔrK”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache•ÔrL•¤type¥start£endªspecifiers¦source±ImportDeclarationÍîÍ‘ÔrM•¤type¥start£end¨imported¥local¯ImportSpecifierÍ÷ÍÔrN”¤type¥start£end¤nameªIdentifierÍ÷Í­LengthMetricsNªIdentifierÍ÷Í­LengthMetricsÔrO•¤type¥start£end¥value£raw§LiteralÍÍ°@ohos.arkui.node²"@ohos.arkui.node"L±ImportDeclarationÍ!ÍA‘ÔrP”¤type¥start£end¥local¶ImportDefaultSpecifierÍ(Í-NªIdentifierÍ(Í-¥hilogO§LiteralÍ3Í@«@ohos.hilog­"@ohos.hilog"L±ImportDeclarationÍCÍl‘M¯ImportSpecifierÍLÍRNªIdentifierÍLÍR¦LoggerNªIdentifierÍLÍR¦LoggerO§LiteralÍZÍk¯../utils/Logger±'../utils/Logger'L±ImportDeclarationÍnÍ¤‘P¶ImportDefaultSpecifierÍuÍ…NªIdentifierÍuÍ…°tetrahedron_napiO§LiteralÍ‹Í£¶libtetrahedron_napi.so¸'libtetrahedron_napi.so'L±ImportDeclarationÍ¦ÍØ‘M¯ImportSpecifierÍ¯Í»NªIdentifierÍ¯Í»¬RotationTypeNªIdentifierÍ¯Í»¬RotationTypeO§LiteralÍÃÍ×²../utils/Constants´'../utils/Constants'
