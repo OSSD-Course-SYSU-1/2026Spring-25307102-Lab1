@@ -23,26 +23,30 @@
 #include <napi/native_api.h>
 #include "tetrahedron.h"
 #include "frame_handle.h"
+
 #define CIRCUMFERENCE_DEGREE   360
 
 class AppNapi {
 public:
     explicit AppNapi(std::string& id);
+
     static AppNapi* GetInstance(std::string& id);
+
     static OH_NativeXComponent_Callback* GetNXComponentCallback();
     static OH_NativeXComponent_MouseEvent_Callback* GetNXComponentMouseEventCallback();
     void SetNativeXComponent(OH_NativeXComponent* component);
 
 public:
-    // NAPI interface
     napi_value Export(napi_env env, napi_value exports);
 
-    // Exposed to JS developers by NAPI
     static napi_value UpdateAngle(napi_env env, napi_callback_info info);
     static napi_value SetRotate(napi_env env, napi_callback_info info);
     static napi_value Quit(napi_env env, napi_callback_info info);
 
-    // xts interfaces
+    static napi_value SelectShape(napi_env env, napi_callback_info info);
+    static napi_value SetShapeParams(napi_env env, napi_callback_info info);
+    static napi_value SetScale(napi_env env, napi_callback_info info);
+
     static napi_value GetXComponentId(napi_env env, napi_callback_info info);
     static napi_value GetXComponentSize_Height(napi_env env, napi_callback_info info);
     static napi_value GetXComponentSize_Width(napi_env env, napi_callback_info info);
@@ -55,14 +59,14 @@ public:
     static napi_value GetXComponentpointtool_type(napi_env env, napi_callback_info info);
     static napi_value GetXComponent_RegisterMouseEventCallback(napi_env env, napi_callback_info info);
 
-    // Callback, called by ACE XComponent
     void OnSurfaceCreated(OH_NativeXComponent* component, void* window);
     void OnSurfaceChanged(OH_NativeXComponent* component, void* window);
     void OnSurfaceDestroyed(OH_NativeXComponent* component, void* window);
     void DispatchTouchEvent(OH_NativeXComponent* component, void* window);
     void DispatchMouseEvent(OH_NativeXComponent* component, void* window);
-    Tetrahedron *getTetrahedron();
-    FrameHandle &getFrameHanlde();
+
+    Tetrahedron* getTetrahedron();
+    FrameHandle& getFrameHanlde();
 
 public:
     static std::unordered_map<std::string, AppNapi*> instance_;
@@ -81,7 +85,7 @@ public:
     static OH_NativeXComponent_MouseEvent testMouseEvent_;
     static OH_NativeXComponent_MouseEvent_Callback mouseEventcallback_;
     static FrameHandle frame_handle_;
-    
+
     OH_NativeXComponent* component_;
     std::string id_;
     uint64_t width_;

@@ -13,11 +13,12 @@
  * limitations under the License.
  */
 
-import { LengthMetrics, window } from '@kit.ArkUI';
+import { LengthMetrics, window, router } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Logger } from '../utils/Logger';
 import tetrahedron_napi from 'libtetrahedron_napi.so';
 import { RotationType } from '../utils/Constants';
+import { ShapeType, ShapeParams } from '../utils/ModelTypes';
 
 interface Areas {
   top: number,
@@ -28,7 +29,11 @@ interface Areas {
   widthBreakpoint: number
 }
 
-// [Start get_safeAreaPixel]
+interface RouteResult {
+  shapeType: number;
+  shapeParams: ShapeParams | null;
+}
+
 function getTop(avoidArea: window.AvoidAreaOptions | undefined): number {
   let result: number = 0;
   if (avoidArea !== undefined) {
@@ -76,88 +81,64 @@ function getRight(avoidArea: window.AvoidAreaOptions | undefined, windowWidth: n
   }
   return result;
 }
-// [End get_safeAreaPixel]
 
-// [Start breakPoint2Native]
 @Entry
 @Component
 struct Index {
-  // [StartExclude breakPoint2Native]
   @State angleArray: Array<number> = new Array<number>();
   @State enableRotate: boolean = false;
-  // [EndExclude breakPoint2Native]
-  // Define the variables passed into the Native side.
+  @State currentShapeName: string = '四面体';
+  @State modelScale: number = 1.0;
+
   @State cutoutAreas: Areas = {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    heightBreakpoint: 0,
-    widthBreakpoint: 0
+    top: 0, right: 0, bottom: 0, left: 0,
+    heightBreakpoint: 0, widthBreakpoint: 0
   };
-  // [StartExclude breakPoint2Native]
-  // [Start padding]
-  @State localPadding: LocalizedPadding = { top: LengthMetrics.vp(0), start: LengthMetrics.vp(0) };
-  // [StartExclude padding]
-  // [EndExclude breakPoint2Native]
-  // Watching the changes in horizontal and vertical breakpoint values.
-  @StorageLink('currentHeightBreakpoint') @Watch('breakPointChange') heightBreakpoint: HeightBreakpoint =
-    HeightBreakpoint.HEIGHT_SM;
-  @StorageLink('currentWidthBreakpoint') @Watch('breakPointChange') widthBreakpoint: WidthBreakpoint =
-    WidthBreakpoint.WIDTH_XS;
-  // [StartExclude breakPoint2Native]
-  // [EndExclude padding]
-  // [Start get_avoidAreas]
-  @StorageLink('cutout') @Watch('cutoutChange') avoidAreas: window.AvoidAreaOptions | undefined = undefined;
-  // [StartExclude padding]
+
+  @State localPadding: LocalizedPadding = {
+    top: LengthMetrics.vp(0),
+    start: LengthMetrics.vp(0)
+  };
+
+  @StorageLink('currentHeightBreakpoint') @Watch('breakPointChange')
+  heightBreakpoint: HeightBreakpoint = HeightBreakpoint.HEIGHT_SM;
+  @StorageLink('currentWidthBreakpoint') @Watch('breakPointChange')
+  widthBreakpoint: WidthBreakpoint = WidthBreakpoint.WIDTH_XS;
+
+  @StorageLink('cutout') @Watch('cutoutChange')
+  avoidAreas: window.AvoidAreaOptions | undefined = undefined;
   @StorageLink('windowHeight') windowHeight: number = 0;
   @StorageLink('windowWidth') windowWidth: number = 0;
-  // [StartExclude get_avoidAreas]
+
   private xComponentId = 'tetrahedron';
   private panOption: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.All });
-  // [EndExclude breakPoint2Native]
 
-  // Breakpoint change, triggering value transfer.
   breakPointChange() {
     this.cutoutAreas.heightBreakpoint = this.heightBreakpoint;
     this.cutoutAreas.widthBreakpoint = this.widthBreakpoint;
-    // Encapsulate the Native method and pass in a breakpoint.
     tetrahedron_napi.objectPassing(this.cutoutAreas);
   }
-  // [EndExclude padding]
-  // [EndExclude get_avoidAreas]
-  // [StartExclude breakPoint2Native]
+
   cutoutChange() {
     let topPX = getTop(this.avoidAreas);
     let rightPX = getRight(this.avoidAreas, this.windowWidth);
     let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
     let leftPX = getLeft(this.avoidAreas);
 
-    // [StartExclude padding]
-    // [StartExclude get_avoidAreas]
     this.cutoutAreas = {
-      top: topPX,
-      right: rightPX,
-      bottom: bottomPX,
-      left: leftPX,
-      heightBreakpoint: this.heightBreakpoint,
-      widthBreakpoint: this.widthBreakpoint
+      top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
+      heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
     };
-    // [EndExclude padding]
 
     this.localPadding = {
       top: LengthMetrics.px(topPX),
       end: LengthMetrics.px(rightPX),
       bottom: LengthMetrics.px(bottomPX),
       start: LengthMetrics.px(leftPX)
-    }
-    // ArkTS2Native
+    };
     tetrahedron_napi.objectPassing(this.cutoutAreas);
-    // [EndExclude get_avoidAreas]
   }
-  // [End get_avoidAreas]
 
-  // [StartExclude padding]
   async aboutToAppear() {
     Logger.info('aboutToAppear');
     this.angleArray[0] = 30;
@@ -169,12 +150,8 @@ struct Index {
     let leftPX = getLeft(this.avoidAreas);
 
     this.cutoutAreas = {
-      top: topPX,
-      right: rightPX,
-      bottom: bottomPX,
-      left: leftPX,
-      heightBreakpoint: this.heightBreakpoint,
-      widthBreakpoint: this.widthBreakpoint
+      top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
+      heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
     };
 
     this.localPadding = {
@@ -182,14 +159,39 @@ struct Index {
       end: LengthMetrics.px(rightPX),
       bottom: LengthMetrics.px(bottomPX),
       start: LengthMetrics.px(leftPX)
-    }
+    };
 
     tetrahedron_napi.objectPassing(this.cutoutAreas);
   }
-  // [EndExclude padding]
+
+  onPageShow(): void {
+    Logger.info('onPageShow');
+    let params = router.getParams() as RouteResult;
+    if (params && params.shapeType !== undefined) {
+      this.applyShapeSelection(params.shapeType, params.shapeParams);
+      router.clear();
+    }
+  }
+
+  applyShapeSelection(shapeType: number, shapeParams: ShapeParams | null): void {
+    Logger.info('applyShapeSelection type=' + shapeType);
+
+    tetrahedron_napi.selectShape(shapeType);
+
+    if (shapeParams !== null) {
+      tetrahedron_napi.setShapeParams(shapeParams);
+    }
+
+    let names = [
+      '四面体', '球体', '正方体', '圆锥',
+      '椭球面', '单叶双曲面', '椭圆抛物面', '椭圆锥面'
+    ];
+    if (shapeType >= 0 && shapeType < names.length) {
+      this.currentShapeName = names[shapeType];
+    }
+  }
 
   build() {
-    // [StartExclude padding]
     Stack({ alignContent: Alignment.Bottom }) {
       Column() {
         Column() {
@@ -206,13 +208,13 @@ struct Index {
               Logger.info('onDestroy');
             })
             .id('xComponent')
-            .backgroundColor(Color.White)
+            .backgroundColor('#FFFFFF')
         }
         .justifyContent(FlexAlign.SpaceAround)
         .alignItems(HorizontalAlign.Center)
         .height('100%')
         .width('100%')
-        .backgroundColor(Color.White)
+        .backgroundColor('#FFFFFF')
         .borderRadius(24)
       }
       .gesture(
@@ -232,6 +234,72 @@ struct Index {
       )
       .height('100%')
       .justifyContent(FlexAlign.SpaceBetween)
+
+      Row() {
+        Button() {
+          Row({ space: 6 }) {
+            Text('\u2630')
+              .fontSize(18)
+              .fontColor('#FFFFFF')
+            Text('模型')
+              .fontSize(14)
+              .fontColor('#FFFFFF')
+              .fontWeight(FontWeight.Medium)
+          }
+        }
+        .type(ButtonType.Capsule)
+        .backgroundColor('#80000000')
+        .borderRadius(20)
+        .onClick(() => {
+          router.pushUrl({ url: 'pages/ModelSelectPage' });
+        })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start)
+      .padding({ left: 16, top: 16 })
+      .hitTestBehavior(HitTestMode.Transparent)
+      .position({ x: 0, y: 0 })
+      .zIndex(10)
+
+      Text('当前: ' + this.currentShapeName)
+        .fontSize(11)
+        .fontColor('#99FFFFFF')
+        .backgroundColor('#40000000')
+        .borderRadius(10)
+        .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+        .position({ x: 16, y: 56 })
+        .zIndex(10)
+
+      Row() {
+        Text('缩小')
+          .fontSize(11)
+          .fontColor('#999999')
+          .margin({ right: 8 })
+
+        Slider({
+          value: this.modelScale,
+          min: 0.3,
+          max: 2.5,
+          step: 0.05,
+          style: SliderStyle.InSet
+        })
+          .showTips(true)
+          .trackColor('#40000000')
+          .selectedColor('#FFFFFF')
+          .layoutWeight(1)
+          .onChange((value: number) => {
+            this.modelScale = value;
+            tetrahedron_napi.setScale(value);
+          })
+
+        Text('放大')
+          .fontSize(11)
+          .fontColor('#999999')
+          .margin({ left: 8 })
+      }
+      .width('100%')
+      .padding({ left: 24, right: 24 })
+      .hitTestBehavior(HitTestMode.Transparent)
 
       Row({ space: 12 }) {
         Button(this.enableRotate ? $r('app.string.btn_stop_rotation') : $r('app.string.btn_auto_rotation'),
@@ -263,10 +331,6 @@ struct Index {
         bottom: 50
       })
     }
-    // [EndExclude padding]
     .padding(this.localPadding)
   }
-  // [End padding]
-  // [EndExclude breakPoint2Native]
 }
-// [End breakPoint2Native]

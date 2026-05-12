@@ -4,6 +4,8 @@ if (!("finalizeConstruction" in ViewPU.prototype)) {
 interface Index_Params {
     angleArray?: Array<number>;
     enableRotate?: boolean;
+    currentShapeName?: string;
+    modelScale?: number;
     cutoutAreas?: Areas;
     localPadding?: LocalizedPadding;
     heightBreakpoint?: HeightBreakpoint;
@@ -16,10 +18,12 @@ interface Index_Params {
 }
 import { LengthMetrics } from "@ohos:arkui.node";
 import type window from "@ohos:window";
+import router from "@ohos:router";
 import hilog from "@ohos:hilog";
 import { Logger } from "@bundle:com.samples.ndkopengl/entry/ets/utils/Logger";
 import tetrahedron_napi from "@app:com.samples.ndkopengl/entry/tetrahedron_napi";
 import { RotationType } from "@bundle:com.samples.ndkopengl/entry/ets/utils/Constants";
+import type { ShapeParams } from '../utils/ModelTypes';
 interface Areas {
     top: number;
     right: number;
@@ -28,7 +32,10 @@ interface Areas {
     heightBreakpoint: number;
     widthBreakpoint: number;
 }
-// [Start get_safeAreaPixel]
+interface RouteResult {
+    shapeType: number;
+    shapeParams: ShapeParams | null;
+}
 function getTop(avoidArea: window.AvoidAreaOptions | undefined): number {
     let result: number = 0;
     if (avoidArea !== undefined) {
@@ -85,15 +92,16 @@ class Index extends ViewPU {
         }
         this.__angleArray = new ObservedPropertyObjectPU(new Array<number>(), this, "angleArray");
         this.__enableRotate = new ObservedPropertySimplePU(false, this, "enableRotate");
+        this.__currentShapeName = new ObservedPropertySimplePU('四面体', this, "currentShapeName");
+        this.__modelScale = new ObservedPropertySimplePU(1.0, this, "modelScale");
         this.__cutoutAreas = new ObservedPropertyObjectPU({
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            heightBreakpoint: 0,
-            widthBreakpoint: 0
+            top: 0, right: 0, bottom: 0, left: 0,
+            heightBreakpoint: 0, widthBreakpoint: 0
         }, this, "cutoutAreas");
-        this.__localPadding = new ObservedPropertyObjectPU({ top: LengthMetrics.vp(0), start: LengthMetrics.vp(0) }, this, "localPadding");
+        this.__localPadding = new ObservedPropertyObjectPU({
+            top: LengthMetrics.vp(0),
+            start: LengthMetrics.vp(0)
+        }, this, "localPadding");
         this.__heightBreakpoint = this.createStorageLink('currentHeightBreakpoint', HeightBreakpoint.HEIGHT_SM, "heightBreakpoint");
         this.__widthBreakpoint = this.createStorageLink('currentWidthBreakpoint', WidthBreakpoint.WIDTH_XS, "widthBreakpoint");
         this.__avoidAreas = this.createStorageLink('cutout', undefined, "avoidAreas");
@@ -114,6 +122,12 @@ class Index extends ViewPU {
         if (params.enableRotate !== undefined) {
             this.enableRotate = params.enableRotate;
         }
+        if (params.currentShapeName !== undefined) {
+            this.currentShapeName = params.currentShapeName;
+        }
+        if (params.modelScale !== undefined) {
+            this.modelScale = params.modelScale;
+        }
         if (params.cutoutAreas !== undefined) {
             this.cutoutAreas = params.cutoutAreas;
         }
@@ -132,6 +146,8 @@ class Index extends ViewPU {
     purgeVariableDependenciesOnElmtId(rmElmtId) {
         this.__angleArray.purgeDependencyOnElmtId(rmElmtId);
         this.__enableRotate.purgeDependencyOnElmtId(rmElmtId);
+        this.__currentShapeName.purgeDependencyOnElmtId(rmElmtId);
+        this.__modelScale.purgeDependencyOnElmtId(rmElmtId);
         this.__cutoutAreas.purgeDependencyOnElmtId(rmElmtId);
         this.__localPadding.purgeDependencyOnElmtId(rmElmtId);
         this.__heightBreakpoint.purgeDependencyOnElmtId(rmElmtId);
@@ -143,6 +159,8 @@ class Index extends ViewPU {
     aboutToBeDeleted() {
         this.__angleArray.aboutToBeDeleted();
         this.__enableRotate.aboutToBeDeleted();
+        this.__currentShapeName.aboutToBeDeleted();
+        this.__modelScale.aboutToBeDeleted();
         this.__cutoutAreas.aboutToBeDeleted();
         this.__localPadding.aboutToBeDeleted();
         this.__heightBreakpoint.aboutToBeDeleted();
@@ -153,7 +171,6 @@ class Index extends ViewPU {
         SubscriberManager.Get().delete(this.id__());
         this.aboutToBeDeletedInternal();
     }
-    // [StartExclude breakPoint2Native]
     private __angleArray: ObservedPropertyObjectPU<Array<number>>;
     get angleArray() {
         return this.__angleArray.get();
@@ -168,8 +185,20 @@ class Index extends ViewPU {
     set enableRotate(newValue: boolean) {
         this.__enableRotate.set(newValue);
     }
-    // [EndExclude breakPoint2Native]
-    // Define the variables passed into the Native side.
+    private __currentShapeName: ObservedPropertySimplePU<string>;
+    get currentShapeName() {
+        return this.__currentShapeName.get();
+    }
+    set currentShapeName(newValue: string) {
+        this.__currentShapeName.set(newValue);
+    }
+    private __modelScale: ObservedPropertySimplePU<number>;
+    get modelScale() {
+        return this.__modelScale.get();
+    }
+    set modelScale(newValue: number) {
+        this.__modelScale.set(newValue);
+    }
     private __cutoutAreas: ObservedPropertyObjectPU<Areas>;
     get cutoutAreas() {
         return this.__cutoutAreas.get();
@@ -177,8 +206,6 @@ class Index extends ViewPU {
     set cutoutAreas(newValue: Areas) {
         this.__cutoutAreas.set(newValue);
     }
-    // [StartExclude breakPoint2Native]
-    // [Start padding]
     private __localPadding: ObservedPropertyObjectPU<LocalizedPadding>;
     get localPadding() {
         return this.__localPadding.get();
@@ -186,9 +213,6 @@ class Index extends ViewPU {
     set localPadding(newValue: LocalizedPadding) {
         this.__localPadding.set(newValue);
     }
-    // [StartExclude padding]
-    // [EndExclude breakPoint2Native]
-    // Watching the changes in horizontal and vertical breakpoint values.
     private __heightBreakpoint: ObservedPropertyAbstractPU<HeightBreakpoint>;
     get heightBreakpoint() {
         return this.__heightBreakpoint.get();
@@ -203,9 +227,6 @@ class Index extends ViewPU {
     set widthBreakpoint(newValue: WidthBreakpoint) {
         this.__widthBreakpoint.set(newValue);
     }
-    // [StartExclude breakPoint2Native]
-    // [EndExclude padding]
-    // [Start get_avoidAreas]
     private __avoidAreas: ObservedPropertyAbstractPU<window.AvoidAreaOptions | undefined>;
     get avoidAreas() {
         return this.__avoidAreas.get();
@@ -213,7 +234,6 @@ class Index extends ViewPU {
     set avoidAreas(newValue: window.AvoidAreaOptions | undefined) {
         this.__avoidAreas.set(newValue);
     }
-    // [StartExclude padding]
     private __windowHeight: ObservedPropertyAbstractPU<number>;
     get windowHeight() {
         return this.__windowHeight.get();
@@ -228,48 +248,30 @@ class Index extends ViewPU {
     set windowWidth(newValue: number) {
         this.__windowWidth.set(newValue);
     }
-    // [StartExclude get_avoidAreas]
     private xComponentId;
     private panOption: PanGestureOptions;
-    // [EndExclude breakPoint2Native]
-    // Breakpoint change, triggering value transfer.
     breakPointChange() {
         this.cutoutAreas.heightBreakpoint = this.heightBreakpoint;
         this.cutoutAreas.widthBreakpoint = this.widthBreakpoint;
-        // Encapsulate the Native method and pass in a breakpoint.
         tetrahedron_napi.objectPassing(this.cutoutAreas);
     }
-    // [EndExclude padding]
-    // [EndExclude get_avoidAreas]
-    // [StartExclude breakPoint2Native]
     cutoutChange() {
         let topPX = getTop(this.avoidAreas);
         let rightPX = getRight(this.avoidAreas, this.windowWidth);
         let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
         let leftPX = getLeft(this.avoidAreas);
-        // [StartExclude padding]
-        // [StartExclude get_avoidAreas]
         this.cutoutAreas = {
-            top: topPX,
-            right: rightPX,
-            bottom: bottomPX,
-            left: leftPX,
-            heightBreakpoint: this.heightBreakpoint,
-            widthBreakpoint: this.widthBreakpoint
+            top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
+            heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
         };
-        // [EndExclude padding]
         this.localPadding = {
             top: LengthMetrics.px(topPX),
             end: LengthMetrics.px(rightPX),
             bottom: LengthMetrics.px(bottomPX),
             start: LengthMetrics.px(leftPX)
         };
-        // ArkTS2Native
         tetrahedron_napi.objectPassing(this.cutoutAreas);
-        // [EndExclude get_avoidAreas]
     }
-    // [End get_avoidAreas]
-    // [StartExclude padding]
     async aboutToAppear() {
         Logger.info('aboutToAppear');
         this.angleArray[0] = 30;
@@ -279,12 +281,8 @@ class Index extends ViewPU {
         let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
         let leftPX = getLeft(this.avoidAreas);
         this.cutoutAreas = {
-            top: topPX,
-            right: rightPX,
-            bottom: bottomPX,
-            left: leftPX,
-            heightBreakpoint: this.heightBreakpoint,
-            widthBreakpoint: this.widthBreakpoint
+            top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
+            heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
         };
         this.localPadding = {
             top: LengthMetrics.px(topPX),
@@ -294,12 +292,31 @@ class Index extends ViewPU {
         };
         tetrahedron_napi.objectPassing(this.cutoutAreas);
     }
-    // [EndExclude padding]
+    onPageShow(): void {
+        Logger.info('onPageShow');
+        let params = router.getParams() as RouteResult;
+        if (params && params.shapeType !== undefined) {
+            this.applyShapeSelection(params.shapeType, params.shapeParams);
+            router.clear();
+        }
+    }
+    applyShapeSelection(shapeType: number, shapeParams: ShapeParams | null): void {
+        Logger.info('applyShapeSelection type=' + shapeType);
+        tetrahedron_napi.selectShape(shapeType);
+        if (shapeParams !== null) {
+            tetrahedron_napi.setShapeParams(shapeParams);
+        }
+        let names = [
+            '四面体', '球体', '正方体', '圆锥',
+            '椭球面', '单叶双曲面', '椭圆抛物面', '椭圆锥面'
+        ];
+        if (shapeType >= 0 && shapeType < names.length) {
+            this.currentShapeName = names[shapeType];
+        }
+    }
     initialRender() {
         this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // [StartExclude padding]
             Stack.create({ alignContent: Alignment.Bottom });
-            // [StartExclude padding]
             Stack.padding(ObservedObject.GetRawObject(this.localPadding));
         }, Stack);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
@@ -329,7 +346,7 @@ class Index extends ViewPU {
             Column.alignItems(HorizontalAlign.Center);
             Column.height('100%');
             Column.width('100%');
-            Column.backgroundColor(Color.White);
+            Column.backgroundColor('#FFFFFF');
             Column.borderRadius(24);
         }, Column);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
@@ -346,10 +363,96 @@ class Index extends ViewPU {
                 Logger.info('onDestroy');
             });
             XComponent.id('xComponent');
-            XComponent.backgroundColor(Color.White);
+            XComponent.backgroundColor('#FFFFFF');
         }, XComponent);
         Column.pop();
         Column.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.width('100%');
+            Row.justifyContent(FlexAlign.Start);
+            Row.padding({ left: 16, top: 16 });
+            Row.hitTestBehavior(HitTestMode.Transparent);
+            Row.position({ x: 0, y: 0 });
+            Row.zIndex(10);
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Button.createWithChild();
+            Button.type(ButtonType.Capsule);
+            Button.backgroundColor('#80000000');
+            Button.borderRadius(20);
+            Button.onClick(() => {
+                router.pushUrl({ url: 'pages/ModelSelectPage' });
+            });
+        }, Button);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create({ space: 6 });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('\u2630');
+            Text.fontSize(18);
+            Text.fontColor('#FFFFFF');
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('模型');
+            Text.fontSize(14);
+            Text.fontColor('#FFFFFF');
+            Text.fontWeight(FontWeight.Medium);
+        }, Text);
+        Text.pop();
+        Row.pop();
+        Button.pop();
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('当前: ' + this.currentShapeName);
+            Text.fontSize(11);
+            Text.fontColor('#99FFFFFF');
+            Text.backgroundColor('#40000000');
+            Text.borderRadius(10);
+            Text.padding({ left: 10, right: 10, top: 4, bottom: 4 });
+            Text.position({ x: 16, y: 56 });
+            Text.zIndex(10);
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.width('100%');
+            Row.padding({ left: 24, right: 24 });
+            Row.hitTestBehavior(HitTestMode.Transparent);
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('缩小');
+            Text.fontSize(11);
+            Text.fontColor('#999999');
+            Text.margin({ right: 8 });
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Slider.create({
+                value: this.modelScale,
+                min: 0.3,
+                max: 2.5,
+                step: 0.05,
+                style: SliderStyle.InSet
+            });
+            Slider.showTips(true);
+            Slider.trackColor('#40000000');
+            Slider.selectedColor('#FFFFFF');
+            Slider.layoutWeight(1);
+            Slider.onChange((value: number) => {
+                this.modelScale = value;
+                tetrahedron_napi.setScale(value);
+            });
+        }, Slider);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('放大');
+            Text.fontSize(11);
+            Text.fontColor('#999999');
+            Text.margin({ left: 8 });
+        }, Text);
+        Text.pop();
+        Row.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Row.create({ space: 12 });
             Row.hitTestBehavior(HitTestMode.Transparent);
@@ -386,7 +489,6 @@ class Index extends ViewPU {
         }, Button);
         Button.pop();
         Row.pop();
-        // [StartExclude padding]
         Stack.pop();
     }
     rerender() {

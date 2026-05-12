@@ -590,12 +590,131 @@ napi_value AppNapi::GetXComponent_RegisterMouseEventCallback(napi_env env, napi_
     return obj;
 }
 
+/**
+ * @brief NAPI: 切换 3D 模型类型
+ *
+ * ArkTS 调用: tetrahedron_napi.selectShape(shapeType)
+ * shapeType 对应 ShapeType 枚举 (0=四面体, 1=球体, ..., 7=椭圆锥面)
+ *
+ * 内部流程:
+ *   1. 从 JS 参数中提取整数 shapeType
+ *   2. 调用 tetrahedron_->SetShapeType() 重建几何数据
+ *   3. 立即触发一帧渲染以更新显示
+ */
+napi_value AppNapi::SelectShape(napi_env env, napi_callback_info info)
+{
+    LOGE("SelectShape");
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    int shapeType = 0;
+    napi_get_value_int32(env, args[0], &shapeType);
+
+    if (tetrahedron_ != nullptr) {
+        tetrahedron_->SetShapeType(static_cast<ShapeType>(shapeType));
+        tetrahedron_->Update(tetrahedron_->GetAngleX(), tetrahedron_->GetAngleY());
+    }
+
+    napi_value ret;
+    napi_get_null(env, &ret);
+    return ret;
+}
+
+/**
+ * @brief NAPI: 实时缩放控制
+ *
+ * ArkTS 调用: tetrahedron_napi.setScale(scale)
+ * scale 范围: 0.3 ~ 2.5
+ *
+ * 内部流程:
+ *   1. 从 JS 参数中提取浮点数 scale
+ *   2. 调用 tetrahedron_->SetScale() 更新缩放因子
+ *   3. 立即触发一帧渲染（无需重建几何数据）
+ *
+ * 实现原理: shader 中的 u_scale 矩阵，0 顶点重建开销
+ */
+napi_value AppNapi::SetScale(napi_env env, napi_callback_info info)
+{
+    LOGE("SetScale");
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    double scale = 1.0;
+    napi_get_value_double(env, args[0], &scale);
+
+    if (tetrahedron_ != nullptr) {
+        tetrahedron_->SetScale(static_cast<float>(scale));
+        tetrahedron_->Update(tetrahedron_->GetAngleX(), tetrahedron_->GetAngleY());
+    }
+
+    napi_value ret;
+    napi_get_null(env, &ret);
+    return ret;
+}
+
+/**
+ * @brief NAPI: 设置自定义曲面的几何参数
+ *
+ * ArkTS 调用: tetrahedron_napi.setShapeParams({ paramA, paramB, paramC, resolutionU, resolutionV })
+ *
+ * 仅对 PARAMETRIC_* 类型（椭球面/双曲面/抛物面/椭圆锥面）生效。
+ * 调用后会重建几何体数据。
+ */
+napi_value AppNapi::SetShapeParams(napi_env env, napi_callback_info info)
+{
+    LOGE("SetShapeParams");
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    napi_value obj = args[0];
+
+    ShapeParams params;
+    napi_value val;
+
+    napi_get_named_property(env, obj, "paramA", &val);
+    double dVal;
+    napi_get_value_double(env, val, &dVal);
+    params.paramA = static_cast<float>(dVal);
+
+    napi_get_named_property(env, obj, "paramB", &val);
+    napi_get_value_double(env, val, &dVal);
+    params.paramB = static_cast<float>(dVal);
+
+    napi_get_named_property(env, obj, "paramC", &val);
+    napi_get_value_double(env, val, &dVal);
+    params.paramC = static_cast<float>(dVal);
+
+    napi_get_named_property(env, obj, "resolutionU", &val);
+    int32_t iVal;
+    napi_get_value_int32(env, val, &iVal);
+    params.resolutionU = iVal;
+
+    napi_get_named_property(env, obj, "resolutionV", &val);
+    napi_get_value_int32(env, val, &iVal);
+    params.resolutionV = iVal;
+
+    if (tetrahedron_ != nullptr) {
+        tetrahedron_->SetShapeParams(params);
+        tetrahedron_->Update(tetrahedron_->GetAngleX(), tetrahedron_->GetAngleY());
+    }
+
+    napi_value ret;
+    napi_get_null(env, &ret);
+    return ret;
+}
+
 napi_value AppNapi::Export(napi_env env, napi_value exports)
 {
     LOGE("AppNapi::Export");
     // Register NAPI
     napi_property_descriptor desc[] = {
         DECLARE_NAPI_FUNCTION("Quit", AppNapi::Quit),
+        DECLARE_NAPI_FUNCTION("selectShape", AppNapi::SelectShape),
+        DECLARE_NAPI_FUNCTION("setShapeParams", AppNapi::SetShapeParams),
+        DECLARE_NAPI_FUNCTION("setScale", AppNapi::SetScale),
         DECLARE_NAPI_FUNCTION("GetXComponentId", AppNapi::GetXComponentId),
         DECLARE_NAPI_FUNCTION("GetXComponentSize_Height", AppNapi::GetXComponentSize_Height),
         DECLARE_NAPI_FUNCTION("GetXComponentSize_Width", AppNapi::GetXComponentSize_Width),

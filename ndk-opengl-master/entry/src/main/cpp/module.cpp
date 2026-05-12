@@ -13,118 +13,93 @@
  * limitations under the License.
  */
 
-#include "log.h"
+#include <napi/native_api.h>
 #include "napi_manager.h"
 #include "app_napi.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*
- * function for module exports
- */
-EXTERN_C_START
-// [Start ArkTS2Native]
-// Responsible for transferring data from ArkTS to Native.
-static napi_value objectPassingTs2Napi(napi_env env, napi_callback_info info)
-{
-    size_t argc = 1;
-    napi_value args[1];
-    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
-    
-    if (argc < 1) {
-        napi_throw_error(env, NULL, "Wrong number of arguments");
-        return NULL;
-    }
-    
-    napi_value obj = args[0];
-    napi_value keys;
-    napi_get_property_names(env, obj, &keys); // Get all attribute names.
-    
-    uint32_t length;
-    napi_get_array_length(env, keys, &length); // Obtain the number of attributes.
-    
-    for (uint32_t i = 0; i < length; ++i) {
-        napi_value key;
-        napi_get_element(env, keys, i, &key); // Get the i-th attribute name.
-        
-        // Convert attribute names to strings.
-        char keyStr[128];
-        size_t keyLen;
-        napi_get_value_string_utf8(env, key, keyStr, sizeof(keyStr), &keyLen);
-        
-        // Get attribute values.
-        napi_value value;
-        napi_get_property(env, obj, key, &value);
-        
-        // Determine the type of attribute value and process it.
-        napi_valuetype type;
-        napi_typeof(env, value, &type);
-        
-        if (type == napi_string) {
-            char valueStr[4];
-            size_t valueLen;
-            napi_get_value_string_utf8(env, value, valueStr, sizeof(valueStr), &valueLen);
-        }
-        if (type == napi_number) {
-            double num;
-            napi_get_value_double(env, value, &num);
-        }
-    }
-    return NULL;
-}
-
-// Define data transfer function.
 static napi_value objectPassing(napi_env env, napi_callback_info info)
 {
-    objectPassingTs2Napi(env, info);
+    napi_status status;
+    size_t argc = 1;
+    napi_value argv[1];
+
+    status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+
+    uint32_t length = 0;
+    uint32_t i;
+    napi_value keys;
+    status = napi_get_all_property_names(env, argv[0], napi_key_own_only,
+                                         static_cast<napi_key_filter>(napi_key_enumerable | napi_key_skip_symbols),
+                                         napi_key_numbers_to_strings, &keys);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+
+    status = napi_get_array_length(env, keys, &length);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+
+    for (i = 0; i < length; i++) {
+        napi_value key;
+        status = napi_get_element(env, keys, i, &key);
+        if (status != napi_ok) {
+            return nullptr;
+        }
+
+        napi_valuetype type;
+        napi_value value;
+        status = napi_get_property(env, argv[0], key, &value);
+        napi_typeof(env, value, &type);
+
+        if (type == napi_string) {
+            size_t bufSize = 0;
+            napi_get_value_string_utf8(env, value, nullptr, 0, &bufSize);
+            char *strBuffer = new char[bufSize + 1];
+            napi_get_value_string_utf8(env, value, strBuffer, bufSize + 1, &bufSize);
+            delete[] strBuffer;
+        } else if (type == napi_number) {
+            double number;
+            napi_get_value_double(env, value, &number);
+        }
+    }
+
     return nullptr;
 }
-// [End ArkTS2Native]
 
 static napi_value Init(napi_env env, napi_value exports)
 {
-    LOGE("Init");
     napi_property_descriptor desc[] = {
         DECLARE_NAPI_FUNCTION("getContext", NapiManager::GetContext),
         DECLARE_NAPI_FUNCTION("updateAngle", AppNapi::UpdateAngle),
         DECLARE_NAPI_FUNCTION("setRotate", AppNapi::SetRotate),
+        DECLARE_NAPI_FUNCTION("selectShape", AppNapi::SelectShape),
+        DECLARE_NAPI_FUNCTION("setShapeParams", AppNapi::SetShapeParams),
+        DECLARE_NAPI_FUNCTION("setScale", AppNapi::SetScale),
         {"objectPassing", nullptr, objectPassing, nullptr, nullptr, nullptr, napi_default, nullptr}
     };
 
-    NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
+    napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
 
-    bool ret = NapiManager::GetInstance()->Export(env, exports);
-    if (!ret) {
-        LOGE("Init failed");
-    }
+    NapiManager::GetInstance()->Export(env, exports);
 
     return exports;
 }
-EXTERN_C_END
 
-/*
- * Napi Module define
- */
-static napi_module appNapiModule = {
+static napi_module demoModule = {
     .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_register_func = Init,
-    .nm_modname = "tetrahedron_napi",
-    .nm_priv = ((void*)0),
-    .reserved = { 0 },
+    .nm_modname = "entry",
+    .nm_priv = nullptr,
+    .reserved = {0},
 };
 
-/*
- * Module register function
- */
-extern "C" __attribute__((constructor)) void RegisterModule(void)
+extern "C" __attribute__((constructor)) void RegisterEntryModule(void)
 {
-    napi_module_register(&appNapiModule);
+    napi_module_register(&demoModule);
 }
-
-#ifdef __cplusplus
-}
-#endif

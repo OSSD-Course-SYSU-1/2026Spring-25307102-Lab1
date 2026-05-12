@@ -13,24 +13,12 @@
  * limitations under the License.
  */
 
-/**
- * @file tetrahedron.cpp
- * @brief OpenGL ES 3D Tetrahedron Rendering Implementation
- * 
- * This file implements the core OpenGL ES rendering logic for a 3D tetrahedron
- * with lighting effects. It handles EGL context creation, shader compilation,
- * and frame rendering.
- */
-
 #include <GLES3/gl31.h>
 #include <bits/alltypes.h>
 #include <cmath>
 #include "log.h"
 #include "tetrahedron.h"
 
-// ============================================================================
-// Constants
-// ============================================================================
 namespace {
     constexpr float FIFTY_PERCENT = 0.5f;
     constexpr float PI = 3.14159265358979323846f;
@@ -41,16 +29,6 @@ namespace {
     constexpr float LIGHT_DIRECTION_Z = 3.0f;
 }
 
-// ============================================================================
-// Shader Source Code
-// ============================================================================
-
-/**
- * Vertex Shader:
- * - Transforms vertex positions using rotation matrices
- * - Calculates diffuse lighting based on light direction and surface normal
- * - Passes computed color to fragment shader
- */
 static const char* g_vertexShader =
     "attribute vec4 a_pos;\n"
     "attribute vec4 a_color;\n"
@@ -59,20 +37,16 @@ static const char* g_vertexShader =
     "uniform vec3 u_lightDirection;\n"
     "uniform mat4 a_mx;\n"
     "uniform mat4 a_my;\n"
+    "uniform mat4 u_scale;\n"
     "varying vec4 v_color;\n"
     "void main() {\n"
-    "    gl_Position = a_mx * a_my * vec4(a_pos.x, a_pos.y, a_pos.z, 1.0);\n"
-    "    vec3 normal = normalize((a_mx * a_my * a_normal).xyz);\n"
+    "    gl_Position = a_mx * a_my * u_scale * vec4(a_pos.x, a_pos.y, a_pos.z, 1.0);\n"
+    "    vec3 normal = normalize((a_mx * a_my * u_scale * a_normal).xyz);\n"
     "    float dot = max(dot(u_lightDirection, normal), 0.0);\n"
     "    vec3 reflectedLight = u_lightColor * a_color.rgb * dot;\n"
     "    v_color = vec4(reflectedLight, a_color.a);\n"
     "}\n\0";
 
-/**
- * Fragment Shader:
- * - Receives interpolated color from vertex shader
- * - Outputs final pixel color
- */
 static const char* g_fragmentShader =
     "precision mediump float;\n"
     "varying vec4 v_color;\n"
@@ -80,74 +54,6 @@ static const char* g_fragmentShader =
     "    gl_FragColor = v_color;\n"
     "}\n\0";
 
-// ============================================================================
-// Tetrahedron Geometry Data
-// ============================================================================
-
-/**
- * Vertex positions for the tetrahedron (4 triangular faces)
- * Each face is defined by 3 vertices (x, y, z)
- * Total: 12 vertices (4 faces × 3 vertices)
- */
-static const float g_vertexData[] = {
-    // Face 1 (bottom)
-    -0.75f, -0.50f, -0.43f,   // vertex 1
-     0.75f, -0.50f, -0.43f,   // vertex 2
-     0.00f, -0.50f,  0.87f,   // vertex 3
-    // Face 2 (side 1)
-     0.75f, -0.50f, -0.43f,   // vertex 2
-     0.00f, -0.50f,  0.87f,   // vertex 3
-     0.00f,  1.00f,  0.00f,   // apex
-    // Face 3 (side 2)
-     0.00f, -0.50f,  0.87f,   // vertex 3
-     0.00f,  1.00f,  0.00f,   // apex
-    -0.75f, -0.50f, -0.43f,   // vertex 1
-    // Face 4 (side 3)
-     0.00f,  1.00f,  0.00f,   // apex
-    -0.75f, -0.50f, -0.43f,   // vertex 1
-     0.75f, -0.50f, -0.43f,   // vertex 2
-};
-
-/**
- * Vertex colors (RGBA) - Red color for all faces
- * Each vertex has 3 color components (R, G, B)
- */
-static const float g_colorData[] = {
-    // Face 1 - Red
-    1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
-    // Face 2 - Red
-    1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
-    // Face 3 - Red
-    1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
-    // Face 4 - Red
-    1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
-};
-
-/**
- * Vertex normals for lighting calculations
- * Each normal vector is normalized (length = 1)
- */
-static const float g_normalData[] = {
-    // Face 1 normal (pointing down)
-     0.00f, -1.00f,  0.00f,   0.00f, -1.00f,  0.00f,   0.00f, -1.00f,  0.00f,
-    // Face 2 normal
-    -0.83f, -0.28f, -0.48f,  -0.83f, -0.28f, -0.48f,  -0.83f, -0.28f, -0.48f,
-    // Face 3 normal
-    -0.83f,  0.28f,  0.48f,  -0.83f,  0.28f,  0.48f,  -0.83f,  0.28f,  0.48f,
-    // Face 4 normal
-     0.00f, -0.28f,  0.96f,   0.00f, -0.28f,  0.96f,   0.00f, -0.28f,  0.96f,
-};
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * @brief Select an appropriate EGL configuration
- * @param version OpenGL ES version (not used currently, reserved for future)
- * @param eglDisplay EGL display connection
- * @return EGLConfig on success, nullptr on failure
- */
 static EGLConfig getConfig(int version, EGLDisplay eglDisplay)
 {
     const EGLint attribList[] = {
@@ -159,7 +65,7 @@ static EGLConfig getConfig(int version, EGLDisplay eglDisplay)
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
         EGL_NONE
     };
-    
+
     EGLConfig configs = nullptr;
     EGLint configsNum = 0;
 
@@ -167,7 +73,7 @@ static EGLConfig getConfig(int version, EGLDisplay eglDisplay)
         LOGE("eglChooseConfig failed: 0x%{public}x", eglGetError());
         return nullptr;
     }
-    
+
     if (configsNum <= 0) {
         LOGE("No suitable EGL config found");
         return nullptr;
@@ -176,19 +82,13 @@ static EGLConfig getConfig(int version, EGLDisplay eglDisplay)
     return configs;
 }
 
-/**
- * @brief Enable vertex attribute with buffer data
- * @param index Attribute index in shader
- * @param data Vertex data array
- * @param len Size of data in bytes
- */
 static void enableVertexAttrib(GLuint index, const float* data, int32_t len)
 {
     if (data == nullptr || len <= 0) {
         LOGE("Invalid vertex attribute data");
         return;
     }
-    
+
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -283,7 +183,369 @@ GLuint Tetrahedron::CreateProgram(const char *vertexShader, const char *fragShad
     return program;
 }
 
-void Tetrahedron::reSizeWindow(int32_t width,  int32_t height)
+Tetrahedron::Tetrahedron(std::string& id) : id(id)
+{
+    GenerateGeometry();
+}
+
+void Tetrahedron::SetShapeType(ShapeType type)
+{
+    m_shapeType = type;
+    GenerateGeometry();
+}
+
+void Tetrahedron::SetShapeParams(const ShapeParams& params)
+{
+    m_shapeParams = params;
+    if (m_shapeType >= ShapeType::PARAMETRIC_ELLIPSOID) {
+        GenerateGeometry();
+    }
+}
+
+void Tetrahedron::GenerateGeometry()
+{
+    m_vertexData.clear();
+    m_colorData.clear();
+    m_normalData.clear();
+
+    switch (m_shapeType) {
+        case ShapeType::TETRAHEDRON:
+            GenerateTetrahedron();
+            break;
+        case ShapeType::SPHERE:
+            GenerateSphere();
+            break;
+        case ShapeType::CUBE:
+            GenerateCube();
+            break;
+        case ShapeType::CONE:
+            GenerateCone();
+            break;
+        case ShapeType::PARAMETRIC_ELLIPSOID:
+            GenerateEllipsoid();
+            break;
+        case ShapeType::PARAMETRIC_HYPERBOLOID:
+            GenerateHyperboloid();
+            break;
+        case ShapeType::PARAMETRIC_PARABOLOID:
+            GenerateParaboloid();
+            break;
+        case ShapeType::PARAMETRIC_ELLIPTIC_CONE:
+            GenerateEllipticCone();
+            break;
+        default:
+            GenerateTetrahedron();
+            break;
+    }
+
+    m_vertexCount = static_cast<int>(m_vertexData.size() / TRIANGLES_POINT);
+    LOGI("Generated shape type=%{public}d, vertices=%{public}d", (int)m_shapeType, m_vertexCount);
+}
+
+void Tetrahedron::AddTriangle(
+    float x1, float y1, float z1,
+    float x2, float y2, float z2,
+    float x3, float y3, float z3,
+    float r, float g, float b)
+{
+    float ux = x2 - x1, uy = y2 - y1, uz = z2 - z1;
+    float vx = x3 - x1, vy = y3 - y1, vz = z3 - z1;
+    float nx = uy * vz - uz * vy;
+    float ny = uz * vx - ux * vz;
+    float nz = ux * vy - uy * vx;
+    float len = std::sqrt(nx * nx + ny * ny + nz * nz);
+    if (len > 0.0001f) {
+        nx /= len; ny /= len; nz /= len;
+    } else {
+        nx = 0.0f; ny = 1.0f; nz = 0.0f;
+    }
+
+    m_vertexData.push_back(x1); m_vertexData.push_back(y1); m_vertexData.push_back(z1);
+    m_colorData.push_back(r);   m_colorData.push_back(g);   m_colorData.push_back(b);
+    m_normalData.push_back(nx); m_normalData.push_back(ny); m_normalData.push_back(nz);
+
+    m_vertexData.push_back(x2); m_vertexData.push_back(y2); m_vertexData.push_back(z2);
+    m_colorData.push_back(r);   m_colorData.push_back(g);   m_colorData.push_back(b);
+    m_normalData.push_back(nx); m_normalData.push_back(ny); m_normalData.push_back(nz);
+
+    m_vertexData.push_back(x3); m_vertexData.push_back(y3); m_vertexData.push_back(z3);
+    m_colorData.push_back(r);   m_colorData.push_back(g);   m_colorData.push_back(b);
+    m_normalData.push_back(nx); m_normalData.push_back(ny); m_normalData.push_back(nz);
+}
+
+void Tetrahedron::GenerateTetrahedron()
+{
+    AddTriangle(-0.75f, -0.50f, -0.43f,   0.75f, -0.50f, -0.43f,   0.00f, -0.50f,  0.87f,  1.0f, 0.3f, 0.3f);
+    AddTriangle( 0.75f, -0.50f, -0.43f,   0.00f, -0.50f,  0.87f,   0.00f,  1.00f,  0.00f,  1.0f, 0.3f, 0.3f);
+    AddTriangle( 0.00f, -0.50f,  0.87f,   0.00f,  1.00f,  0.00f,  -0.75f, -0.50f, -0.43f,  1.0f, 0.3f, 0.3f);
+    AddTriangle( 0.00f,  1.00f,  0.00f,  -0.75f, -0.50f, -0.43f,   0.75f, -0.50f, -0.43f,  1.0f, 0.3f, 0.3f);
+}
+
+void Tetrahedron::GenerateSphere()
+{
+    float radius = m_shapeParams.paramA;
+    int latSteps = m_shapeParams.resolutionV;
+    int lonSteps = m_shapeParams.resolutionU;
+
+    for (int j = 0; j < latSteps; ++j) {
+        float theta1 = PI * static_cast<float>(j) / static_cast<float>(latSteps);
+        float theta2 = PI * static_cast<float>(j + 1) / static_cast<float>(latSteps);
+
+        for (int i = 0; i < lonSteps; ++i) {
+            float phi1 = 2.0f * PI * static_cast<float>(i) / static_cast<float>(lonSteps);
+            float phi2 = 2.0f * PI * static_cast<float>(i + 1) / static_cast<float>(lonSteps);
+
+            float x1 = radius * std::sin(theta1) * std::cos(phi1);
+            float y1 = radius * std::cos(theta1);
+            float z1 = radius * std::sin(theta1) * std::sin(phi1);
+
+            float x2 = radius * std::sin(theta2) * std::cos(phi1);
+            float y2 = radius * std::cos(theta2);
+            float z2 = radius * std::sin(theta2) * std::sin(phi1);
+
+            float x3 = radius * std::sin(theta2) * std::cos(phi2);
+            float y3 = radius * std::cos(theta2);
+            float z3 = radius * std::sin(theta2) * std::sin(phi2);
+
+            float x4 = radius * std::sin(theta1) * std::cos(phi2);
+            float y4 = radius * std::cos(theta1);
+            float z4 = radius * std::sin(theta1) * std::sin(phi2);
+
+            float hue = static_cast<float>(j) / static_cast<float>(latSteps);
+            float r = 0.3f + 0.7f * hue;
+            float g = 0.3f + 0.4f * (1.0f - hue);
+            float b = 0.5f + 0.5f * hue;
+
+            AddTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3, r, g, b);
+            AddTriangle(x1, y1, z1, x3, y3, z3, x4, y4, z4, r, g, b);
+        }
+    }
+}
+
+void Tetrahedron::GenerateCube()
+{
+    float s = m_shapeParams.paramA * 0.5f;
+
+    AddTriangle(-s, -s,  s,   s, -s,  s,   s,  s,  s,  1.0f, 0.2f, 0.2f);
+    AddTriangle(-s, -s,  s,   s,  s,  s,  -s,  s,  s,  1.0f, 0.2f, 0.2f);
+    AddTriangle( s, -s, -s,  -s, -s, -s,  -s,  s, -s,  0.2f, 1.0f, 0.2f);
+    AddTriangle( s, -s, -s,  -s,  s, -s,   s,  s, -s,  0.2f, 1.0f, 0.2f);
+    AddTriangle(-s,  s,  s,   s,  s,  s,   s,  s, -s,  0.2f, 0.2f, 1.0f);
+    AddTriangle(-s,  s,  s,   s,  s, -s,  -s,  s, -s,  0.2f, 0.2f, 1.0f);
+    AddTriangle(-s, -s, -s,   s, -s, -s,   s, -s,  s,  1.0f, 1.0f, 0.2f);
+    AddTriangle(-s, -s, -s,   s, -s,  s,  -s, -s,  s,  1.0f, 1.0f, 0.2f);
+    AddTriangle( s, -s,  s,   s, -s, -s,   s,  s, -s,  1.0f, 0.5f, 0.0f);
+    AddTriangle( s, -s,  s,   s,  s, -s,   s,  s,  s,  1.0f, 0.5f, 0.0f);
+    AddTriangle(-s, -s, -s,  -s, -s,  s,  -s,  s,  s,  0.5f, 0.0f, 1.0f);
+    AddTriangle(-s, -s, -s,  -s,  s,  s,  -s,  s, -s,  0.5f, 0.0f, 1.0f);
+}
+
+void Tetrahedron::GenerateCone()
+{
+    float radius = m_shapeParams.paramA * 0.6f;
+    float height = m_shapeParams.paramC * 1.2f;
+    int segments = m_shapeParams.resolutionU;
+
+    float apexX = 0.0f, apexY = height * 0.5f, apexZ = 0.0f;
+    float baseY = -height * 0.5f;
+
+    for (int i = 0; i < segments; ++i) {
+        float angle1 = 2.0f * PI * static_cast<float>(i) / static_cast<float>(segments);
+        float angle2 = 2.0f * PI * static_cast<float>(i + 1) / static_cast<float>(segments);
+
+        float x1 = radius * std::cos(angle1);
+        float z1 = radius * std::sin(angle1);
+        float x2 = radius * std::cos(angle2);
+        float z2 = radius * std::sin(angle2);
+
+        float hue = static_cast<float>(i) / static_cast<float>(segments);
+
+        AddTriangle(x1, baseY, z1, x2, baseY, z2, apexX, apexY, apexZ,
+                    0.3f + 0.7f * hue, 0.8f, 0.3f + 0.5f * (1.0f - hue));
+        AddTriangle(x1, baseY, z1, 0.0f, baseY, 0.0f, x2, baseY, z2,
+                    0.3f + 0.7f * hue, 0.3f + 0.5f * (1.0f - hue), 0.8f);
+    }
+}
+
+void Tetrahedron::GenerateEllipsoid()
+{
+    float a = m_shapeParams.paramA;
+    float b = m_shapeParams.paramB;
+    float c = m_shapeParams.paramC;
+    int uSteps = m_shapeParams.resolutionU;
+    int vSteps = m_shapeParams.resolutionV;
+
+    for (int j = 0; j < vSteps; ++j) {
+        float v1 = PI * static_cast<float>(j) / static_cast<float>(vSteps);
+        float v2 = PI * static_cast<float>(j + 1) / static_cast<float>(vSteps);
+
+        for (int i = 0; i < uSteps; ++i) {
+            float u1 = 2.0f * PI * static_cast<float>(i) / static_cast<float>(uSteps);
+            float u2 = 2.0f * PI * static_cast<float>(i + 1) / static_cast<float>(uSteps);
+
+            float x1 = a * std::sin(v1) * std::cos(u1);
+            float y1 = b * std::cos(v1);
+            float z1 = c * std::sin(v1) * std::sin(u1);
+
+            float x2 = a * std::sin(v2) * std::cos(u1);
+            float y2 = b * std::cos(v2);
+            float z2 = c * std::sin(v2) * std::sin(u1);
+
+            float x3 = a * std::sin(v2) * std::cos(u2);
+            float y3 = b * std::cos(v2);
+            float z3 = c * std::sin(v2) * std::sin(u2);
+
+            float x4 = a * std::sin(v1) * std::cos(u2);
+            float y4 = b * std::cos(v1);
+            float z4 = c * std::sin(v1) * std::sin(u2);
+
+            float hue = static_cast<float>(j) / static_cast<float>(vSteps);
+            float r = 0.3f + 0.5f * hue;
+            float g = 0.4f + 0.4f * (1.0f - hue);
+            float bl = 0.6f + 0.4f * hue;
+
+            AddTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3, r, g, bl);
+            AddTriangle(x1, y1, z1, x3, y3, z3, x4, y4, z4, r, g, bl);
+        }
+    }
+}
+
+void Tetrahedron::GenerateHyperboloid()
+{
+    float a = m_shapeParams.paramA * 0.8f;
+    float b = m_shapeParams.paramB * 0.8f;
+    float cl = m_shapeParams.paramC * 0.8f;
+    int uSteps = m_shapeParams.resolutionU;
+    int vSteps = m_shapeParams.resolutionV;
+    float uMin = -1.2f, uMax = 1.2f;
+
+    for (int j = 0; j < vSteps; ++j) {
+        float u1 = uMin + (uMax - uMin) * static_cast<float>(j) / static_cast<float>(vSteps);
+        float u2 = uMin + (uMax - uMin) * static_cast<float>(j + 1) / static_cast<float>(vSteps);
+
+        for (int i = 0; i < uSteps; ++i) {
+            float v1 = 2.0f * PI * static_cast<float>(i) / static_cast<float>(uSteps);
+            float v2 = 2.0f * PI * static_cast<float>(i + 1) / static_cast<float>(uSteps);
+
+            float ch1 = std::cosh(u1), sh1 = std::sinh(u1);
+            float ch2 = std::cosh(u2), sh2 = std::sinh(u2);
+
+            float x1 = a * ch1 * std::cos(v1);
+            float y1 = b * ch1 * std::sin(v1);
+            float z1 = cl * sh1;
+
+            float x2 = a * ch2 * std::cos(v1);
+            float y2 = b * ch2 * std::sin(v1);
+            float z2 = cl * sh2;
+
+            float x3 = a * ch2 * std::cos(v2);
+            float y3 = b * ch2 * std::sin(v2);
+            float z3 = cl * sh2;
+
+            float x4 = a * ch1 * std::cos(v2);
+            float y4 = b * ch1 * std::sin(v2);
+            float z4 = cl * sh1;
+
+            float hue = static_cast<float>(j) / static_cast<float>(vSteps);
+            float r = 0.2f + 0.6f * hue;
+            float g = 0.6f;
+            float bl2 = 0.3f + 0.5f * (1.0f - hue);
+
+            AddTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3, r, g, bl2);
+            AddTriangle(x1, y1, z1, x3, y3, z3, x4, y4, z4, r, g, bl2);
+        }
+    }
+}
+
+void Tetrahedron::GenerateParaboloid()
+{
+    float a = m_shapeParams.paramA * 0.8f;
+    float b = m_shapeParams.paramB * 0.8f;
+    float scaleZ = m_shapeParams.paramC * 0.6f;
+    int uSteps = m_shapeParams.resolutionU;
+    int vSteps = m_shapeParams.resolutionV;
+    float uMax = 1.5f;
+
+    for (int j = 0; j < vSteps; ++j) {
+        float u1 = uMax * static_cast<float>(j) / static_cast<float>(vSteps);
+        float u2 = uMax * static_cast<float>(j + 1) / static_cast<float>(vSteps);
+
+        for (int i = 0; i < uSteps; ++i) {
+            float v1 = 2.0f * PI * static_cast<float>(i) / static_cast<float>(uSteps);
+            float v2 = 2.0f * PI * static_cast<float>(i + 1) / static_cast<float>(uSteps);
+
+            float x1 = a * u1 * std::cos(v1);
+            float y1 = b * u1 * std::sin(v1);
+            float z1 = scaleZ * u1 * u1;
+
+            float x2 = a * u2 * std::cos(v1);
+            float y2 = b * u2 * std::sin(v1);
+            float z2 = scaleZ * u2 * u2;
+
+            float x3 = a * u2 * std::cos(v2);
+            float y3 = b * u2 * std::sin(v2);
+            float z3 = scaleZ * u2 * u2;
+
+            float x4 = a * u1 * std::cos(v2);
+            float y4 = b * u1 * std::sin(v2);
+            float z4 = scaleZ * u1 * u1;
+
+            float hue = static_cast<float>(j) / static_cast<float>(vSteps);
+            float r = 0.3f + 0.5f * hue;
+            float g = 0.2f + 0.6f * hue;
+            float bl2 = 0.7f;
+
+            AddTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3, r, g, bl2);
+            AddTriangle(x1, y1, z1, x3, y3, z3, x4, y4, z4, r, g, bl2);
+        }
+    }
+}
+
+void Tetrahedron::GenerateEllipticCone()
+{
+    float a = m_shapeParams.paramA * 0.7f;
+    float b = m_shapeParams.paramB * 0.7f;
+    float cl = m_shapeParams.paramC * 0.7f;
+    int uSteps = m_shapeParams.resolutionU;
+    int vSteps = m_shapeParams.resolutionV;
+    float uMax = 1.8f;
+
+    for (int j = 0; j < vSteps; ++j) {
+        float u1 = uMax * static_cast<float>(j) / static_cast<float>(vSteps);
+        float u2 = uMax * static_cast<float>(j + 1) / static_cast<float>(vSteps);
+
+        for (int i = 0; i < uSteps; ++i) {
+            float v1 = 2.0f * PI * static_cast<float>(i) / static_cast<float>(uSteps);
+            float v2 = 2.0f * PI * static_cast<float>(i + 1) / static_cast<float>(uSteps);
+
+            float x1 = a * u1 * std::cos(v1);
+            float y1 = b * u1 * std::sin(v1);
+            float z1 = cl * u1 - cl * uMax * 0.5f;
+
+            float x2 = a * u2 * std::cos(v1);
+            float y2 = b * u2 * std::sin(v1);
+            float z2 = cl * u2 - cl * uMax * 0.5f;
+
+            float x3 = a * u2 * std::cos(v2);
+            float y3 = b * u2 * std::sin(v2);
+            float z3 = cl * u2 - cl * uMax * 0.5f;
+
+            float x4 = a * u1 * std::cos(v2);
+            float y4 = b * u1 * std::sin(v2);
+            float z4 = cl * u1 - cl * uMax * 0.5f;
+
+            float hue = static_cast<float>(j) / static_cast<float>(vSteps);
+            float r = 0.5f + 0.5f * hue;
+            float g = 0.5f;
+            float bl2 = 0.3f + 0.5f * (1.0f - hue);
+
+            AddTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3, r, g, bl2);
+            AddTriangle(x1, y1, z1, x3, y3, z3, x4, y4, z4, r, g, bl2);
+        }
+    }
+}
+
+void Tetrahedron::reSizeWindow(int32_t width, int32_t height)
 {
     if ((0 >= width) || (0 >= height)) {
         LOGE("Tetrahedron::Init: param error.");
@@ -294,10 +556,12 @@ void Tetrahedron::reSizeWindow(int32_t width,  int32_t height)
     m_widthPercent = FIFTY_PERCENT * m_height / m_width;
 }
 
-int32_t Tetrahedron::Init(void *window, int32_t width,  int32_t height)
+int32_t Tetrahedron::Init(void *window, int32_t width, int32_t height)
 {
     LOGI("Init window = %{public}p, w = %{public}d, h = %{public}d.", window, width, height);
     mEglWindow = reinterpret_cast<EGLNativeWindowType>(window);
+
+    reSizeWindow(width, height);
 
     mEGLDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (mEGLDisplay == EGL_NO_DISPLAY) {
@@ -328,18 +592,17 @@ int32_t Tetrahedron::Init(void *window, int32_t width,  int32_t height)
             return -1;
         }
     }
-    
-    /* Create EGLContext from */
+
     int attrib3_list[] = {
         EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
-    
+
     mEGLContext = eglCreateContext(mEGLDisplay, mEGLConfig, mSharedEGLContext, attrib3_list);
     if (!eglMakeCurrent(mEGLDisplay, mEGLSurface, mEGLSurface, mEGLContext)) {
         LOGE("eglMakeCurrent error = %{public}d", eglGetError());
     }
-    
+
     mProgramHandle = CreateProgram(g_vertexShader, g_fragmentShader);
     if (!mProgramHandle) {
         LOGE("Could not create CreateProgram");
@@ -347,43 +610,32 @@ int32_t Tetrahedron::Init(void *window, int32_t width,  int32_t height)
     }
 
     LOGI("Init success.");
-
     return 0;
 }
 
-/**
- * @brief Update and render the tetrahedron with new rotation angles
- * @param angleXOffset X-axis rotation angle in degrees
- * @param angleYOffset Y-axis rotation angle in degrees
- */
 void Tetrahedron::Update(float angleXOffset, float angleYOffset)
 {
-    // Validate dimensions
     if (m_width <= 0 || m_height <= 0) {
-        LOGE("Tetrahedron::Update: Invalid dimensions w=%{public}d, h=%{public}d", m_width, m_height);
         return;
     }
-    
-    // Set viewport and clear buffers
+
     glViewport(0, 0, m_width, m_height);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(mProgramHandle);
 
-    // Get shader attribute and uniform locations
-    GLint aPos = glGetAttribLocation(mProgramHandle, "a_pos");
-    GLint aColor = glGetAttribLocation(mProgramHandle, "a_color");
-    GLint aNormal = glGetAttribLocation(mProgramHandle, "a_normal");
-    GLint uLightColor = glGetUniformLocation(mProgramHandle, "u_lightColor");
+    GLint aPos           = glGetAttribLocation(mProgramHandle, "a_pos");
+    GLint aColor         = glGetAttribLocation(mProgramHandle, "a_color");
+    GLint aNormal        = glGetAttribLocation(mProgramHandle, "a_normal");
+    GLint uLightColor    = glGetUniformLocation(mProgramHandle, "u_lightColor");
     GLint uLightDirection = glGetUniformLocation(mProgramHandle, "u_lightDirection");
-    GLint aMx = glGetUniformLocation(mProgramHandle, "a_mx");
-    GLint aMy = glGetUniformLocation(mProgramHandle, "a_my");
+    GLint aMx            = glGetUniformLocation(mProgramHandle, "a_mx");
+    GLint aMy            = glGetUniformLocation(mProgramHandle, "a_my");
+    GLint uScale         = glGetUniformLocation(mProgramHandle, "u_scale");
 
-    // Store current angles
     angleX = angleXOffset;
     angleY = angleYOffset;
 
-    // Calculate Y-axis rotation matrix
     float radianY = (angleY * PI) / 180.0f;
     float cosY = std::cos(radianY);
     float sinY = std::sin(radianY);
@@ -395,7 +647,6 @@ void Tetrahedron::Update(float angleXOffset, float angleYOffset)
     };
     glUniformMatrix4fv(aMy, 1, GL_FALSE, myArr);
 
-    // Calculate X-axis rotation matrix
     float radianX = (angleX * PI) / 180.0f;
     float cosX = std::cos(radianX);
     float sinX = std::sin(radianX);
@@ -407,29 +658,40 @@ void Tetrahedron::Update(float angleXOffset, float angleYOffset)
     };
     glUniformMatrix4fv(aMx, 1, GL_FALSE, mxArr);
 
-    // Set light properties (white light)
+    float s = m_scale;
+    float scaleArr[] = {
+        s,    0.0f, 0.0f, 0.0f,
+        0.0f, s,    0.0f, 0.0f,
+        0.0f, 0.0f, s,    0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    glUniformMatrix4fv(uScale, 1, GL_FALSE, scaleArr);
+
     glUniform3f(uLightColor, 1.0f, 1.0f, 1.0f);
 
-    // Set light direction (normalized vector)
-    // Direction: (2, -2, 3) normalized to unit length
-    constexpr float sqrt15 = 3.872983346207417f;  // sqrt(15)
+    constexpr float sqrt15 = 3.872983346207417f;
     float lightX = LIGHT_DIRECTION_X / sqrt15;
     float lightY = LIGHT_DIRECTION_Y / sqrt15;
     float lightZ = LIGHT_DIRECTION_Z / sqrt15;
     glUniform3f(uLightDirection, lightX, -lightY, lightZ);
 
-    // Bind vertex attributes
-    enableVertexAttrib(aPos, g_vertexData, sizeof(g_vertexData));
-    enableVertexAttrib(aNormal, g_normalData, sizeof(g_normalData));
-    enableVertexAttrib(aColor, g_colorData, sizeof(g_colorData));
+    if (!m_vertexData.empty()) {
+        enableVertexAttrib(aPos, m_vertexData.data(),
+            static_cast<int32_t>(m_vertexData.size() * sizeof(float)));
+    }
+    if (!m_normalData.empty()) {
+        enableVertexAttrib(aNormal, m_normalData.data(),
+            static_cast<int32_t>(m_normalData.size() * sizeof(float)));
+    }
+    if (!m_colorData.empty()) {
+        enableVertexAttrib(aColor, m_colorData.data(),
+            static_cast<int32_t>(m_colorData.size() * sizeof(float)));
+    }
 
-    // Enable depth testing for proper 3D rendering
     glEnable(GL_DEPTH_TEST);
 
-    // Draw the tetrahedron
-    glDrawArrays(GL_TRIANGLES, 0, TETRAHEDRON_POINT);
-    
-    // Swap buffers to display the rendered frame
+    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+
     if (mEGLDisplay != EGL_NO_DISPLAY && mEGLSurface != nullptr) {
         eglSwapBuffers(mEGLDisplay, mEGLSurface);
     }
@@ -445,13 +707,8 @@ float Tetrahedron::GetAngleY()
     return angleY;
 }
 
-/**
- * @brief Clean up EGL resources
- * @return 0 on success, -1 on failure
- */
 int32_t Tetrahedron::Quit(void)
 {
-    // Destroy EGL surface
     if (mEGLSurface != nullptr && mEGLDisplay != EGL_NO_DISPLAY) {
         if (!eglDestroySurface(mEGLDisplay, mEGLSurface)) {
             LOGW("eglDestroySurface failed: 0x%{public}x", eglGetError());
@@ -459,7 +716,6 @@ int32_t Tetrahedron::Quit(void)
         mEGLSurface = nullptr;
     }
 
-    // Destroy EGL context
     if (mEGLContext != EGL_NO_CONTEXT && mEGLDisplay != EGL_NO_DISPLAY) {
         if (!eglDestroyContext(mEGLDisplay, mEGLContext)) {
             LOGW("eglDestroyContext failed: 0x%{public}x", eglGetError());
@@ -467,7 +723,6 @@ int32_t Tetrahedron::Quit(void)
         mEGLContext = EGL_NO_CONTEXT;
     }
 
-    // Terminate EGL display connection
     if (mEGLDisplay != EGL_NO_DISPLAY) {
         if (!eglTerminate(mEGLDisplay)) {
             LOGW("eglTerminate failed: 0x%{public}x", eglGetError());

@@ -1,0 +1,440 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚ/*
+ * æ¨¡å‹ç±»å‹å®šä¹‰ä¸é¢„ç½®æ•°æ®
+ *
+ * æœ¬æ–‡ä»¶å®šä¹‰äº†æ¨¡å‹ç³»ç»Ÿçš„æ ¸å¿ƒæ•°æ®ç»“æ„å’Œé¢„ç½®æ¨¡å‹åˆ—è¡¨ã€‚
+ * ä¸ C++ å±‚çš„ ShapeType æšä¸¾å’Œ ShapeParams ç»“æ„ä½“ä¿æŒåŒæ­¥ã€‚
+ *
+ * æ•°æ®æµå‘ï¼š
+ *   UI ç‚¹å‡» â†’ ModelEntry.shapeType â†’ NAPI selectShape() â†’ C++ ShapeType
+ *   æ»‘å—è°ƒèŠ‚ â†’ ShapeParams â†’ NAPI setShapeParams() â†’ C++ ShapeParams
+ */
+// ============================================================================
+// æ¨¡å‹ç±»å‹æšä¸¾ â€” ä¸ C++ ShapeType æšä¸¾ä¸¥æ ¼å¯¹é½
+// ============================================================================
+/** æ¨¡å‹ç±»å‹ï¼Œæ•°å€¼ä¸ C++ å±‚ ShapeType æšä¸¾ä¸€ä¸€å¯¹åº” */
+export var ShapeType;
+(function (ShapeType) {
+    ShapeType[ShapeType["TETRAHEDRON"] = 0] = "TETRAHEDRON";
+    ShapeType[ShapeType["SPHERE"] = 1] = "SPHERE";
+    ShapeType[ShapeType["CUBE"] = 2] = "CUBE";
+    ShapeType[ShapeType["CONE"] = 3] = "CONE";
+    ShapeType[ShapeType["PARAMETRIC_ELLIPSOID"] = 4] = "PARAMETRIC_ELLIPSOID";
+    ShapeType[ShapeType["PARAMETRIC_HYPERBOLOID"] = 5] = "PARAMETRIC_HYPERBOLOID";
+    ShapeType[ShapeType["PARAMETRIC_PARABOLOID"] = 6] = "PARAMETRIC_PARABOLOID";
+    ShapeType[ShapeType["PARAMETRIC_ELLIPTIC_CONE"] = 7] = "PARAMETRIC_ELLIPTIC_CONE";
+})(ShapeType || (ShapeType = {}));
+// ============================================================================
+// é¢„å®šä¹‰åŸºç¡€æ¨¡å‹åˆ—è¡¨
+// ============================================================================
+/** 4 ä¸ªåŸºç¡€å‡ ä½•ä½“ï¼Œç‚¹å‡»ç›´æ¥æ¸²æŸ“ï¼Œæ— éœ€å‚æ•°ç¼–è¾‘ */
+export const PREDEFINED_MODELS = [
+    {
+        name: 'å››é¢ä½“ (Tetrahedron)',
+        description: 'ç»å…¸å››é¢ä½“ï¼Œ4ä¸ªä¸‰è§’é¢',
+        shapeType: ShapeType.TETRAHEDRON,
+        isCustom: false
+    },
+    {
+        name: 'çƒä½“ (Sphere)',
+        description: 'å…‰æ»‘çƒä½“ï¼Œç»çº¬ç½‘æ ¼ç”Ÿæˆ',
+        shapeType: ShapeType.SPHERE,
+        isCustom: false,
+        defaultParams: { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 32, resolutionV: 32 }
+    },
+    {
+        name: 'æ­£æ–¹ä½“ (Cube)',
+        description: 'å…­é¢æ­£æ–¹ä½“ï¼Œå½©è‰²é¢',
+        shapeType: ShapeType.CUBE,
+        isCustom: false,
+        defaultParams: { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 0, resolutionV: 0 }
+    },
+    {
+        name: 'åœ†é”¥ (Cone)',
+        description: 'æ ‡å‡†åœ†é”¥ä½“',
+        shapeType: ShapeType.CONE,
+        isCustom: false,
+        defaultParams: { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 32, resolutionV: 0 }
+    }
+];
+// ============================================================================
+// è‡ªå®šä¹‰ç©ºé—´æ›²é¢åˆ—è¡¨
+// ============================================================================
+/** 4 ç§ç©ºé—´è§£æå‡ ä½•æ›²é¢ï¼Œæ”¯æŒå‚æ•°ç¼–è¾‘ */
+export const CUSTOM_FUNCTIONS = [
+    {
+        name: 'æ¤­çƒé¢ (Ellipsoid)',
+        description: 'xÂ²/aÂ² + yÂ²/bÂ² + zÂ²/cÂ² = 1',
+        shapeType: ShapeType.PARAMETRIC_ELLIPSOID,
+        isCustom: true,
+        defaultParams: { paramA: 1.5, paramB: 1.2, paramC: 1.0, resolutionU: 32, resolutionV: 32 }
+    },
+    {
+        name: 'å•å¶åŒæ›²é¢ (Hyperboloid)',
+        description: 'xÂ²/aÂ² + yÂ²/bÂ² âˆ’ zÂ²/cÂ² = 1',
+        shapeType: ShapeType.PARAMETRIC_HYPERBOLOID,
+        isCustom: true,
+        defaultParams: { paramA: 1.0, paramB: 1.0, paramC: 0.8, resolutionU: 32, resolutionV: 32 }
+    },
+    {
+        name: 'æ¤­åœ†æŠ›ç‰©é¢ (Paraboloid)',
+        description: 'z = xÂ²/aÂ² + yÂ²/bÂ²',
+        shapeType: ShapeType.PARAMETRIC_PARABOLOID,
+        isCustom: true,
+        defaultParams: { paramA: 0.8, paramB: 0.8, paramC: 0.6, resolutionU: 32, resolutionV: 32 }
+    },
+    {
+        name: 'æ¤­åœ†é”¥é¢ (Elliptic Cone)',
+        description: 'xÂ²/aÂ² + yÂ²/bÂ² = zÂ²/cÂ²',
+        shapeType: ShapeType.PARAMETRIC_ELLIPTIC_CONE,
+        isCustom: true,
+        defaultParams: { paramA: 0.7, paramB: 0.7, paramC: 0.7, resolutionU: 32, resolutionV: 32 }
+    }
+];
+// ============================================================================
+// å‚æ•°ç¼–è¾‘é¡µè¾…åŠ©
+// ============================================================================
+/** é»˜è®¤å‚æ•°å€¼ */
+export function getDefaultParams() {
+    return { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 32, resolutionV: 32 };
+}
+/**
+ * @brief æ ¹æ®æ¨¡å‹ç±»å‹è·å–å¯¹åº”çš„å‚æ•°æè¿°åˆ—è¡¨
+ *
+ * ä¸åŒæ›²é¢çš„å‚æ•°å«ä¹‰ä¸åŒï¼š
+ *   - æ¤­çƒé¢ï¼ša/b/c ä¸ºä¸‰ä¸ªåŠè½´é•¿åº¦
+ *   - åŒæ›²é¢ï¼ša/b/c ä¸ºæ–¹ç¨‹ç³»æ•°
+ *   - æŠ›ç‰©é¢ï¼ša/b æ§åˆ¶å¼€å£å½¢çŠ¶ï¼Œc æ§åˆ¶ z è½´ç¼©æ”¾
+ *   - æ¤­åœ†é”¥é¢ï¼ša/b æ§åˆ¶åº•é¢æ¤­åœ†ï¼Œc æ§åˆ¶é”¥ä½“é«˜åº¦
+ */
+export function getParamDescriptions(shapeType) {
+    switch (shapeType) {
+        case ShapeType.PARAMETRIC_ELLIPSOID:
+            return [
+                { key: 'paramA', label: 'åŠé•¿è½´ a (xæ–¹å‘)', min: 0.3, max: 3.0, step: 0.1, defaultValue: 1.5 },
+                { key: 'paramB', label: 'åŠé•¿è½´ b (yæ–¹å‘)', min: 0.3, max: 3.0, step: 0.1, defaultValue: 1.2 },
+                { key: 'paramC', label: 'åŠé•¿è½´ c (zæ–¹å‘)', min: 0.3, max: 3.0, step: 0.1, defaultValue: 1.0 },
+                { key: 'resolutionU', label: 'ç»åº¦åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+                { key: 'resolutionV', label: 'çº¬åº¦åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+            ];
+        case ShapeType.PARAMETRIC_HYPERBOLOID:
+            return [
+                { key: 'paramA', label: 'å‚æ•° a', min: 0.3, max: 2.5, step: 0.1, defaultValue: 1.0 },
+                { key: 'paramB', label: 'å‚æ•° b', min: 0.3, max: 2.5, step: 0.1, defaultValue: 1.0 },
+                { key: 'paramC', label: 'å‚æ•° c (è…°çš„ç²—ç»†)', min: 0.3, max: 2.0, step: 0.1, defaultValue: 0.8 },
+                { key: 'resolutionU', label: 'ç¯å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+                { key: 'resolutionV', label: 'çºµå‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+            ];
+        case ShapeType.PARAMETRIC_PARABOLOID:
+            return [
+                { key: 'paramA', label: 'å‚æ•° a', min: 0.3, max: 2.0, step: 0.1, defaultValue: 0.8 },
+                { key: 'paramB', label: 'å‚æ•° b', min: 0.3, max: 2.0, step: 0.1, defaultValue: 0.8 },
+                { key: 'paramC', label: 'zè½´ç¼©æ”¾', min: 0.2, max: 1.5, step: 0.1, defaultValue: 0.6 },
+                { key: 'resolutionU', label: 'ç¯å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+                { key: 'resolutionV', label: 'å¾„å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+            ];
+        case ShapeType.PARAMETRIC_ELLIPTIC_CONE:
+            return [
+                { key: 'paramA', label: 'å‚æ•° a', min: 0.2, max: 2.0, step: 0.1, defaultValue: 0.7 },
+                { key: 'paramB', label: 'å‚æ•° b', min: 0.2, max: 2.0, step: 0.1, defaultValue: 0.7 },
+                { key: 'paramC', label: 'å‚æ•° c', min: 0.2, max: 2.0, step: 0.1, defaultValue: 0.7 },
+                { key: 'resolutionU', label: 'ç¯å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+                { key: 'resolutionV', label: 'çºµå‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+            ];
+        default:
+            return [];
+    }
+}
+//# sourceMappingURL=ModelTypes.js.mapÂÙHD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\ModelTypes.etsÔrBœªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo¯hostModulesInfo°belongModulePath§checker¬shouldEmitJs¥entryÃÂÙ&D:\HUAWEI\Lab2\ndk-opengl-master\entryÙ D:\HUAWEI\Lab2\ndk-opengl-master¥entry¥1.0.0Ô  ’ÔrC’²hostDependencyName®hostModuleName³../utils/ModelTypes¥entryC³../utils/ModelTypes¥entryÙ&D:\HUAWEI\Lab2\ndk-opengl-master\entryÔrDÜ ®¬getNodeCount²getIdentifierCount®getSymbolCount¬getTypeCountµgetInstantiationCountµgetRelationCacheSizes±isUndefinedSymbol±isArgumentsSymbol¯isUnknownSymbol¯getMergedSymbol®getDiagnostics´getGlobalDiagnostics´getRecursionIdentity¶getUnmatchedProperties¹getTypeOfSymbolAtLocation¯getTypeOfSymbolÙ(getSymbolsOfParameterPropertyDeclaration·getDeclaredTypeOfSymbol³getPropertiesOfType±getPropertyOfTypeÙ"getPrivateIdentifierPropertyOfType·getTypeOfPropertyOfType²getIndexInfoOfType³getIndexInfosOfTypeºgetIndexInfosOfIndexSymbol³getSignaturesOfType²getIndexTypeOfType¬getIndexType¬getBaseTypes¸getBaseTypeOfLiteralType®getWidenedType³getTypeFromTypeNode°getParameterTypeÙ$getParameterIdentifierNameAtPosition¸getPromisedTypeOfPromise®getAwaitedType¸getReturnTypeOfSignature®isNullableType¯getNullableType²getNonNullableType²getNonOptionalType°getTypeArguments®typeToTypeNodeÙ$indexInfoToIndexSignatureDeclaration¿signatureToSignatureDeclaration²symbolToEntityName²symbolToExpression¬symbolToNodeÙ!symbolToTypeParameterDeclarations¼symbolToParameterDeclarationºtypeParameterToDeclaration±getSymbolsInScope³getSymbolAtLocation·getIndexInfosAtLocationÙ!getShorthandAssignmentValueSymbolÙ#getExportSpecifierLocalTargetSymbol·getExportSymbolOfSymbol±getTypeAtLocationºgetTypeAtLocationForLinterÙ tryGetTypeAtLocationWithoutCheckºgetTypeOfAssignmentPatternÙ*getPropertySymbolOfDestructuringAssignment±signatureToString¬typeToString®symbolToStringµtypePredicateToString®writeSignature©writeType«writeSymbol²writeTypePredicate¼getAugmentedPropertiesOfType®getRootSymbols²getSymbolOfExpando±getContextualTypeÙ(getContextualTypeForObjectLiteralElementÙ#getContextualTypeForArgumentAtIndexÙ getContextualTypeForJsxAttribute²isContextSensitiveÙ!getTypeOfPropertyOfContextualTypeµgetFullyQualifiedNameÙ#tryGetResolvedSignatureWithoutCheck´getResolvedSignatureÙ/getResolvedSignatureForStringLiteralCompletionsÙ$getResolvedSignatureForSignatureHelpµgetExpandedParameters¹hasEffectiveRestParameterºcontainsArgumentsReference°getConstantValueµisValidPropertyAccessÙ#isValidPropertyAccessForCompletions»getSignatureFromDeclarationºisImplementationOfOverload¹getImmediateAliasedSymbol°getAliasedSymbol¯getEmitResolver²getExportsOfModule¿getExportsAndPropertiesOfModuleÙ forEachExportAndPropertyOfModule¯getSymbolWalker±getAmbientModules¹getJsxIntrinsicTagNamesAt³isOptionalParameter»tryGetMemberInModuleExportsÙ(tryGetMemberInModuleExportsAndProperties´tryFindAmbientModuleÙ(tryFindAmbientModuleWithoutAugmentations¯getApparentType¬getUnionType²isTypeAssignableTo³createAnonymousType¯createSignature¬createSymbol¯createIndexInfoªgetAnyType­getStringType­getNumberType±createPromiseType¯createArrayType¹getElementTypeOfArrayType®getBooleanType¬getFalseType«getTrueType«getVoidType°getUndefinedType«getNullType¯getESSymbolType¬getNeverType¯getOptionalType®getPromiseType²getPromiseLikeType´getAsyncIterableType²isSymbolAccessible«isArrayType«isTupleType¯isArrayLikeTypeÙ#isTypeInvalidDueToUnionDiscriminantºgetExactOptionalProperties¿getAllPossiblePropertiesOfTypesÙ(getSuggestedSymbolForNonexistentPropertyÙ#getSuggestionForNonexistentPropertyÙ,getSuggestedSymbolForNonexistentJSXAttributeÙ&getSuggestedSymbolForNonexistentSymbolÙ!getSuggestionForNonexistentSymbolÙ&getSuggestedSymbolForNonexistentModuleÙ!getSuggestionForNonexistentExportÙ+getSuggestedSymbolForNonexistentClassMember·getBaseConstraintOfType»getDefaultFromTypeParameter«resolveName¯getJsxNamespaceµgetJsxFragmentFactory¸getAccessibleSymbolChain»getTypePredicateOfSignature¹resolveExternalModuleName»resolveExternalModuleSymbol°tryGetThisTypeAt¹getTypeArgumentConstraint¸getSuggestionDiagnostics¸runWithCancellationTokenÙ3getLocalTypeParametersOfClassOrInterfaceOrTypeAlias´isDeclarationVisible´isPropertyAccessible»getTypeOnlyAliasDeclaration¿getMemberOverrideModifierStatusÙ!isTypeParameterPossiblyReferenced²getConstEnumRelate´clearConstEnumRelateµdeleteConstEnumRelateÙ$getTypeArgumentsForResolvedSignatureµgetCheckedSourceFilesÙ"collectHaveTsNoCheckFilesForLinter·clearQualifiedNameCache®isStaticRecord²isStaticSourceFileÔ  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  ÃÃÚ ]/*
+ * æ¨¡å‹ç±»å‹å®šä¹‰ä¸é¢„ç½®æ•°æ®
+ *
+ * æœ¬æ–‡ä»¶å®šä¹‰äº†æ¨¡å‹ç³»ç»Ÿçš„æ ¸å¿ƒæ•°æ®ç»“æ„å’Œé¢„ç½®æ¨¡å‹åˆ—è¡¨ã€‚
+ * ä¸ C++ å±‚çš„ ShapeType æšä¸¾å’Œ ShapeParams ç»“æ„ä½“ä¿æŒåŒæ­¥ã€‚
+ *
+ * æ•°æ®æµå‘ï¼š
+ *   UI ç‚¹å‡» â†’ ModelEntry.shapeType â†’ NAPI selectShape() â†’ C++ ShapeType
+ *   æ»‘å—è°ƒèŠ‚ â†’ ShapeParams â†’ NAPI setShapeParams() â†’ C++ ShapeParams
+ */
+
+// ============================================================================
+// æ¨¡å‹ç±»å‹æšä¸¾ â€” ä¸ C++ ShapeType æšä¸¾ä¸¥æ ¼å¯¹é½
+// ============================================================================
+
+/** æ¨¡å‹ç±»å‹ï¼Œæ•°å€¼ä¸ C++ å±‚ ShapeType æšä¸¾ä¸€ä¸€å¯¹åº” */
+export enum ShapeType {
+  TETRAHEDRON = 0,             // å››é¢ä½“
+  SPHERE = 1,                  // çƒä½“
+  CUBE = 2,                    // æ­£æ–¹ä½“
+  CONE = 3,                    // åœ†é”¥
+  PARAMETRIC_ELLIPSOID = 4,    // æ¤­çƒé¢ï¼ˆè‡ªå®šä¹‰ï¼‰
+  PARAMETRIC_HYPERBOLOID = 5,  // å•å¶åŒæ›²é¢ï¼ˆè‡ªå®šä¹‰ï¼‰
+  PARAMETRIC_PARABOLOID = 6,   // æ¤­åœ†æŠ›ç‰©é¢ï¼ˆè‡ªå®šä¹‰ï¼‰
+  PARAMETRIC_ELLIPTIC_CONE = 7, // æ¤­åœ†é”¥é¢ï¼ˆè‡ªå®šä¹‰ï¼‰
+}
+
+// ============================================================================
+// æ›²é¢å‚æ•°æ¥å£ â€” ä¸ C++ ShapeParams ç»“æ„ä½“å¯¹é½
+// ============================================================================
+
+/** è‡ªå®šä¹‰æ›²é¢çš„å¯è°ƒå‚æ•° */
+export interface ShapeParams {
+  paramA: number;       // åŠè½´ a / åŠå¾„
+  paramB: number;       // åŠè½´ b
+  paramC: number;       // åŠè½´ c / é«˜åº¦ç¼©æ”¾
+  resolutionU: number;  // u æ–¹å‘ç½‘æ ¼åˆ†è¾¨ç‡ï¼ˆç¯å‘ï¼‰
+  resolutionV: number;  // v æ–¹å‘ç½‘æ ¼åˆ†è¾¨ç‡ï¼ˆçºµå‘/å¾„å‘ï¼‰
+}
+
+// ============================================================================
+// æ¨¡å‹æ¡ç›® â€” UI åˆ—è¡¨ç”¨
+// ============================================================================
+
+/** æ¨¡å‹åˆ—è¡¨ä¸­çš„å•ä¸ªæ¡ç›® */
+export interface ModelEntry {
+  name: string;              // ä¸­æ–‡æ˜¾ç¤ºåç§°
+  description: string;       // ç®€è¦æ•°å­¦æè¿°
+  shapeType: ShapeType;      // å¯¹åº”çš„æ¨¡å‹ç±»å‹æšä¸¾
+  isCustom: boolean;         // æ˜¯å¦ä¸ºè‡ªå®šä¹‰æ›²é¢ï¼ˆtrue åˆ™è¿›å…¥å‚æ•°ç¼–è¾‘é¡µï¼‰
+  defaultParams?: ShapeParams; // é¢„è®¾å‚æ•°ï¼ˆå¯é€‰ï¼‰
+}
+
+// ============================================================================
+// é¢„å®šä¹‰åŸºç¡€æ¨¡å‹åˆ—è¡¨
+// ============================================================================
+
+/** 4 ä¸ªåŸºç¡€å‡ ä½•ä½“ï¼Œç‚¹å‡»ç›´æ¥æ¸²æŸ“ï¼Œæ— éœ€å‚æ•°ç¼–è¾‘ */
+export const PREDEFINED_MODELS: ModelEntry[] = [
+  {
+    name: 'å››é¢ä½“ (Tetrahedron)',
+    description: 'ç»å…¸å››é¢ä½“ï¼Œ4ä¸ªä¸‰è§’é¢',
+    shapeType: ShapeType.TETRAHEDRON,
+    isCustom: false
+  },
+  {
+    name: 'çƒä½“ (Sphere)',
+    description: 'å…‰æ»‘çƒä½“ï¼Œç»çº¬ç½‘æ ¼ç”Ÿæˆ',
+    shapeType: ShapeType.SPHERE,
+    isCustom: false,
+    defaultParams: { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 32, resolutionV: 32 }
+  },
+  {
+    name: 'æ­£æ–¹ä½“ (Cube)',
+    description: 'å…­é¢æ­£æ–¹ä½“ï¼Œå½©è‰²é¢',
+    shapeType: ShapeType.CUBE,
+    isCustom: false,
+    defaultParams: { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 0, resolutionV: 0 }
+  },
+  {
+    name: 'åœ†é”¥ (Cone)',
+    description: 'æ ‡å‡†åœ†é”¥ä½“',
+    shapeType: ShapeType.CONE,
+    isCustom: false,
+    defaultParams: { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 32, resolutionV: 0 }
+  }
+];
+
+// ============================================================================
+// è‡ªå®šä¹‰ç©ºé—´æ›²é¢åˆ—è¡¨
+// ============================================================================
+
+/** 4 ç§ç©ºé—´è§£æå‡ ä½•æ›²é¢ï¼Œæ”¯æŒå‚æ•°ç¼–è¾‘ */
+export const CUSTOM_FUNCTIONS: ModelEntry[] = [
+  {
+    name: 'æ¤­çƒé¢ (Ellipsoid)',
+    description: 'xÂ²/aÂ² + yÂ²/bÂ² + zÂ²/cÂ² = 1',
+    shapeType: ShapeType.PARAMETRIC_ELLIPSOID,
+    isCustom: true,
+    defaultParams: { paramA: 1.5, paramB: 1.2, paramC: 1.0, resolutionU: 32, resolutionV: 32 }
+  },
+  {
+    name: 'å•å¶åŒæ›²é¢ (Hyperboloid)',
+    description: 'xÂ²/aÂ² + yÂ²/bÂ² âˆ’ zÂ²/cÂ² = 1',
+    shapeType: ShapeType.PARAMETRIC_HYPERBOLOID,
+    isCustom: true,
+    defaultParams: { paramA: 1.0, paramB: 1.0, paramC: 0.8, resolutionU: 32, resolutionV: 32 }
+  },
+  {
+    name: 'æ¤­åœ†æŠ›ç‰©é¢ (Paraboloid)',
+    description: 'z = xÂ²/aÂ² + yÂ²/bÂ²',
+    shapeType: ShapeType.PARAMETRIC_PARABOLOID,
+    isCustom: true,
+    defaultParams: { paramA: 0.8, paramB: 0.8, paramC: 0.6, resolutionU: 32, resolutionV: 32 }
+  },
+  {
+    name: 'æ¤­åœ†é”¥é¢ (Elliptic Cone)',
+    description: 'xÂ²/aÂ² + yÂ²/bÂ² = zÂ²/cÂ²',
+    shapeType: ShapeType.PARAMETRIC_ELLIPTIC_CONE,
+    isCustom: true,
+    defaultParams: { paramA: 0.7, paramB: 0.7, paramC: 0.7, resolutionU: 32, resolutionV: 32 }
+  }
+];
+
+// ============================================================================
+// å‚æ•°ç¼–è¾‘é¡µè¾…åŠ©
+// ============================================================================
+
+/** é»˜è®¤å‚æ•°å€¼ */
+export function getDefaultParams(): ShapeParams {
+  return { paramA: 1.5, paramB: 1.5, paramC: 1.5, resolutionU: 32, resolutionV: 32 };
+}
+
+/** å•ä¸ªå‚æ•°çš„æè¿°å…ƒæ•°æ®ï¼ˆç”¨äºç”Ÿæˆæ»‘å—ï¼‰ */
+export interface ParamDescription {
+  key: string;           // å‚æ•°é”®åï¼Œå¯¹åº” ShapeParams çš„å±æ€§å
+  label: string;         // æ»‘å—æ ‡ç­¾ï¼ˆä¸­æ–‡ï¼‰
+  min: number;           // æ»‘å—æœ€å°å€¼
+  max: number;           // æ»‘å—æœ€å¤§å€¼
+  step: number;          // æ»‘å—æ­¥é•¿
+  defaultValue: number;  // é»˜è®¤å€¼
+}
+
+/**
+ * @brief æ ¹æ®æ¨¡å‹ç±»å‹è·å–å¯¹åº”çš„å‚æ•°æè¿°åˆ—è¡¨
+ *
+ * ä¸åŒæ›²é¢çš„å‚æ•°å«ä¹‰ä¸åŒï¼š
+ *   - æ¤­çƒé¢ï¼ša/b/c ä¸ºä¸‰ä¸ªåŠè½´é•¿åº¦
+ *   - åŒæ›²é¢ï¼ša/b/c ä¸ºæ–¹ç¨‹ç³»æ•°
+ *   - æŠ›ç‰©é¢ï¼ša/b æ§åˆ¶å¼€å£å½¢çŠ¶ï¼Œc æ§åˆ¶ z è½´ç¼©æ”¾
+ *   - æ¤­åœ†é”¥é¢ï¼ša/b æ§åˆ¶åº•é¢æ¤­åœ†ï¼Œc æ§åˆ¶é”¥ä½“é«˜åº¦
+ */
+export function getParamDescriptions(shapeType: ShapeType): ParamDescription[] {
+  switch (shapeType) {
+    case ShapeType.PARAMETRIC_ELLIPSOID:
+      return [
+        { key: 'paramA', label: 'åŠé•¿è½´ a (xæ–¹å‘)', min: 0.3, max: 3.0, step: 0.1, defaultValue: 1.5 },
+        { key: 'paramB', label: 'åŠé•¿è½´ b (yæ–¹å‘)', min: 0.3, max: 3.0, step: 0.1, defaultValue: 1.2 },
+        { key: 'paramC', label: 'åŠé•¿è½´ c (zæ–¹å‘)', min: 0.3, max: 3.0, step: 0.1, defaultValue: 1.0 },
+        { key: 'resolutionU', label: 'ç»åº¦åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+        { key: 'resolutionV', label: 'çº¬åº¦åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+      ];
+    case ShapeType.PARAMETRIC_HYPERBOLOID:
+      return [
+        { key: 'paramA', label: 'å‚æ•° a', min: 0.3, max: 2.5, step: 0.1, defaultValue: 1.0 },
+        { key: 'paramB', label: 'å‚æ•° b', min: 0.3, max: 2.5, step: 0.1, defaultValue: 1.0 },
+        { key: 'paramC', label: 'å‚æ•° c (è…°çš„ç²—ç»†)', min: 0.3, max: 2.0, step: 0.1, defaultValue: 0.8 },
+        { key: 'resolutionU', label: 'ç¯å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+        { key: 'resolutionV', label: 'çºµå‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+      ];
+    case ShapeType.PARAMETRIC_PARABOLOID:
+      return [
+        { key: 'paramA', label: 'å‚æ•° a', min: 0.3, max: 2.0, step: 0.1, defaultValue: 0.8 },
+        { key: 'paramB', label: 'å‚æ•° b', min: 0.3, max: 2.0, step: 0.1, defaultValue: 0.8 },
+        { key: 'paramC', label: 'zè½´ç¼©æ”¾', min: 0.2, max: 1.5, step: 0.1, defaultValue: 0.6 },
+        { key: 'resolutionU', label: 'ç¯å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+        { key: 'resolutionV', label: 'å¾„å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+      ];
+    case ShapeType.PARAMETRIC_ELLIPTIC_CONE:
+      return [
+        { key: 'paramA', label: 'å‚æ•° a', min: 0.2, max: 2.0, step: 0.1, defaultValue: 0.7 },
+        { key: 'paramB', label: 'å‚æ•° b', min: 0.2, max: 2.0, step: 0.1, defaultValue: 0.7 },
+        { key: 'paramC', label: 'å‚æ•° c', min: 0.2, max: 2.0, step: 0.1, defaultValue: 0.7 },
+        { key: 'resolutionU', label: 'ç¯å‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+        { key: 'resolutionV', label: 'çºµå‘åˆ†è¾¨ç‡', min: 8, max: 64, step: 4, defaultValue: 32 },
+      ];
+    default:
+      return [];
+  }
+}
+ÀA“ÔrE–§version¤fileªsourceRoot§sources¥names¨mappings­ModelTypes.js ‘®ModelTypes.etsÜ ’‘”    ‘” 	’”   ”ÌO ÌO’”   ”" "’”   ”ÌO ÌO’”   ”& &•”   ” ”  ” ” “”   ” ” “” ”; ”< “” ”1 ”2 “” ”- 
+”. 
+“” ”- 
+”. 
+“” ”ÌM ”ÌN “” ”ÌQ ”ÌR “” ”ÌO ”ÌP “” ”ÌU ”ÌV —”   ” ” ” ” ” ”" ’”  5 ”ÌO 5ÌO’”  6 ” 6’”  7 ”ÌO 7ÌO’”  9 ” 9–”  : ” :” :” :” :”! :/‘” ;”” <” <” <
+”! <”” =” =” =”" =–” >” >” >” >” >”( >$”” ?” ?” ?” ?‘” Ì@‘” ÌA”” ÌB” ÌB” ÌB
+” ÌB”” ÌC” ÌC” ÌC”" ÌC–” ÌD” ÌD” ÌD” ÌD” ÌD”# ÌD”” ÌE” ÌE” ÌE” ÌEÜ ” ÌF” ÌF” ÌF” ÌF” ÌF”! ÌF”$ ÌF ”& ÌF"”, ÌF(”. ÌF*”1 ÌF-”3 ÌF/”9 ÌF5”; ÌF7”> ÌF:”Ì@ ÌF<”ÌK ÌFÌG”ÌM ÌFÌI”ÌO ÌFÌK”ÌQ ÌFÌM”Ì\ ÌFÌX”Ì^ ÌFÌZ”Ì` ÌFÌ\”Ìb ÌFÌ^‘” ÌG‘” ÌH”” ÌI” ÌI” ÌI
+” ÌI”” ÌJ” ÌJ” ÌJ”  ÌJ–” ÌK” ÌK” ÌK” ÌK” ÌK”! ÌK”” ÌL” ÌL” ÌL” ÌLÜ ” ÌM” ÌM” ÌM” ÌM” ÌM”! ÌM”$ ÌM ”& ÌM"”, ÌM(”. ÌM*”1 ÌM-”3 ÌM/”9 ÌM5”; ÌM7”> ÌM:”Ì@ ÌM<”ÌK ÌMÌG”ÌM ÌMÌI”ÌN ÌMÌJ”ÌP ÌMÌL”Ì[ ÌMÌW”Ì] ÌMÌY”Ì^ ÌMÌZ”Ì` ÌMÌ\‘” ÌN‘” ÌO”” ÌP” ÌP” ÌP
+” ÌP”” ÌQ” ÌQ” ÌQ” ÌQ–” ÌR” ÌR” ÌR” ÌR” ÌR”! ÌR”” ÌS” ÌS” ÌS” ÌSÜ ” ÌT” ÌT” ÌT” ÌT” ÌT”! ÌT”$ ÌT ”& ÌT"”, ÌT(”. ÌT*”1 ÌT-”3 ÌT/”9 ÌT5”; ÌT7”> ÌT:”Ì@ ÌT<”ÌK ÌTÌG”ÌM ÌTÌI”ÌO ÌTÌK”ÌQ ÌTÌM”Ì\ ÌTÌX”Ì^ ÌTÌZ”Ì_ ÌTÌ[”Ìa ÌTÌ]‘” ÌU’” ÌV” ÌV’”  ÌX ”ÌO ÌXÌO’”  ÌY ” ÌY’”  ÌZ ”ÌO ÌZÌO’”  Ì\ ” Ì\–”  Ì] ” Ì]” Ì]” Ì]” Ì]”  Ì].‘” Ì^”” Ì_” Ì_” Ì_
+” Ì_”” Ì`” Ì`” Ì`”0 Ì`,–” Ìa” Ìa” Ìa” Ìa” Ìa”1 Ìa-”” Ìb” Ìb” Ìb” ÌbÜ ” Ìc” Ìc” Ìc” Ìc” Ìc”! Ìc”$ Ìc ”& Ìc"”, Ìc(”. Ìc*”1 Ìc-”3 Ìc/”9 Ìc5”; Ìc7”> Ìc:”Ì@ Ìc<”ÌK ÌcÌG”ÌM ÌcÌI”ÌO ÌcÌK”ÌQ ÌcÌM”Ì\ ÌcÌX”Ì^ ÌcÌZ”Ì` ÌcÌ\”Ìb ÌcÌ^‘” Ìd‘” Ìe”” Ìf” Ìf” Ìf
+”# Ìf”” Ìg” Ìg” Ìg”0 Ìg,–” Ìh” Ìh” Ìh” Ìh” Ìh”3 Ìh/”” Ìi” Ìi” Ìi” ÌiÜ ” Ìj” Ìj” Ìj” Ìj” Ìj”! Ìj”$ Ìj ”& Ìj"”, Ìj(”. Ìj*”1 Ìj-”3 Ìj/”9 Ìj5”; Ìj7”> Ìj:”Ì@ Ìj<”ÌK ÌjÌG”ÌM ÌjÌI”ÌO ÌjÌK”ÌQ ÌjÌM”Ì\ ÌjÌX”Ì^ ÌjÌZ”Ì` ÌjÌ\”Ìb ÌjÌ^‘” Ìk‘” Ìl”” Ìm” Ìm” Ìm
+”" Ìm”” Ìn” Ìn” Ìn”( Ìn$–” Ìo” Ìo” Ìo” Ìo” Ìo”2 Ìo.”” Ìp” Ìp” Ìp” ÌpÜ ” Ìq” Ìq” Ìq” Ìq” Ìq”! Ìq”$ Ìq ”& Ìq"”, Ìq(”. Ìq*”1 Ìq-”3 Ìq/”9 Ìq5”; Ìq7”> Ìq:”Ì@ Ìq<”ÌK ÌqÌG”ÌM ÌqÌI”ÌO ÌqÌK”ÌQ ÌqÌM”Ì\ ÌqÌX”Ì^ ÌqÌZ”Ì` ÌqÌ\”Ìb ÌqÌ^‘” Ìr‘” Ìs”” Ìt” Ìt” Ìt
+”$ Ìt ”” Ìu” Ìu” Ìu”, Ìu(–” Ìv” Ìv” Ìv” Ìv” Ìv”5 Ìv1”” Ìw” Ìw” Ìw” ÌwÜ ” Ìx” Ìx” Ìx” Ìx” Ìx”! Ìx”$ Ìx ”& Ìx"”, Ìx(”. Ìx*”1 Ìx-”3 Ìx/”9 Ìx5”; Ìx7”> Ìx:”Ì@ Ìx<”ÌK ÌxÌG”ÌM ÌxÌI”ÌO ÌxÌK”ÌQ ÌxÌM”Ì\ ÌxÌX”Ì^ ÌxÌZ”Ì` ÌxÌ\”Ìb ÌxÌ^‘” Ìy’” Ìz” Ìz’”  Ì| ”ÌO Ì|ÌO’”  Ì} ”
+ Ì}
+’”  Ì~ ”ÌO Ì~ÌO’”  Ì€ ” Ì€””  Ì ” Ì” Ì”  Ì Ü ” Ì‚” Ì‚	” Ì‚” Ì‚” Ì‚” Ì‚” Ì‚”  Ì‚”" Ì‚ ”% Ì‚#”' Ì‚%”- Ì‚+”/ Ì‚-”2 Ì‚0”4 Ì‚2”? Ì‚=”ÌA Ì‚?”ÌC Ì‚ÌA”ÌE Ì‚ÌC”ÌP Ì‚ÌN”ÌR Ì‚ÌP”ÌT Ì‚ÌR”ÌV Ì‚ÌT”ÌW Ì‚ÌU’”  Ìƒ ” Ìƒ‘”  Ì ‘” Ì—–”  Ì˜ ” Ì˜” Ì˜”$ Ì˜$”% Ì˜%”. Ì˜9”” Ì™” Ì™
+” Ì™” Ì™•” Ìš” Ìš	” Ìš” Ìš”+ Ìš'’” Ì›” Ì›Ü ” Ìœ” Ìœ
+” Ìœ” Ìœ” Ìœ”! Ìœ”& Ìœ”( Ìœ ”5 Ìœ-”7 Ìœ/”: Ìœ2”< Ìœ4”? Ìœ7”ÌA Ìœ9”ÌD Ìœ<”ÌF Ìœ>”ÌI ÌœÌA”ÌK ÌœÌC”ÌO ÌœÌG”ÌQ ÌœÌI”ÌT ÌœÌL”ÌV ÌœÌN”Ìb ÌœÌZ”Ìd ÌœÌ\”Ìg ÌœÌ_”Ìi ÌœÌaÜ ” Ì” Ì
+” Ì” Ì” Ì”! Ì”& Ì”( Ì ”5 Ì-”7 Ì/”: Ì2”< Ì4”? Ì7”ÌA Ì9”ÌD Ì<”ÌF Ì>”ÌI ÌÌA”ÌK ÌÌC”ÌO ÌÌG”ÌQ ÌÌI”ÌT ÌÌL”ÌV ÌÌN”Ìb ÌÌZ”Ìd ÌÌ\”Ìg ÌÌ_”Ìi ÌÌaÜ ” Ì” Ì
+” Ì” Ì” Ì”! Ì”& Ì”( Ì ”5 Ì-”7 Ì/”: Ì2”< Ì4”? Ì7”ÌA Ì9”ÌD Ì<”ÌF Ì>”ÌI ÌÌA”ÌK ÌÌC”ÌO ÌÌG”ÌQ ÌÌI”ÌT ÌÌL”ÌV ÌÌN”Ìb ÌÌZ”Ìd ÌÌ\”Ìg ÌÌ_”Ìi ÌÌaÜ ” ÌŸ” ÌŸ
+” ÌŸ” ÌŸ”$ ÌŸ”& ÌŸ”+ ÌŸ#”- ÌŸ%”4 ÌŸ,”6 ÌŸ.”9 ÌŸ1”; ÌŸ3”< ÌŸ4”> ÌŸ6”ÌA ÌŸ9”ÌC ÌŸ;”ÌE ÌŸ=”ÌG ÌŸ?”ÌK ÌŸÌC”ÌM ÌŸÌE”ÌN ÌŸÌF”ÌP ÌŸÌH”Ì\ ÌŸÌT”Ì^ ÌŸÌV”Ì` ÌŸÌX”Ìb ÌŸÌZÜ ” Ì ” Ì 
+” Ì ” Ì ”$ Ì ”& Ì ”+ Ì #”- Ì %”4 Ì ,”6 Ì .”9 Ì 1”; Ì 3”< Ì 4”> Ì 6”ÌA Ì 9”ÌC Ì ;”ÌE Ì =”ÌG Ì ?”ÌK Ì ÌC”ÌM Ì ÌE”ÌN Ì ÌF”ÌP Ì ÌH”Ì\ Ì ÌT”Ì^ Ì ÌV”Ì` Ì ÌX”Ìb Ì ÌZ’” Ì¡” Ì¡•” Ì¢” Ì¢	” Ì¢” Ì¢”- Ì¢)’” Ì£” Ì£Ü ” Ì¤” Ì¤
+” Ì¤” Ì¤” Ì¤”! Ì¤”& Ì¤”( Ì¤ ”. Ì¤&”0 Ì¤(”3 Ì¤+”5 Ì¤-”8 Ì¤0”: Ì¤2”= Ì¤5”? Ì¤7”ÌB Ì¤:”ÌD Ì¤<”ÌH Ì¤Ì@”ÌJ Ì¤ÌB”ÌM Ì¤ÌE”ÌO Ì¤ÌG”Ì[ Ì¤ÌS”Ì] Ì¤ÌU”Ì` Ì¤ÌX”Ìb Ì¤ÌZÜ ” Ì¥” Ì¥
+” Ì¥” Ì¥” Ì¥”! Ì¥”& Ì¥”( Ì¥ ”. Ì¥&”0 Ì¥(”3 Ì¥+”5 Ì¥-”8 Ì¥0”: Ì¥2”= Ì¥5”? Ì¥7”ÌB Ì¥:”ÌD Ì¥<”ÌH Ì¥Ì@”ÌJ Ì¥ÌB”ÌM Ì¥ÌE”ÌO Ì¥ÌG”Ì[ Ì¥ÌS”Ì] Ì¥ÌU”Ì` Ì¥ÌX”Ìb Ì¥ÌZÜ ” Ì¦” Ì¦
+” Ì¦” Ì¦” Ì¦”! Ì¦”& Ì¦”( Ì¦ ”5 Ì¦-”7 Ì¦/”: Ì¦2”< Ì¦4”? Ì¦7”ÌA Ì¦9”ÌD Ì¦<”ÌF Ì¦>”ÌI Ì¦ÌA”ÌK Ì¦ÌC”ÌO Ì¦ÌG”ÌQ Ì¦ÌI”ÌT Ì¦ÌL”ÌV Ì¦ÌN”Ìb Ì¦ÌZ”Ìd Ì¦Ì\”Ìg Ì¦Ì_”Ìi Ì¦ÌaÜ ” Ì§” Ì§
+” Ì§” Ì§”$ Ì§”& Ì§”+ Ì§#”- Ì§%”4 Ì§,”6 Ì§.”9 Ì§1”; Ì§3”< Ì§4”> Ì§6”ÌA Ì§9”ÌC Ì§;”ÌE Ì§=”ÌG Ì§?”ÌK Ì§ÌC”ÌM Ì§ÌE”ÌN Ì§ÌF”ÌP Ì§ÌH”Ì\ Ì§ÌT”Ì^ Ì§ÌV”Ì` Ì§ÌX”Ìb Ì§ÌZÜ ” Ì¨” Ì¨
+” Ì¨” Ì¨”$ Ì¨”& Ì¨”+ Ì¨#”- Ì¨%”4 Ì¨,”6 Ì¨.”9 Ì¨1”; Ì¨3”< Ì¨4”> Ì¨6”ÌA Ì¨9”ÌC Ì¨;”ÌE Ì¨=”ÌG Ì¨?”ÌK Ì¨ÌC”ÌM Ì¨ÌE”ÌN Ì¨ÌF”ÌP Ì¨ÌH”Ì\ Ì¨ÌT”Ì^ Ì¨ÌV”Ì` Ì¨ÌX”Ìb Ì¨ÌZ’” Ì©” Ì©•” Ìª” Ìª	” Ìª” Ìª”, Ìª(’” Ì«” Ì«Ü ” Ì¬” Ì¬
+” Ì¬” Ì¬” Ì¬”! Ì¬”& Ì¬”( Ì¬ ”. Ì¬&”0 Ì¬(”3 Ì¬+”5 Ì¬-”8 Ì¬0”: Ì¬2”= Ì¬5”? Ì¬7”ÌB Ì¬:”ÌD Ì¬<”ÌH Ì¬Ì@”ÌJ Ì¬ÌB”ÌM Ì¬ÌE”ÌO Ì¬ÌG”Ì[ Ì¬ÌS”Ì] Ì¬ÌU”Ì` Ì¬ÌX”Ìb Ì¬ÌZÜ ” Ì­” Ì­
+” Ì­” Ì­” Ì­”! Ì­”& Ì­”( Ì­ ”. Ì­&”0 Ì­(”3 Ì­+”5 Ì­-”8 Ì­0”: Ì­2”= Ì­5”? Ì­7”ÌB Ì­:”ÌD Ì­<”ÌH Ì­Ì@”ÌJ Ì­ÌB”ÌM Ì­ÌE”ÌO Ì­ÌG”Ì[ Ì­ÌS”Ì] Ì­ÌU”Ì` Ì­ÌX”Ìb Ì­ÌZÜ ” Ì®” Ì®
+” Ì®” Ì®” Ì®”! Ì®”& Ì®”( Ì® ”. Ì®&”0 Ì®(”3 Ì®+”5 Ì®-”8 Ì®0”: Ì®2”= Ì®5”? Ì®7”ÌB Ì®:”ÌD Ì®<”ÌH Ì®Ì@”ÌJ Ì®ÌB”ÌM Ì®ÌE”ÌO Ì®ÌG”Ì[ Ì®ÌS”Ì] Ì®ÌU”Ì` Ì®ÌX”Ìb Ì®ÌZÜ ” Ì¯” Ì¯
+” Ì¯” Ì¯”$ Ì¯”& Ì¯”+ Ì¯#”- Ì¯%”4 Ì¯,”6 Ì¯.”9 Ì¯1”; Ì¯3”< Ì¯4”> Ì¯6”ÌA Ì¯9”ÌC Ì¯;”ÌE Ì¯=”ÌG Ì¯?”ÌK Ì¯ÌC”ÌM Ì¯ÌE”ÌN Ì¯ÌF”ÌP Ì¯ÌH”Ì\ Ì¯ÌT”Ì^ Ì¯ÌV”Ì` Ì¯ÌX”Ìb Ì¯ÌZÜ ” Ì°” Ì°
+” Ì°” Ì°”$ Ì°”& Ì°”+ Ì°#”- Ì°%”4 Ì°,”6 Ì°.”9 Ì°1”; Ì°3”< Ì°4”> Ì°6”ÌA Ì°9”ÌC Ì°;”ÌE Ì°=”ÌG Ì°?”ÌK Ì°ÌC”ÌM Ì°ÌE”ÌN Ì°ÌF”ÌP Ì°ÌH”Ì\ Ì°ÌT”Ì^ Ì°ÌV”Ì` Ì°ÌX”Ìb Ì°ÌZ’” Ì±” Ì±•” Ì²” Ì²	” Ì²” Ì²”/ Ì²+’” Ì³” Ì³Ü ” Ì´” Ì´
+” Ì´” Ì´” Ì´”! Ì´”& Ì´”( Ì´ ”. Ì´&”0 Ì´(”3 Ì´+”5 Ì´-”8 Ì´0”: Ì´2”= Ì´5”? Ì´7”ÌB Ì´:”ÌD Ì´<”ÌH Ì´Ì@”ÌJ Ì´ÌB”ÌM Ì´ÌE”ÌO Ì´ÌG”Ì[ Ì´ÌS”Ì] Ì´ÌU”Ì` Ì´ÌX”Ìb Ì´ÌZÜ ” Ìµ” Ìµ
+” Ìµ” Ìµ” Ìµ”! Ìµ”& Ìµ”( Ìµ ”. Ìµ&”0 Ìµ(”3 Ìµ+”5 Ìµ-”8 Ìµ0”: Ìµ2”= Ìµ5”? Ìµ7”ÌB Ìµ:”ÌD Ìµ<”ÌH ÌµÌ@”ÌJ ÌµÌB”ÌM ÌµÌE”ÌO ÌµÌG”Ì[ ÌµÌS”Ì] ÌµÌU”Ì` ÌµÌX”Ìb ÌµÌZÜ ” Ì¶” Ì¶
+” Ì¶” Ì¶” Ì¶”! Ì¶”& Ì¶”( Ì¶ ”. Ì¶&”0 Ì¶(”3 Ì¶+”5 Ì¶-”8 Ì¶0”: Ì¶2”= Ì¶5”? Ì¶7”ÌB Ì¶:”ÌD Ì¶<”ÌH Ì¶Ì@”ÌJ Ì¶ÌB”ÌM Ì¶ÌE”ÌO Ì¶ÌG”Ì[ Ì¶ÌS”Ì] Ì¶ÌU”Ì` Ì¶ÌX”Ìb Ì¶ÌZÜ ” Ì·” Ì·
+” Ì·” Ì·”$ Ì·”& Ì·”+ Ì·#”- Ì·%”4 Ì·,”6 Ì·.”9 Ì·1”; Ì·3”< Ì·4”> Ì·6”ÌA Ì·9”ÌC Ì·;”ÌE Ì·=”ÌG Ì·?”ÌK Ì·ÌC”ÌM Ì·ÌE”ÌN Ì·ÌF”ÌP Ì·ÌH”Ì\ Ì·ÌT”Ì^ Ì·ÌV”Ì` Ì·ÌX”Ìb Ì·ÌZÜ ” Ì¸” Ì¸
+” Ì¸” Ì¸”$ Ì¸”& Ì¸”+ Ì¸#”- Ì¸%”4 Ì¸,”6 Ì¸.”9 Ì¸1”; Ì¸3”< Ì¸4”> Ì¸6”ÌA Ì¸9”ÌC Ì¸;”ÌE Ì¸=”ÌG Ì¸?”ÌK Ì¸ÌC”ÌM Ì¸ÌE”ÌN Ì¸ÌF”ÌP Ì¸ÌH”Ì\ Ì¸ÌT”Ì^ Ì¸ÌV”Ì` Ì¸ÌX”Ìb Ì¸ÌZ’” Ì¹” Ì¹‘” Ìº”” Ì»” Ì»” Ì»” Ì»‘” Ì¼’”  Ì½ ” Ì½ÔrF–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ “‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ÔrG’§missing¦pluginÃ¦genAbcÂÔ  ÔrH”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache•ÔrI–¤type¥start£end«declarationªspecifiers¦source¶ExportNamedDeclarationÍòÍÔrJ•¤type¥start£end¬declarations¤kind³VariableDeclarationÍùÍ‘ÔrK•¤type¥start£end¢id¤init²VariableDeclaratorÍıÍÔrL”¤type¥start£end¤nameªIdentifierÍıÍ©ShapeTypeÀ£varÀI¶ExportNamedDeclarationÍ5ÍÆJ³VariableDeclarationÍ<ÍÆ‘K²VariableDeclaratorÍBÍÅLªIdentifierÍBÍS±PREDEFINED_MODELSÔrM”¤type¥start£end¨elements¯ArrayExpressionÍVÍÅ”ÔrN”¤type¥start£endªproperties°ObjectExpressionÍ]Íò”ÔrO™¤type¥start£end¦method©shorthand¨computed£key¥value¤kind¨PropertyÍhÍÂÂÂLªIdentifierÍhÍl¤nameÔrP•¤type¥start£end¥value£raw§LiteralÍnÍ·å››é¢ä½“ (Tetrahedron)¹'å››é¢ä½“ (Tetrahedron)'¤initO¨PropertyÍŒÍ¦ÂÂÂLªIdentifierÍŒÍ—«descriptionP§LiteralÍ™Í¦¿ç»å…¸å››é¢ä½“ï¼Œ4ä¸ªä¸‰è§’é¢Ù!'ç»å…¸å››é¢ä½“ï¼Œ4ä¸ªä¸‰è§’é¢'¤initO¨PropertyÍ±ÍÑÂÂÂLªIdentifierÍ±Íº©shapeTypeÔrQ—¤type¥start£end¦object¨property¨computed¨optional°MemberExpressionÍ¼ÍÑLªIdentifierÍ¼ÍÅ©ShapeTypeLªIdentifierÍÆÍÑ«TETRAHEDRONÂÂ¤initO¨PropertyÍÜÍëÂÂÂLªIdentifierÍÜÍä¨isCustomP§LiteralÍæÍëÂ¥false¤initN°ObjectExpressionÍùÍè•O¨PropertyÍÍÂÂÂLªIdentifierÍÍ¤nameP§LiteralÍ
+Í¯çƒä½“ (Sphere)±'çƒä½“ (Sphere)'¤initO¨PropertyÍ"Í<ÂÂÂLªIdentifierÍ"Í-«descriptionP§LiteralÍ/Í<Ù!å…‰æ»‘çƒä½“ï¼Œç»çº¬ç½‘æ ¼ç”ŸæˆÙ#'å…‰æ»‘çƒä½“ï¼Œç»çº¬ç½‘æ ¼ç”Ÿæˆ'¤initO¨PropertyÍGÍbÂÂÂLªIdentifierÍGÍP©shapeTypeQ°MemberExpressionÍRÍbLªIdentifierÍRÍ[©ShapeTypeLªIdentifierÍ\Íb¦SPHEREÂÂ¤initO¨PropertyÍmÍ|ÂÂÂLªIdentifierÍmÍu¨isCustomP§LiteralÍwÍ|Â¥false¤initO¨PropertyÍ‡ÍáÂÂÂLªIdentifierÍ‡Í”­defaultParamsN°ObjectExpressionÍ–Íá•O¨PropertyÍ˜Í£ÂÂÂLªIdentifierÍ˜Í¦paramAP§LiteralÍ Í£Ë?ø      £1.5¤initO¨PropertyÍ¥Í°ÂÂÂLªIdentifierÍ¥Í«¦paramBP§LiteralÍ­Í°Ë?ø      £1.5¤initO¨PropertyÍ²Í½ÂÂÂLªIdentifierÍ²Í¸¦paramCP§LiteralÍºÍ½Ë?ø      £1.5¤initO¨PropertyÍ¿ÍÎÂÂÂLªIdentifierÍ¿ÍÊ«resolutionUP§LiteralÍÌÍÎ ¢32¤initO¨PropertyÍĞÍßÂÂÂLªIdentifierÍĞÍÛ«resolutionVP§LiteralÍİÍß ¢32¤init¤initN°ObjectExpressionÍïÍ×•O¨PropertyÍúÍÂÂÂLªIdentifierÍúÍş¤nameP§LiteralÍ Í°æ­£æ–¹ä½“ (Cube)²'æ­£æ–¹ä½“ (Cube)'¤initO¨PropertyÍÍ/ÂÂÂLªIdentifierÍÍ"«descriptionP§LiteralÍ$Í/»å…­é¢æ­£æ–¹ä½“ï¼Œå½©è‰²é¢½'å…­é¢æ­£æ–¹ä½“ï¼Œå½©è‰²é¢'¤initO¨PropertyÍ:ÍSÂÂÂLªIdentifierÍ:ÍC©shapeTypeQ°MemberExpressionÍEÍSLªIdentifierÍEÍN©ShapeTypeLªIdentifierÍOÍS¤CUBEÂÂ¤initO¨PropertyÍ^ÍmÂÂÂLªIdentifierÍ^Íf¨isCustomP§LiteralÍhÍmÂ¥false¤initO¨PropertyÍxÍĞÂÂÂLªIdentifierÍxÍ…­defaultParamsN°ObjectExpressionÍ‡ÍĞ•O¨PropertyÍ‰Í”ÂÂÂLªIdentifierÍ‰Í¦paramAP§LiteralÍ‘Í”Ë?ø      £1.5¤initO¨PropertyÍ–Í¡ÂÂÂLªIdentifierÍ–Íœ¦paramBP§LiteralÍÍ¡Ë?ø      £1.5¤initO¨PropertyÍ£Í®ÂÂÂLªIdentifierÍ£Í©¦paramCP§LiteralÍ«Í®Ë?ø      £1.5¤initO¨PropertyÍ°Í¾ÂÂÂLªIdentifierÍ°Í»«resolutionUP§LiteralÍ½Í¾ ¡0¤initO¨PropertyÍÀÍÎÂÂÂLªIdentifierÍÀÍË«resolutionVP§LiteralÍÍÍÎ ¡0¤init¤initN°ObjectExpressionÍŞÍÂ•O¨PropertyÍéÍúÂÂÂLªIdentifierÍéÍí¤nameP§LiteralÍïÍú­åœ†é”¥ (Cone)¯'åœ†é”¥ (Cone)'¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ«descriptionP§LiteralÍÍ¯æ ‡å‡†åœ†é”¥ä½“±'æ ‡å‡†åœ†é”¥ä½“'¤initO¨PropertyÍ$Í=ÂÂÂLªIdentifierÍ$Í-©shapeTypeQ°MemberExpressionÍ/Í=LªIdentifierÍ/Í8©ShapeTypeLªIdentifierÍ9Í=¤CONEÂÂ¤initO¨PropertyÍHÍWÂÂÂLªIdentifierÍHÍP¨isCustomP§LiteralÍRÍWÂ¥false¤initO¨PropertyÍbÍ»ÂÂÂLªIdentifierÍbÍo­defaultParamsN°ObjectExpressionÍqÍ»•O¨PropertyÍsÍ~ÂÂÂLªIdentifierÍsÍy¦paramAP§LiteralÍ{Í~Ë?ø      £1.5¤initO¨PropertyÍ€Í‹ÂÂÂLªIdentifierÍ€Í†¦paramBP§LiteralÍˆÍ‹Ë?ø      £1.5¤initO¨PropertyÍÍ˜ÂÂÂLªIdentifierÍÍ“¦paramCP§LiteralÍ•Í˜Ë?ø      £1.5¤initO¨PropertyÍšÍ©ÂÂÂLªIdentifierÍšÍ¥«resolutionUP§LiteralÍ§Í© ¢32¤initO¨PropertyÍ«Í¹ÂÂÂLªIdentifierÍ«Í¶«resolutionVP§LiteralÍ¸Í¹ ¡0¤init¤init¥constÀI¶ExportNamedDeclarationÍ	“ÍJ³VariableDeclarationÍ	šÍ‘K²VariableDeclaratorÍ	 ÍLªIdentifierÍ	 Í	°°CUSTOM_FUNCTIONSM¯ArrayExpressionÍ	³Í”N°ObjectExpressionÍ	ºÍ
+È•O¨PropertyÍ	ÅÍ	ÜÂÂÂLªIdentifierÍ	ÅÍ	É¤nameP§LiteralÍ	ËÍ	Üµæ¤­çƒé¢ (Ellipsoid)·'æ¤­çƒé¢ (Ellipsoid)'¤initO¨PropertyÍ	çÍ
+ÂÂÂLªIdentifierÍ	çÍ	ò«descriptionP§LiteralÍ	ôÍ
+¿xÂ²/aÂ² + yÂ²/bÂ² + zÂ²/cÂ² = 1Ù!'xÂ²/aÂ² + yÂ²/bÂ² + zÂ²/cÂ² = 1'¤initO¨PropertyÍ
+Í
+CÂÂÂLªIdentifierÍ
+Í
+#©shapeTypeQ°MemberExpressionÍ
+%Í
+CLªIdentifierÍ
+%Í
+.©ShapeTypeLªIdentifierÍ
+/Í
+C´PARAMETRIC_ELLIPSOIDÂÂ¤initO¨PropertyÍ
+NÍ
+\ÂÂÂLªIdentifierÍ
+NÍ
+V¨isCustomP§LiteralÍ
+XÍ
+\Ã¤true¤initO¨PropertyÍ
+gÍ
+ÁÂÂÂLªIdentifierÍ
+gÍ
+t­defaultParamsN°ObjectExpressionÍ
+vÍ
+Á•O¨PropertyÍ
+xÍ
+ƒÂÂÂLªIdentifierÍ
+xÍ
+~¦paramAP§LiteralÍ
+€Í
+ƒË?ø      £1.5¤initO¨PropertyÍ
+…Í
+ÂÂÂLªIdentifierÍ
+…Í
+‹¦paramBP§LiteralÍ
+Í
+Ë?ó333333£1.2¤initO¨PropertyÍ
+’Í
+ÂÂÂLªIdentifierÍ
+’Í
+˜¦paramCP§LiteralÍ
+šÍ
+£1.0¤initO¨PropertyÍ
+ŸÍ
+®ÂÂÂLªIdentifierÍ
+ŸÍ
+ª«resolutionUP§LiteralÍ
+¬Í
+® ¢32¤initO¨PropertyÍ
+°Í
+¿ÂÂÂLªIdentifierÍ
+°Í
+»«resolutionVP§LiteralÍ
+½Í
+¿ ¢32¤init¤initN°ObjectExpressionÍ
+ÏÍã•O¨PropertyÍ
+ÚÍ
+õÂÂÂLªIdentifierÍ
+ÚÍ
+Ş¤nameP§LiteralÍ
+àÍ
+õ½å•å¶åŒæ›²é¢ (Hyperboloid)¿'å•å¶åŒæ›²é¢ (Hyperboloid)'¤initO¨PropertyÍ Í(ÂÂÂLªIdentifierÍ Í«descriptionP§LiteralÍÍ(Ù!xÂ²/aÂ² + yÂ²/bÂ² âˆ’ zÂ²/cÂ² = 1Ù#'xÂ²/aÂ² + yÂ²/bÂ² âˆ’ zÂ²/cÂ² = 1'¤initO¨PropertyÍ3Í^ÂÂÂLªIdentifierÍ3Í<©shapeTypeQ°MemberExpressionÍ>Í^LªIdentifierÍ>ÍG©ShapeTypeLªIdentifierÍHÍ^¶PARAMETRIC_HYPERBOLOIDÂÂ¤initO¨PropertyÍiÍwÂÂÂLªIdentifierÍiÍq¨isCustomP§LiteralÍsÍwÃ¤true¤initO¨PropertyÍ‚ÍÜÂÂÂLªIdentifierÍ‚Í­defaultParamsN°ObjectExpressionÍ‘ÍÜ•O¨PropertyÍ“ÍÂÂÂLªIdentifierÍ“Í™¦paramAP§LiteralÍ›Í£1.0¤initO¨PropertyÍ Í«ÂÂÂLªIdentifierÍ Í¦¦paramBP§LiteralÍ¨Í«£1.0¤initO¨PropertyÍ­Í¸ÂÂÂLªIdentifierÍ­Í³¦paramCP§LiteralÍµÍ¸Ë?é™™™™™š£0.8¤initO¨PropertyÍºÍÉÂÂÂLªIdentifierÍºÍÅ«resolutionUP§LiteralÍÇÍÉ ¢32¤initO¨PropertyÍËÍÚÂÂÂLªIdentifierÍËÍÖ«resolutionVP§LiteralÍØÍÚ ¢32¤init¤initN°ObjectExpressionÍêÍô•O¨PropertyÍõÍÂÂÂLªIdentifierÍõÍù¤nameP§LiteralÍûÍ¼æ¤­åœ†æŠ›ç‰©é¢ (Paraboloid)¾'æ¤­åœ†æŠ›ç‰©é¢ (Paraboloid)'¤initO¨PropertyÍÍ:ÂÂÂLªIdentifierÍÍ%«descriptionP§LiteralÍ'Í:µz = xÂ²/aÂ² + yÂ²/bÂ²·'z = xÂ²/aÂ² + yÂ²/bÂ²'¤initO¨PropertyÍEÍoÂÂÂLªIdentifierÍEÍN©shapeTypeQ°MemberExpressionÍPÍoLªIdentifierÍPÍY©ShapeTypeLªIdentifierÍZÍoµPARAMETRIC_PARABOLOIDÂÂ¤initO¨PropertyÍzÍˆÂÂÂLªIdentifierÍzÍ‚¨isCustomP§LiteralÍ„ÍˆÃ¤true¤initO¨PropertyÍ“ÍíÂÂÂLªIdentifierÍ“Í ­defaultParamsN°ObjectExpressionÍ¢Íí•O¨PropertyÍ¤Í¯ÂÂÂLªIdentifierÍ¤Íª¦paramAP§LiteralÍ¬Í¯Ë?é™™™™™š£0.8¤initO¨PropertyÍ±Í¼ÂÂÂLªIdentifierÍ±Í·¦paramBP§LiteralÍ¹Í¼Ë?é™™™™™š£0.8¤initO¨PropertyÍ¾ÍÉÂÂÂLªIdentifierÍ¾ÍÄ¦paramCP§LiteralÍÆÍÉË?ã333333£0.6¤initO¨PropertyÍËÍÚÂÂÂLªIdentifierÍËÍÖ«resolutionUP§LiteralÍØÍÚ ¢32¤initO¨PropertyÍÜÍëÂÂÂLªIdentifierÍÜÍç«resolutionVP§LiteralÍéÍë ¢32¤init¤initN°ObjectExpressionÍûÍ•O¨PropertyÍÍ"ÂÂÂLªIdentifierÍÍ
+¤nameP§LiteralÍÍ"¼æ¤­åœ†é”¥é¢ (Elliptic Cone)¾'æ¤­åœ†é”¥é¢ (Elliptic Cone)'¤initO¨PropertyÍ-ÍQÂÂÂLªIdentifierÍ-Í8«descriptionP§LiteralÍ:ÍQ»xÂ²/aÂ² + yÂ²/bÂ² = zÂ²/cÂ²½'xÂ²/aÂ² + yÂ²/bÂ² = zÂ²/cÂ²'¤initO¨PropertyÍ\Í‰ÂÂÂLªIdentifierÍ\Íe©shapeTypeQ°MemberExpressionÍgÍ‰LªIdentifierÍgÍp©ShapeTypeLªIdentifierÍqÍ‰¸PARAMETRIC_ELLIPTIC_CONEÂÂ¤initO¨PropertyÍ”Í¢ÂÂÂLªIdentifierÍ”Íœ¨isCustomP§LiteralÍÍ¢Ã¤true¤initO¨PropertyÍ­ÍÂÂÂLªIdentifierÍ­Íº­defaultParamsN°ObjectExpressionÍ¼Í•O¨PropertyÍ¾ÍÉÂÂÂLªIdentifierÍ¾ÍÄ¦paramAP§LiteralÍÆÍÉË?æffffff£0.7¤initO¨PropertyÍËÍÖÂÂÂLªIdentifierÍËÍÑ¦paramBP§LiteralÍÓÍÖË?æffffff£0.7¤initO¨PropertyÍØÍãÂÂÂLªIdentifierÍØÍŞ¦paramCP§LiteralÍàÍãË?æffffff£0.7¤initO¨PropertyÍåÍôÂÂÂLªIdentifierÍåÍğ«resolutionUP§LiteralÍòÍô ¢32¤initO¨PropertyÍöÍÂÂÂLªIdentifierÍöÍ«resolutionVP§LiteralÍÍ ¢32¤init¤init¥constÀI¶ExportNamedDeclarationÍĞÍPÔrR™¤type¥start£end¢idªexpression©generator¥async¦params¤body³FunctionDeclarationÍ×ÍPLªIdentifierÍàÍğ°getDefaultParamsÂÂÂÔrS”¤type¥start£end¤body®BlockStatementÍóÍP‘ÔrT”¤type¥start£end¨argument¯ReturnStatementÍúÍMN°ObjectExpressionÍÍL•O¨PropertyÍÍÂÂÂLªIdentifierÍÍ	¦paramAP§LiteralÍÍË?ø      £1.5¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ¦paramBP§LiteralÍÍË?ø      £1.5¤initO¨PropertyÍÍ(ÂÂÂLªIdentifierÍÍ#¦paramCP§LiteralÍ%Í(Ë?ø      £1.5¤initO¨PropertyÍ*Í9ÂÂÂLªIdentifierÍ*Í5«resolutionUP§LiteralÍ7Í9 ¢32¤initO¨PropertyÍ;ÍJÂÂÂLªIdentifierÍ;ÍF«resolutionVP§LiteralÍHÍJ ¢32¤initÀI¶ExportNamedDeclarationÍÍÙR³FunctionDeclarationÍ
+ÍÙLªIdentifierÍÍ'´getParamDescriptionsÂÂÂ‘LªIdentifierÍ(Í1©shapeTypeS®BlockStatementÍ3ÍÙ‘ÔrU•¤type¥start£end¬discriminant¥cases¯SwitchStatementÍ:ÍÖLªIdentifierÍBÍK©shapeType•ÔrV•¤type¥start£endªconsequent¤testªSwitchCaseÍXÍ°‘T¯ReturnStatementÍŠÍ°M¯ArrayExpressionÍ‘Í¯•N°ObjectExpressionÍ¤Íı–O¨PropertyÍ¦Í³ÂÂÂLªIdentifierÍ¦Í©£keyP§LiteralÍ«Í³¦paramA¨'paramA'¤initO¨PropertyÍµÍÉÂÂÂLªIdentifierÍµÍº¥labelP§LiteralÍ¼ÍÉµåŠé•¿è½´ a (xæ–¹å‘)·'åŠé•¿è½´ a (xæ–¹å‘)'¤initO¨PropertyÍËÍÓÂÂÂLªIdentifierÍËÍÎ£minP§LiteralÍĞÍÓË?Ó333333£0.3¤initO¨PropertyÍÕÍİÂÂÂLªIdentifierÍÕÍØ£maxP§LiteralÍÚÍİ£3.0¤initO¨PropertyÍßÍèÂÂÂLªIdentifierÍßÍã¤stepP§LiteralÍåÍèË?¹™™™™™š£0.1¤initO¨PropertyÍêÍûÂÂÂLªIdentifierÍêÍö¬defaultValueP§LiteralÍøÍûË?ø      £1.5¤initN°ObjectExpressionÍÍi–O¨PropertyÍÍÂÂÂLªIdentifierÍÍ£keyP§LiteralÍÍ¦paramB¨'paramB'¤initO¨PropertyÍ!Í5ÂÂÂLªIdentifierÍ!Í&¥labelP§LiteralÍ(Í5µåŠé•¿è½´ b (yæ–¹å‘)·'åŠé•¿è½´ b (yæ–¹å‘)'¤initO¨PropertyÍ7Í?ÂÂÂLªIdentifierÍ7Í:£minP§LiteralÍ<Í?Ë?Ó333333£0.3¤initO¨PropertyÍAÍIÂÂÂLªIdentifierÍAÍD£maxP§LiteralÍFÍI£3.0¤initO¨PropertyÍKÍTÂÂÂLªIdentifierÍKÍO¤stepP§LiteralÍQÍTË?¹™™™™™š£0.1¤initO¨PropertyÍVÍgÂÂÂLªIdentifierÍVÍb¬defaultValueP§LiteralÍdÍgË?ó333333£1.2¤initN°ObjectExpressionÍ|ÍÕ–O¨PropertyÍ~Í‹ÂÂÂLªIdentifierÍ~Í£keyP§LiteralÍƒÍ‹¦paramC¨'paramC'¤initO¨PropertyÍÍ¡ÂÂÂLªIdentifierÍÍ’¥labelP§LiteralÍ”Í¡µåŠé•¿è½´ c (zæ–¹å‘)·'åŠé•¿è½´ c (zæ–¹å‘)'¤initO¨PropertyÍ£Í«ÂÂÂLªIdentifierÍ£Í¦£minP§LiteralÍ¨Í«Ë?Ó333333£0.3¤initO¨PropertyÍ­ÍµÂÂÂLªIdentifierÍ­Í°£maxP§LiteralÍ²Íµ£3.0¤initO¨PropertyÍ·ÍÀÂÂÂLªIdentifierÍ·Í»¤stepP§LiteralÍ½ÍÀË?¹™™™™™š£0.1¤initO¨PropertyÍÂÍÓÂÂÂLªIdentifierÍÂÍÎ¬defaultValueP§LiteralÍĞÍÓ£1.0¤initN°ObjectExpressionÍèÍ:–O¨PropertyÍêÍüÂÂÂLªIdentifierÍêÍí£keyP§LiteralÍïÍü«resolutionU­'resolutionU'¤initO¨PropertyÍşÍÂÂÂLªIdentifierÍşÍ¥labelP§LiteralÍÍ¯ç»åº¦åˆ†è¾¨ç‡±'ç»åº¦åˆ†è¾¨ç‡'¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ£minP§LiteralÍÍ¡8¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ£maxP§LiteralÍÍÌ@¢64¤initO¨PropertyÍÍ&ÂÂÂLªIdentifierÍÍ#¤stepP§LiteralÍ%Í&¡4¤initO¨PropertyÍ(Í8ÂÂÂLªIdentifierÍ(Í4¬defaultValueP§LiteralÍ6Í8 ¢32¤initN°ObjectExpressionÍMÍŸ–O¨PropertyÍOÍaÂÂÂLªIdentifierÍOÍR£keyP§LiteralÍTÍa«resolutionV­'resolutionV'¤initO¨PropertyÍcÍqÂÂÂLªIdentifierÍcÍh¥labelP§LiteralÍjÍq¯çº¬åº¦åˆ†è¾¨ç‡±'çº¬åº¦åˆ†è¾¨ç‡'¤initO¨PropertyÍsÍyÂÂÂLªIdentifierÍsÍv£minP§LiteralÍxÍy¡8¤initO¨PropertyÍ{Í‚ÂÂÂLªIdentifierÍ{Í~£maxP§LiteralÍ€Í‚Ì@¢64¤initO¨PropertyÍ„Í‹ÂÂÂLªIdentifierÍ„Íˆ¤stepP§LiteralÍŠÍ‹¡4¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ™¬defaultValueP§LiteralÍ›Í ¢32¤initQ°MemberExpressionÍ]Í{LªIdentifierÍ]Íf©ShapeTypeLªIdentifierÍgÍ{´PARAMETRIC_ELLIPSOIDÂÂVªSwitchCaseÍºÍ‘T¯ReturnStatementÍîÍM¯ArrayExpressionÍõÍ•N°ObjectExpressionÍÍZ–O¨PropertyÍ
+ÍÂÂÂLªIdentifierÍ
+Í£keyP§LiteralÍÍ¦paramA¨'paramA'¤initO¨PropertyÍÍ&ÂÂÂLªIdentifierÍÍ¥labelP§LiteralÍ Í&¨å‚æ•° aª'å‚æ•° a'¤initO¨PropertyÍ(Í0ÂÂÂLªIdentifierÍ(Í+£minP§LiteralÍ-Í0Ë?Ó333333£0.3¤initO¨PropertyÍ2Í:ÂÂÂLªIdentifierÍ2Í5£maxP§LiteralÍ7Í:Ë@      £2.5¤initO¨PropertyÍ<ÍEÂÂÂLªIdentifierÍ<Í@¤stepP§LiteralÍBÍEË?¹™™™™™š£0.1¤initO¨PropertyÍGÍXÂÂÂLªIdentifierÍGÍS¬defaultValueP§LiteralÍUÍX£1.0¤initN°ObjectExpressionÍmÍ¿–O¨PropertyÍoÍ|ÂÂÂLªIdentifierÍoÍr£keyP§LiteralÍtÍ|¦paramB¨'paramB'¤initO¨PropertyÍ~Í‹ÂÂÂLªIdentifierÍ~Íƒ¥labelP§LiteralÍ…Í‹¨å‚æ•° bª'å‚æ•° b'¤initO¨PropertyÍÍ•ÂÂÂLªIdentifierÍÍ£minP§LiteralÍ’Í•Ë?Ó333333£0.3¤initO¨PropertyÍ—ÍŸÂÂÂLªIdentifierÍ—Íš£maxP§LiteralÍœÍŸË@      £2.5¤initO¨PropertyÍ¡ÍªÂÂÂLªIdentifierÍ¡Í¥¤stepP§LiteralÍ§ÍªË?¹™™™™™š£0.1¤initO¨PropertyÍ¬Í½ÂÂÂLªIdentifierÍ¬Í¸¬defaultValueP§LiteralÍºÍ½£1.0¤initN°ObjectExpressionÍÒÍ+–O¨PropertyÍÔÍáÂÂÂLªIdentifierÍÔÍ×£keyP§LiteralÍÙÍá¦paramC¨'paramC'¤initO¨PropertyÍãÍ÷ÂÂÂLªIdentifierÍãÍè¥labelP§LiteralÍêÍ÷·å‚æ•° c (è…°çš„ç²—ç»†)¹'å‚æ•° c (è…°çš„ç²—ç»†)'¤initO¨PropertyÍùÍÂÂÂLªIdentifierÍùÍü£minP§LiteralÍşÍË?Ó333333£0.3¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ£maxP§LiteralÍÍ£2.0¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ¤stepP§LiteralÍÍË?¹™™™™™š£0.1¤initO¨PropertyÍÍ)ÂÂÂLªIdentifierÍÍ$¬defaultValueP§LiteralÍ&Í)Ë?é™™™™™š£0.8¤initN°ObjectExpressionÍ>Í–O¨PropertyÍ@ÍRÂÂÂLªIdentifierÍ@ÍC£keyP§LiteralÍEÍR«resolutionU­'resolutionU'¤initO¨PropertyÍTÍbÂÂÂLªIdentifierÍTÍY¥labelP§LiteralÍ[Íb¯ç¯å‘åˆ†è¾¨ç‡±'ç¯å‘åˆ†è¾¨ç‡'¤initO¨PropertyÍdÍjÂÂÂLªIdentifierÍdÍg£minP§LiteralÍiÍj¡8¤initO¨PropertyÍlÍsÂÂÂLªIdentifierÍlÍo£maxP§LiteralÍqÍsÌ@¢64¤initO¨PropertyÍuÍ|ÂÂÂLªIdentifierÍuÍy¤stepP§LiteralÍ{Í|¡4¤initO¨PropertyÍ~ÍÂÂÂLªIdentifierÍ~ÍŠ¬defaultValueP§LiteralÍŒÍ ¢32¤initN°ObjectExpressionÍ£Íõ–O¨PropertyÍ¥Í·ÂÂÂLªIdentifierÍ¥Í¨£keyP§LiteralÍªÍ·«resolutionV­'resolutionV'¤initO¨PropertyÍ¹ÍÇÂÂÂLªIdentifierÍ¹Í¾¥labelP§LiteralÍÀÍÇ¯çºµå‘åˆ†è¾¨ç‡±'çºµå‘åˆ†è¾¨ç‡'¤initO¨PropertyÍÉÍÏÂÂÂLªIdentifierÍÉÍÌ£minP§LiteralÍÎÍÏ¡8¤initO¨PropertyÍÑÍØÂÂÂLªIdentifierÍÑÍÔ£maxP§LiteralÍÖÍØÌ@¢64¤initO¨PropertyÍÚÍáÂÂÂLªIdentifierÍÚÍŞ¤stepP§LiteralÍàÍá¡4¤initO¨PropertyÍãÍóÂÂÂLªIdentifierÍãÍï¬defaultValueP§LiteralÍñÍó ¢32¤initQ°MemberExpressionÍ¿ÍßLªIdentifierÍ¿ÍÈ©ShapeTypeLªIdentifierÍÉÍß¶PARAMETRIC_HYPERBOLOIDÂÂVªSwitchCaseÍÍT‘T¯ReturnStatementÍCÍTM¯ArrayExpressionÍJÍS•N°ObjectExpressionÍ]Í¯–O¨PropertyÍ_ÍlÂÂÂLªIdentifierÍ_Íb£keyP§LiteralÍdÍl¦paramA¨'paramA'¤initO¨PropertyÍnÍ{ÂÂÂLªIdentifierÍnÍs¥labelP§LiteralÍuÍ{¨å‚æ•° aª'å‚æ•° a'¤initO¨PropertyÍ}Í…ÂÂÂLªIdentifierÍ}Í€£minP§LiteralÍ‚Í…Ë?Ó333333£0.3¤initO¨PropertyÍ‡ÍÂÂÂLªIdentifierÍ‡ÍŠ£maxP§LiteralÍŒÍ£2.0¤initO¨PropertyÍ‘ÍšÂÂÂLªIdentifierÍ‘Í•¤stepP§LiteralÍ—ÍšË?¹™™™™™š£0.1¤initO¨PropertyÍœÍ­ÂÂÂLªIdentifierÍœÍ¨¬defaultValueP§LiteralÍªÍ­Ë?é™™™™™š£0.8¤initN°ObjectExpressionÍÂÍ–O¨PropertyÍÄÍÑÂÂÂLªIdentifierÍÄÍÇ£keyP§LiteralÍÉÍÑ¦paramB¨'paramB'¤initO¨PropertyÍÓÍàÂÂÂLªIdentifierÍÓÍØ¥labelP§LiteralÍÚÍà¨å‚æ•° bª'å‚æ•° b'¤initO¨PropertyÍâÍêÂÂÂLªIdentifierÍâÍå£minP§LiteralÍçÍêË?Ó333333£0.3¤initO¨PropertyÍìÍôÂÂÂLªIdentifierÍìÍï£maxP§LiteralÍñÍô£2.0¤initO¨PropertyÍöÍÿÂÂÂLªIdentifierÍöÍú¤stepP§LiteralÍüÍÿË?¹™™™™™š£0.1¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ¬defaultValueP§LiteralÍÍË?é™™™™™š£0.8¤initN°ObjectExpressionÍ'Íy–O¨PropertyÍ)Í6ÂÂÂLªIdentifierÍ)Í,£keyP§LiteralÍ.Í6¦paramC¨'paramC'¤initO¨PropertyÍ8ÍEÂÂÂLªIdentifierÍ8Í=¥labelP§LiteralÍ?ÍEªzè½´ç¼©æ”¾¬'zè½´ç¼©æ”¾'¤initO¨PropertyÍGÍOÂÂÂLªIdentifierÍGÍJ£minP§LiteralÍLÍOË?É™™™™™š£0.2¤initO¨PropertyÍQÍYÂÂÂLªIdentifierÍQÍT£maxP§LiteralÍVÍYË?ø      £1.5¤initO¨PropertyÍ[ÍdÂÂÂLªIdentifierÍ[Í_¤stepP§LiteralÍaÍdË?¹™™™™™š£0.1¤initO¨PropertyÍfÍwÂÂÂLªIdentifierÍfÍr¬defaultValueP§LiteralÍtÍwË?ã333333£0.6¤initN°ObjectExpressionÍŒÍŞ–O¨PropertyÍÍ ÂÂÂLªIdentifierÍÍ‘£keyP§LiteralÍ“Í «resolutionU­'resolutionU'¤initO¨PropertyÍ¢Í°ÂÂÂLªIdentifierÍ¢Í§¥labelP§LiteralÍ©Í°¯ç¯å‘åˆ†è¾¨ç‡±'ç¯å‘åˆ†è¾¨ç‡'¤initO¨PropertyÍ²Í¸ÂÂÂLªIdentifierÍ²Íµ£minP§LiteralÍ·Í¸¡8¤initO¨PropertyÍºÍÁÂÂÂLªIdentifierÍºÍ½£maxP§LiteralÍ¿ÍÁÌ@¢64¤initO¨PropertyÍÃÍÊÂÂÂLªIdentifierÍÃÍÇ¤stepP§LiteralÍÉÍÊ¡4¤initO¨PropertyÍÌÍÜÂÂÂLªIdentifierÍÌÍØ¬defaultValueP§LiteralÍÚÍÜ ¢32¤initN°ObjectExpressionÍñÍC–O¨PropertyÍóÍÂÂÂLªIdentifierÍóÍö£keyP§LiteralÍøÍ«resolutionV­'resolutionV'¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ¥labelP§LiteralÍÍ¯å¾„å‘åˆ†è¾¨ç‡±'å¾„å‘åˆ†è¾¨ç‡'¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ£minP§LiteralÍÍ¡8¤initO¨PropertyÍÍ&ÂÂÂLªIdentifierÍÍ"£maxP§LiteralÍ$Í&Ì@¢64¤initO¨PropertyÍ(Í/ÂÂÂLªIdentifierÍ(Í,¤stepP§LiteralÍ.Í/¡4¤initO¨PropertyÍ1ÍAÂÂÂLªIdentifierÍ1Í=¬defaultValueP§LiteralÍ?ÍA ¢32¤initQ°MemberExpressionÍÍ4LªIdentifierÍÍ©ShapeTypeLªIdentifierÍÍ4µPARAMETRIC_PARABOLOIDÂÂVªSwitchCaseÍ^Í¥‘T¯ReturnStatementÍ”Í¥M¯ArrayExpressionÍ›Í¤•N°ObjectExpressionÍ®Í –O¨PropertyÍ°Í½ÂÂÂLªIdentifierÍ°Í³£keyP§LiteralÍµÍ½¦paramA¨'paramA'¤initO¨PropertyÍ¿ÍÌÂÂÂLªIdentifierÍ¿ÍÄ¥labelP§LiteralÍÆÍÌ¨å‚æ•° aª'å‚æ•° a'¤initO¨PropertyÍÎÍÖÂÂÂLªIdentifierÍÎÍÑ£minP§LiteralÍÓÍÖË?É™™™™™š£0.2¤initO¨PropertyÍØÍàÂÂÂLªIdentifierÍØÍÛ£maxP§LiteralÍİÍà£2.0¤initO¨PropertyÍâÍëÂÂÂLªIdentifierÍâÍæ¤stepP§LiteralÍèÍëË?¹™™™™™š£0.1¤initO¨PropertyÍíÍşÂÂÂLªIdentifierÍíÍù¬defaultValueP§LiteralÍûÍşË?æffffff£0.7¤initN°ObjectExpressionÍÍe–O¨PropertyÍÍ"ÂÂÂLªIdentifierÍÍ£keyP§LiteralÍÍ"¦paramB¨'paramB'¤initO¨PropertyÍ$Í1ÂÂÂLªIdentifierÍ$Í)¥labelP§LiteralÍ+Í1¨å‚æ•° bª'å‚æ•° b'¤initO¨PropertyÍ3Í;ÂÂÂLªIdentifierÍ3Í6£minP§LiteralÍ8Í;Ë?É™™™™™š£0.2¤initO¨PropertyÍ=ÍEÂÂÂLªIdentifierÍ=Í@£maxP§LiteralÍBÍE£2.0¤initO¨PropertyÍGÍPÂÂÂLªIdentifierÍGÍK¤stepP§LiteralÍMÍPË?¹™™™™™š£0.1¤initO¨PropertyÍRÍcÂÂÂLªIdentifierÍRÍ^¬defaultValueP§LiteralÍ`ÍcË?æffffff£0.7¤initN°ObjectExpressionÍxÍÊ–O¨PropertyÍzÍ‡ÂÂÂLªIdentifierÍzÍ}£keyP§LiteralÍÍ‡¦paramC¨'paramC'¤initO¨PropertyÍ‰Í–ÂÂÂLªIdentifierÍ‰Í¥labelP§LiteralÍÍ–¨å‚æ•° cª'å‚æ•° c'¤initO¨PropertyÍ˜Í ÂÂÂLªIdentifierÍ˜Í›£minP§LiteralÍÍ Ë?É™™™™™š£0.2¤initO¨PropertyÍ¢ÍªÂÂÂLªIdentifierÍ¢Í¥£maxP§LiteralÍ§Íª£2.0¤initO¨PropertyÍ¬ÍµÂÂÂLªIdentifierÍ¬Í°¤stepP§LiteralÍ²ÍµË?¹™™™™™š£0.1¤initO¨PropertyÍ·ÍÈÂÂÂLªIdentifierÍ·ÍÃ¬defaultValueP§LiteralÍÅÍÈË?æffffff£0.7¤initN°ObjectExpressionÍİÍ/–O¨PropertyÍßÍñÂÂÂLªIdentifierÍßÍâ£keyP§LiteralÍäÍñ«resolutionU­'resolutionU'¤initO¨PropertyÍóÍÂÂÂLªIdentifierÍóÍø¥labelP§LiteralÍúÍ¯ç¯å‘åˆ†è¾¨ç‡±'ç¯å‘åˆ†è¾¨ç‡'¤initO¨PropertyÍÍ	ÂÂÂLªIdentifierÍÍ£minP§LiteralÍÍ	¡8¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ£maxP§LiteralÍÍÌ@¢64¤initO¨PropertyÍÍÂÂÂLªIdentifierÍÍ¤stepP§LiteralÍÍ¡4¤initO¨PropertyÍÍ-ÂÂÂLªIdentifierÍÍ)¬defaultValueP§LiteralÍ+Í- ¢32¤initN°ObjectExpressionÍBÍ”–O¨PropertyÍDÍVÂÂÂLªIdentifierÍDÍG£keyP§LiteralÍIÍV«resolutionV­'resolutionV'¤initO¨PropertyÍXÍfÂÂÂLªIdentifierÍXÍ]¥labelP§LiteralÍ_Íf¯çºµå‘åˆ†è¾¨ç‡±'çºµå‘åˆ†è¾¨ç‡'¤initO¨PropertyÍhÍnÂÂÂLªIdentifierÍhÍk£minP§LiteralÍmÍn¡8¤initO¨PropertyÍpÍwÂÂÂLªIdentifierÍpÍs£maxP§LiteralÍuÍwÌ@¢64¤initO¨PropertyÍyÍ€ÂÂÂLªIdentifierÍyÍ}¤stepP§LiteralÍÍ€¡4¤initO¨PropertyÍ‚Í’ÂÂÂLªIdentifierÍ‚Í¬defaultValueP§LiteralÍÍ’ ¢32¤initQ°MemberExpressionÍcÍ…LªIdentifierÍcÍl©ShapeTypeLªIdentifierÍmÍ…¸PARAMETRIC_ELLIPTIC_CONEÂÂVªSwitchCaseÍ¯ÍÏ‘T¯ReturnStatementÍÅÍÏM¯ArrayExpressionÍÌÍÎÀÀ

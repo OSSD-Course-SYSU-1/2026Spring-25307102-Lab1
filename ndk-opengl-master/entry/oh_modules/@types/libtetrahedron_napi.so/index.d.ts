@@ -17,4 +17,10 @@ export const updateAngle: (offsetX: number, offsetY: number) => Array<number>;
 
 export const setRotate: (mode: number) => void;
 
+export const selectShape: (shapeType: number) => void;
+
+export const setShapeParams: (params: object) => void;
+
+export const setScale: (scale: number) => void;
+
 export const objectPassing: (input: object) => void;

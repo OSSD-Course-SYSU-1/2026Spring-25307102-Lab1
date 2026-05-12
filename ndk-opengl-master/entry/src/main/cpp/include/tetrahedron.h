@@ -22,19 +22,49 @@
 
 #include <string>
 #include <stdint.h>
+#include <vector>
 
 #define TRIANGLES_POINT     3
 #define TETRAHEDRON_POINT   12
 
+enum class ShapeType {
+    TETRAHEDRON = 0,
+    SPHERE,
+    CUBE,
+    CONE,
+    PARAMETRIC_ELLIPSOID,
+    PARAMETRIC_HYPERBOLOID,
+    PARAMETRIC_PARABOLOID,
+    PARAMETRIC_ELLIPTIC_CONE,
+    SHAPE_COUNT
+};
+
+struct ShapeParams {
+    float paramA = 1.5f;
+    float paramB = 1.5f;
+    float paramC = 1.5f;
+    int   resolutionU = 32;
+    int   resolutionV = 32;
+};
+
 class Tetrahedron {
 public:
-    explicit Tetrahedron(std::string& id) : id(id) {};
+    explicit Tetrahedron(std::string& id);
+
     int32_t Init(void* windowHandle, int windowWidth, int windowHeight);
     void reSizeWindow(int windowWidth, int windowHeight);
     void Update(float angleXOffset, float angleYOffset);
     float GetAngleX(void);
     float GetAngleY(void);
     int32_t Quit(void);
+
+    void SetShapeType(ShapeType type);
+    ShapeType GetShapeType() const { return m_shapeType; }
+    void SetShapeParams(const ShapeParams& params);
+    const ShapeParams& GetShapeParams() const { return m_shapeParams; }
+
+    void SetScale(float scale) { m_scale = scale; }
+    float GetScale() const { return m_scale; }
 
 public:
     std::string id;
@@ -43,24 +73,49 @@ private:
     GLuint LoadShader(GLenum type, const char *shaderSrc);
     GLuint CreateProgram(const char *vertexShader, const char *fragShader);
 
-    EGLNativeWindowType mEglWindow;
+    void GenerateGeometry();
+    void GenerateTetrahedron();
+    void GenerateSphere();
+    void GenerateCube();
+    void GenerateCone();
+    void GenerateEllipsoid();
+    void GenerateHyperboloid();
+    void GenerateParaboloid();
+    void GenerateEllipticCone();
+
+    void AddTriangle(
+        float x1, float y1, float z1,
+        float x2, float y2, float z2,
+        float x3, float y3, float z3,
+        float r, float g, float b);
+
+    EGLNativeWindowType mEglWindow = 0;
     EGLDisplay mEGLDisplay = EGL_NO_DISPLAY;
     EGLConfig mEGLConfig = nullptr;
     EGLContext mEGLContext = EGL_NO_CONTEXT;
     EGLContext mSharedEGLContext = EGL_NO_CONTEXT;
     EGLSurface mEGLSurface = nullptr;
-    GLuint mProgramHandle;
-    float angleX = 30.0; /* default X angle */
-    float angleY = 45.0; /* default Y angle */
-    
+
+    GLuint mProgramHandle = 0;
+    float angleX = 30.0;
+    float angleY = 45.0;
     GLfloat m_widthPercent;
-    
-    int m_width;
-    int m_height;
+
+    int m_width = 0;
+    int m_height = 0;
 
     GLint mRotationLocation;
     GLint mTranslationLocation;
     GLint mMoveOriginLocation;
+
+    ShapeType m_shapeType = ShapeType::TETRAHEDRON;
+    ShapeParams m_shapeParams;
+    float m_scale = 1.0f;
+
+    std::vector<float> m_vertexData;
+    std::vector<float> m_colorData;
+    std::vector<float> m_normalData;
+    int m_vertexCount = TETRAHEDRON_POINT;
 };
 
 #endif /* TETRAHEDRON_H */
