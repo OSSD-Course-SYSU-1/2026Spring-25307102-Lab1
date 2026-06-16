@@ -1,0 +1,9 @@
+{
+  "string": [
+    { "name": "app_name", "value": "NewsReader" },
+    { "name": "module_desc", "value": "一次开发多端部署新闻阅读器" },
+    { "name": "EntryAbility_desc", "value": "NewsReader主界面" },
+    { "name": "EntryAbility_label", "value": "NewsReader" },
+    { "name": "internet_reason", "value": "用于获取新闻数据" }
+  ]
+}
