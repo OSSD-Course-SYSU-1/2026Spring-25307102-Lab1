@@ -1,0 +1,10 @@
+.hvigor/
+entry/build/
+.idea/
+local.properties
+*.hap
+*.abc
+*.map
+*.msgpack
+*.protoBin
+_node_modules/
