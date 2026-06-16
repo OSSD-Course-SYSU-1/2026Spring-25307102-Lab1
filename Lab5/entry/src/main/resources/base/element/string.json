@@ -1,0 +1,10 @@
+{
+  "string": [
+    { "name": "app_name", "value": "NoteFlow" },
+    { "name": "module_desc", "value": "跨设备自由流转笔记" },
+    { "name": "EntryAbility_desc", "value": "NoteFlow主界面" },
+    { "name": "EntryAbility_label", "value": "NoteFlow" },
+    { "name": "distributed_reason", "value": "用于跨设备流转笔记数据" },
+    { "name": "internet_reason", "value": "用于网络连接" }
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "src": ["pages/NoteList", "pages/NoteEditor"]
+}
