@@ -1,1221 +1,0 @@
-Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚ‚
-if (!("finalizeConstruction" in ViewPU.prototype)) {
-    Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
-}
-/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/**
- * ä¸»é¡µé¢ â€” 3D å‡ ä½•ä½“æ¸²æŸ“ä¸äº¤äº’
- *
- * é¡µé¢å¸ƒå±€ï¼ˆä»ä¸Šåˆ°ä¸‹ï¼‰ï¼š
- *   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
- *   â”‚ â˜° æ¨¡å‹         å½“å‰: å››é¢ä½“      â”‚  â† å·¦ä¸Šè§’æ¨¡å‹åˆ‡æ¢æŒ‰é’® + åç§°
- *   â”‚                                  â”‚
- *   â”‚        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”         â”‚
- *   â”‚        â”‚   XComponent  â”‚         â”‚  â† OpenGL 3D æ¸²æŸ“åŒºåŸŸ
- *   â”‚        â”‚   (3D æ¨¡å‹)   â”‚         â”‚
- *   â”‚        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜         â”‚
- *   â”‚                                  â”‚
- *   â”‚ ç¼©å° â”€â”€â”€â—â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ æ”¾å¤§       â”‚  â† ç¼©æ”¾æ»‘å— (0.3x ~ 2.5x)
- *   â”‚                                  â”‚
- *   â”‚  [ è‡ªåŠ¨æ—‹è½¬ ]   [ é˜»å°¼æ—‹è½¬ ]     â”‚  â† æ—‹è½¬æ¨¡å¼æŒ‰é’®
- *   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
- *
- * äº¤äº’æ–¹å¼ï¼š
- *   - æ‰‹åŠ¿æ‹–æ‹½ï¼šæ—‹è½¬æ¨¡å‹ï¼ˆPanGestureï¼‰
- *   - è‡ªåŠ¨æ—‹è½¬ï¼šæ¨¡å‹ç»• Y è½´åŒ€é€Ÿæ—‹è½¬
- *   - é˜»å°¼æ—‹è½¬ï¼šæ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
- *   - ç¼©æ”¾æ»‘å—ï¼šè°ƒèŠ‚æ¨¡å‹æ˜¾ç¤ºå¤§å°
- *   - æ¨¡å‹æŒ‰é’®ï¼šè¿›å…¥æ¨¡å‹é€‰æ‹©é¡µé¢
- *
- * NAPI é€šä¿¡ï¼š
- *   tetrahedron_napi.updateAngle(x, y)  â†’ æ›´æ–°æ—‹è½¬è§’åº¦
- *   tetrahedron_napi.setRotate(mode)    â†’ è®¾ç½®æ—‹è½¬æ¨¡å¼
- *   tetrahedron_napi.selectShape(type)  â†’ åˆ‡æ¢æ¨¡å‹
- *   tetrahedron_napi.setShapeParams(p)  â†’ è®¾ç½®è‡ªå®šä¹‰å‚æ•°
- *   tetrahedron_napi.setScale(s)        â†’ è®¾ç½®ç¼©æ”¾
- */
-import { LengthMetrics } from "@ohos.arkui.node";
-/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/**
- * ä¸»é¡µé¢ â€” 3D å‡ ä½•ä½“æ¸²æŸ“ä¸äº¤äº’
- *
- * é¡µé¢å¸ƒå±€ï¼ˆä»ä¸Šåˆ°ä¸‹ï¼‰ï¼š
- *   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
- *   â”‚ â˜° æ¨¡å‹         å½“å‰: å››é¢ä½“      â”‚  â† å·¦ä¸Šè§’æ¨¡å‹åˆ‡æ¢æŒ‰é’® + åç§°
- *   â”‚                                  â”‚
- *   â”‚        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”         â”‚
- *   â”‚        â”‚   XComponent  â”‚         â”‚  â† OpenGL 3D æ¸²æŸ“åŒºåŸŸ
- *   â”‚        â”‚   (3D æ¨¡å‹)   â”‚         â”‚
- *   â”‚        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜         â”‚
- *   â”‚                                  â”‚
- *   â”‚ ç¼©å° â”€â”€â”€â—â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ æ”¾å¤§       â”‚  â† ç¼©æ”¾æ»‘å— (0.3x ~ 2.5x)
- *   â”‚                                  â”‚
- *   â”‚  [ è‡ªåŠ¨æ—‹è½¬ ]   [ é˜»å°¼æ—‹è½¬ ]     â”‚  â† æ—‹è½¬æ¨¡å¼æŒ‰é’®
- *   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
- *
- * äº¤äº’æ–¹å¼ï¼š
- *   - æ‰‹åŠ¿æ‹–æ‹½ï¼šæ—‹è½¬æ¨¡å‹ï¼ˆPanGestureï¼‰
- *   - è‡ªåŠ¨æ—‹è½¬ï¼šæ¨¡å‹ç»• Y è½´åŒ€é€Ÿæ—‹è½¬
- *   - é˜»å°¼æ—‹è½¬ï¼šæ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
- *   - ç¼©æ”¾æ»‘å—ï¼šè°ƒèŠ‚æ¨¡å‹æ˜¾ç¤ºå¤§å°
- *   - æ¨¡å‹æŒ‰é’®ï¼šè¿›å…¥æ¨¡å‹é€‰æ‹©é¡µé¢
- *
- * NAPI é€šä¿¡ï¼š
- *   tetrahedron_napi.updateAngle(x, y)  â†’ æ›´æ–°æ—‹è½¬è§’åº¦
- *   tetrahedron_napi.setRotate(mode)    â†’ è®¾ç½®æ—‹è½¬æ¨¡å¼
- *   tetrahedron_napi.selectShape(type)  â†’ åˆ‡æ¢æ¨¡å‹
- *   tetrahedron_napi.setShapeParams(p)  â†’ è®¾ç½®è‡ªå®šä¹‰å‚æ•°
- *   tetrahedron_napi.setScale(s)        â†’ è®¾ç½®ç¼©æ”¾
- */
-import router from "@ohos.router";
-import hilog from "@ohos.hilog";
-import { Logger } from '../utils/Logger';
-import tetrahedron_napi from 'libtetrahedron_napi.so';
-import { RotationType } from '../utils/Constants';
-// ============================================================================
-// å®‰å…¨åŒºåŸŸè®¡ç®—è¾…åŠ©å‡½æ•°
-// ============================================================================
-/** è·å–é¡¶éƒ¨å®‰å…¨åŒºåŸŸé«˜åº¦ï¼ˆåˆ˜æµ·/çŠ¶æ€æ ï¼‰ */
-function getTop(avoidArea) {
-    let result = 0;
-    if (avoidArea !== undefined) {
-        if (avoidArea.area.topRect.height) {
-            result = avoidArea.area.topRect.top + avoidArea.area.topRect.height;
-        }
-    }
-    else {
-        hilog.error(0x0000, '3D', 'Can not get TopSafeAreaPixel, avoidArea visible false');
-    }
-    return result;
-}
-/** è·å–åº•éƒ¨å®‰å…¨åŒºåŸŸé«˜åº¦ï¼ˆå¯¼èˆªæ ï¼‰ */
-function getBottom(avoidArea, windowHeight) {
-    let result = 0;
-    if (avoidArea !== undefined) {
-        if (avoidArea.area.bottomRect.height) {
-            result = windowHeight - avoidArea.area.bottomRect.top;
-        }
-    }
-    else {
-        hilog.error(0x0000, '3D', 'Can not get BottomSafeAreaPixel, avoidArea visible false');
-    }
-    return result;
-}
-/** è·å–å·¦ä¾§å®‰å…¨åŒºåŸŸå®½åº¦ */
-function getLeft(avoidArea) {
-    let result = 0;
-    if (avoidArea !== undefined) {
-        if (avoidArea.area.leftRect.width) {
-            result = avoidArea.area.leftRect.left + avoidArea.area.leftRect.width;
-        }
-    }
-    else {
-        hilog.error(0x0000, '3D', 'Can not get LeftSafeAreaPixel, avoidArea visible false');
-    }
-    return result;
-}
-/** è·å–å³ä¾§å®‰å…¨åŒºåŸŸå®½åº¦ */
-function getRight(avoidArea, windowWidth) {
-    let result = 0;
-    if (avoidArea !== undefined) {
-        if (avoidArea.area.rightRect.width) {
-            result = windowWidth - avoidArea.area.rightRect.left;
-        }
-    }
-    else {
-        hilog.error(0x0000, '3D', 'Can not get RightSafeAreaPixel, avoidArea visible false');
-    }
-    return result;
-}
-class Index extends ViewPU {
-    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
-        super(parent, __localStorage, elmtId, extraInfo);
-        if (typeof paramsLambda === "function") {
-            this.paramsGenerator_ = paramsLambda;
-        }
-        this.__angleArray = new ObservedPropertyObjectPU(new Array(), this, "angleArray");
-        this.__enableRotate = new ObservedPropertySimplePU(false, this, "enableRotate");
-        this.__currentShapeName = new ObservedPropertySimplePU('å››é¢ä½“', this, "currentShapeName");
-        this.__modelScale = new ObservedPropertySimplePU(1.0, this, "modelScale");
-        this.__cutoutAreas = new ObservedPropertyObjectPU({
-            top: 0, right: 0, bottom: 0, left: 0,
-            heightBreakpoint: 0, widthBreakpoint: 0
-        }, this, "cutoutAreas");
-        this.__localPadding = new ObservedPropertyObjectPU({
-            top: LengthMetrics.vp(0),
-            start: LengthMetrics.vp(0)
-        }, this, "localPadding");
-        this.__heightBreakpoint = this.createStorageLink('currentHeightBreakpoint', HeightBreakpoint.HEIGHT_SM, "heightBreakpoint");
-        this.__widthBreakpoint = this.createStorageLink('currentWidthBreakpoint', WidthBreakpoint.WIDTH_XS, "widthBreakpoint");
-        this.__avoidAreas = this.createStorageLink('cutout', undefined, "avoidAreas");
-        this.__windowHeight = this.createStorageLink('windowHeight', 0, "windowHeight");
-        this.__windowWidth = this.createStorageLink('windowWidth', 0, "windowWidth");
-        this.xComponentId = 'tetrahedron';
-        this.panOption = new PanGestureOptions({ direction: PanDirection.All });
-        this.setInitiallyProvidedValue(params);
-        this.declareWatch("heightBreakpoint", this.breakPointChange);
-        this.declareWatch("widthBreakpoint", this.breakPointChange);
-        this.declareWatch("avoidAreas", this.cutoutChange);
-        this.finalizeConstruction();
-    }
-    setInitiallyProvidedValue(params) {
-        if (params.angleArray !== undefined) {
-            this.angleArray = params.angleArray;
-        }
-        if (params.enableRotate !== undefined) {
-            this.enableRotate = params.enableRotate;
-        }
-        if (params.currentShapeName !== undefined) {
-            this.currentShapeName = params.currentShapeName;
-        }
-        if (params.modelScale !== undefined) {
-            this.modelScale = params.modelScale;
-        }
-        if (params.cutoutAreas !== undefined) {
-            this.cutoutAreas = params.cutoutAreas;
-        }
-        if (params.localPadding !== undefined) {
-            this.localPadding = params.localPadding;
-        }
-        if (params.xComponentId !== undefined) {
-            this.xComponentId = params.xComponentId;
-        }
-        if (params.panOption !== undefined) {
-            this.panOption = params.panOption;
-        }
-    }
-    updateStateVars(params) {
-    }
-    purgeVariableDependenciesOnElmtId(rmElmtId) {
-        this.__angleArray.purgeDependencyOnElmtId(rmElmtId);
-        this.__enableRotate.purgeDependencyOnElmtId(rmElmtId);
-        this.__currentShapeName.purgeDependencyOnElmtId(rmElmtId);
-        this.__modelScale.purgeDependencyOnElmtId(rmElmtId);
-        this.__cutoutAreas.purgeDependencyOnElmtId(rmElmtId);
-        this.__localPadding.purgeDependencyOnElmtId(rmElmtId);
-        this.__heightBreakpoint.purgeDependencyOnElmtId(rmElmtId);
-        this.__widthBreakpoint.purgeDependencyOnElmtId(rmElmtId);
-        this.__avoidAreas.purgeDependencyOnElmtId(rmElmtId);
-        this.__windowHeight.purgeDependencyOnElmtId(rmElmtId);
-        this.__windowWidth.purgeDependencyOnElmtId(rmElmtId);
-    }
-    aboutToBeDeleted() {
-        this.__angleArray.aboutToBeDeleted();
-        this.__enableRotate.aboutToBeDeleted();
-        this.__currentShapeName.aboutToBeDeleted();
-        this.__modelScale.aboutToBeDeleted();
-        this.__cutoutAreas.aboutToBeDeleted();
-        this.__localPadding.aboutToBeDeleted();
-        this.__heightBreakpoint.aboutToBeDeleted();
-        this.__widthBreakpoint.aboutToBeDeleted();
-        this.__avoidAreas.aboutToBeDeleted();
-        this.__windowHeight.aboutToBeDeleted();
-        this.__windowWidth.aboutToBeDeleted();
-        SubscriberManager.Get().delete(this.id__());
-        this.aboutToBeDeletedInternal();
-    }
-    get angleArray() {
-        return this.__angleArray.get();
-    }
-    set angleArray(newValue) {
-        this.__angleArray.set(newValue);
-    }
-    get enableRotate() {
-        return this.__enableRotate.get();
-    }
-    set enableRotate(newValue) {
-        this.__enableRotate.set(newValue);
-    }
-    get currentShapeName() {
-        return this.__currentShapeName.get();
-    }
-    set currentShapeName(newValue) {
-        this.__currentShapeName.set(newValue);
-    }
-    get modelScale() {
-        return this.__modelScale.get();
-    }
-    set modelScale(newValue) {
-        this.__modelScale.set(newValue);
-    }
-    get cutoutAreas() {
-        return this.__cutoutAreas.get();
-    }
-    set cutoutAreas(newValue) {
-        this.__cutoutAreas.set(newValue);
-    }
-    get localPadding() {
-        return this.__localPadding.get();
-    }
-    set localPadding(newValue) {
-        this.__localPadding.set(newValue);
-    }
-    get heightBreakpoint() {
-        return this.__heightBreakpoint.get();
-    }
-    set heightBreakpoint(newValue) {
-        this.__heightBreakpoint.set(newValue);
-    }
-    get widthBreakpoint() {
-        return this.__widthBreakpoint.get();
-    }
-    set widthBreakpoint(newValue) {
-        this.__widthBreakpoint.set(newValue);
-    }
-    get avoidAreas() {
-        return this.__avoidAreas.get();
-    }
-    set avoidAreas(newValue) {
-        this.__avoidAreas.set(newValue);
-    }
-    get windowHeight() {
-        return this.__windowHeight.get();
-    }
-    set windowHeight(newValue) {
-        this.__windowHeight.set(newValue);
-    }
-    get windowWidth() {
-        return this.__windowWidth.get();
-    }
-    set windowWidth(newValue) {
-        this.__windowWidth.set(newValue);
-    }
-    // ==========================================================================
-    // æ–­ç‚¹å˜åŒ–å›è°ƒ
-    // ==========================================================================
-    /** å±å¹•æ–­ç‚¹å˜åŒ–æ—¶ï¼Œæ›´æ–°å®‰å…¨åŒºåŸŸå¹¶ä¼ é€’ç»™ Native å±‚ */
-    breakPointChange() {
-        this.cutoutAreas.heightBreakpoint = this.heightBreakpoint;
-        this.cutoutAreas.widthBreakpoint = this.widthBreakpoint;
-        tetrahedron_napi.objectPassing(this.cutoutAreas);
-    }
-    /** å®‰å…¨åŒºåŸŸ (åˆ˜æµ·/å¯¼èˆªæ ) å˜åŒ–æ—¶é‡æ–°è®¡ç®— */
-    cutoutChange() {
-        let topPX = getTop(this.avoidAreas);
-        let rightPX = getRight(this.avoidAreas, this.windowWidth);
-        let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
-        let leftPX = getLeft(this.avoidAreas);
-        this.cutoutAreas = {
-            top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
-            heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
-        };
-        this.localPadding = {
-            top: LengthMetrics.px(topPX),
-            end: LengthMetrics.px(rightPX),
-            bottom: LengthMetrics.px(bottomPX),
-            start: LengthMetrics.px(leftPX)
-        };
-        tetrahedron_napi.objectPassing(this.cutoutAreas);
-    }
-    // ==========================================================================
-    // ç”Ÿå‘½å‘¨æœŸ
-    // ==========================================================================
-    /** é¡µé¢å³å°†æ˜¾ç¤º â€” åˆå§‹åŒ–æ—‹è½¬è§’åº¦å’Œå®‰å…¨åŒºåŸŸ */
-    async aboutToAppear() {
-        Logger.info('aboutToAppear');
-        this.angleArray[0] = 30; // åˆå§‹ X è½´ 30Â°
-        this.angleArray[1] = 45; // åˆå§‹ Y è½´ 45Â°
-        let topPX = getTop(this.avoidAreas);
-        let rightPX = getRight(this.avoidAreas, this.windowWidth);
-        let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
-        let leftPX = getLeft(this.avoidAreas);
-        this.cutoutAreas = {
-            top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
-            heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
-        };
-        this.localPadding = {
-            top: LengthMetrics.px(topPX),
-            end: LengthMetrics.px(rightPX),
-            bottom: LengthMetrics.px(bottomPX),
-            start: LengthMetrics.px(leftPX)
-        };
-        tetrahedron_napi.objectPassing(this.cutoutAreas);
-    }
-    /**
-     * é¡µé¢æ˜¾ç¤ºå›è°ƒ â€” å¤„ç†ä»æ¨¡å‹é€‰æ‹©/å‚æ•°ç¼–è¾‘é¡µè¿”å›çš„è·¯ç”±å‚æ•°
-     *
-     * å½“ä» ModelSelectPage æˆ– ParamEditPage è¿”å›æ—¶ï¼Œ
-     * router.getParams() ä¼šåŒ…å« shapeType å’Œå¯é€‰çš„ shapeParamsã€‚
-     * è°ƒç”¨ applyShapeSelection() é€šçŸ¥ Native å±‚åˆ‡æ¢æ¨¡å‹ã€‚
-     */
-    onPageShow() {
-        Logger.info('onPageShow');
-        let params = router.getParams();
-        if (params && params.shapeType !== undefined) {
-            this.applyShapeSelection(params.shapeType, params.shapeParams);
-            // æ¸…é™¤è·¯ç”±å‚æ•°ï¼Œé¿å…ä¸‹æ¬¡ onPageShow é‡å¤æ‰§è¡Œ
-            router.clear();
-        }
-    }
-    /**
-     * åº”ç”¨æ¨¡å‹é€‰æ‹©ç»“æœ
-     *
-     * æµç¨‹ï¼š
-     *   1. è°ƒç”¨ NAPI selectShape åˆ‡æ¢åˆ°æŒ‡å®šæ¨¡å‹
-     *   2. å¦‚æœæœ‰è‡ªå®šä¹‰å‚æ•°ï¼Œè°ƒç”¨ NAPI setShapeParams åº”ç”¨
-     *   3. æ›´æ–°å·¦ä¸Šè§’çš„æ¨¡å‹åç§°æ˜¾ç¤º
-     */
-    applyShapeSelection(shapeType, shapeParams) {
-        Logger.info('applyShapeSelection type=' + shapeType);
-        // é€šçŸ¥ Native å±‚åˆ‡æ¢å‡ ä½•ä½“
-        tetrahedron_napi.selectShape(shapeType);
-        // å¦‚æœæœ‰è‡ªå®šä¹‰å‚æ•°ï¼ˆæ¥è‡ª ParamEditPageï¼‰ï¼ŒåŒæ­¥åº”ç”¨
-        if (shapeParams !== null) {
-            tetrahedron_napi.setShapeParams(shapeParams);
-        }
-        // æ›´æ–° UI æ˜¾ç¤ºçš„æ¨¡å‹åç§°
-        let names = [
-            'å››é¢ä½“', 'çƒä½“', 'æ­£æ–¹ä½“', 'åœ†é”¥',
-            'æ¤­çƒé¢', 'å•å¶åŒæ›²é¢', 'æ¤­åœ†æŠ›ç‰©é¢', 'æ¤­åœ†é”¥é¢'
-        ];
-        if (shapeType >= 0 && shapeType < names.length) {
-            this.currentShapeName = names[shapeType];
-        }
-    }
-    // ==========================================================================
-    // é¡µé¢æ„å»º
-    // ==========================================================================
-    initialRender() {
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Stack.create({ alignContent: Alignment.Bottom });
-            Stack.padding(ObservedObject.GetRawObject(this.localPadding));
-        }, Stack);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Column.create();
-            Gesture.create(GesturePriority.Low);
-            PanGesture.create(this.panOption);
-            PanGesture.onActionStart(() => {
-                Logger.info('Gesture onActionStart');
-            });
-            PanGesture.onActionUpdate((event) => {
-                // æ‰‹åŠ¿æ‹–æ‹½æ—¶åœæ­¢è‡ªåŠ¨æ—‹è½¬
-                tetrahedron_napi.setRotate(RotationType.STOP);
-                this.enableRotate = false;
-                // å°†æ‰‹åŠ¿åç§»ä¼ é€’ç»™ Native å±‚æ›´æ–°è§’åº¦
-                this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
-                Logger.info('Gesture onActionUpdate : offSet ' + event.offsetX + ',' + event.offsetY);
-            });
-            PanGesture.onActionEnd(() => {
-                Logger.info('Gesture onActionEnd');
-            });
-            PanGesture.pop();
-            Gesture.pop();
-            Column.height('100%');
-            Column.justifyContent(FlexAlign.SpaceBetween);
-        }, Column);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Column.create();
-            Column.justifyContent(FlexAlign.SpaceAround);
-            Column.alignItems(HorizontalAlign.Center);
-            Column.height('100%');
-            Column.width('100%');
-            Column.backgroundColor('#FFFFFF');
-            Column.borderRadius(24);
-        }, Column);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ==============================================================
-            // XComponent â€” OpenGL ES æ¸²æŸ“è¡¨é¢
-            // ==============================================================
-            XComponent.create({
-                id: this.xComponentId,
-                type: XComponentType.SURFACE,
-                libraryname: 'tetrahedron_napi' // å¯¹åº”çš„ .so åç§°
-            }, "com.samples.ndkopengl/entry");
-            // ==============================================================
-            // XComponent â€” OpenGL ES æ¸²æŸ“è¡¨é¢
-            // ==============================================================
-            XComponent.onLoad(() => {
-                Logger.info('onLoad');
-            });
-            // ==============================================================
-            // XComponent â€” OpenGL ES æ¸²æŸ“è¡¨é¢
-            // ==============================================================
-            XComponent.id('tetrahedron');
-            // ==============================================================
-            // XComponent â€” OpenGL ES æ¸²æŸ“è¡¨é¢
-            // ==============================================================
-            XComponent.onDestroy(() => {
-                Logger.info('onDestroy');
-            });
-            // ==============================================================
-            // XComponent â€” OpenGL ES æ¸²æŸ“è¡¨é¢
-            // ==============================================================
-            XComponent.id('xComponent');
-            // ==============================================================
-            // XComponent â€” OpenGL ES æ¸²æŸ“è¡¨é¢
-            // ==============================================================
-            XComponent.backgroundColor('#FFFFFF');
-        }, XComponent);
-        Column.pop();
-        Column.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-            // ==================================================================
-            Row.create();
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-            // ==================================================================
-            Row.width('100%');
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-            // ==================================================================
-            Row.justifyContent(FlexAlign.Start);
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-            // ==================================================================
-            Row.padding({ left: 16, top: 16 });
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-            // ==================================================================
-            Row.hitTestBehavior(HitTestMode.Transparent);
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-            // ==================================================================
-            Row.position({ x: 0, y: 0 });
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-            // ==================================================================
-            Row.zIndex(10);
-        }, Row);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Button.createWithChild();
-            Button.type(ButtonType.Capsule);
-            Button.backgroundColor('#80000000');
-            Button.borderRadius(20);
-            Button.onClick(() => {
-                // è·³è½¬åˆ°æ¨¡å‹é€‰æ‹©é¡µé¢
-                router.pushUrl({ url: 'pages/ModelSelectPage' });
-            });
-        }, Button);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Row.create({ space: 6 });
-        }, Row);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Text.create('\u2630');
-            Text.fontSize(18);
-            Text.fontColor('#FFFFFF');
-        }, Text);
-        Text.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Text.create('æ¨¡å‹');
-            Text.fontSize(14);
-            Text.fontColor('#FFFFFF');
-            Text.fontWeight(FontWeight.Medium);
-        }, Text);
-        Text.pop();
-        Row.pop();
-        Button.pop();
-        // ==================================================================
-        // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-        // ==================================================================
-        Row.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.create('å½“å‰: ' + this.currentShapeName);
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.fontSize(11);
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.fontColor('#99FFFFFF');
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.backgroundColor('#40000000');
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.borderRadius(10);
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.padding({ left: 10, right: 10, top: 4, bottom: 4 });
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.position({ x: 16, y: 56 });
-            // ==================================================================
-            // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-            // ==================================================================
-            Text.zIndex(10);
-        }, Text);
-        // ==================================================================
-        // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-        // ==================================================================
-        Text.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ==================================================================
-            // ç¼©æ”¾æ»‘å—
-            // ==================================================================
-            Row.create();
-            // ==================================================================
-            // ç¼©æ”¾æ»‘å—
-            // ==================================================================
-            Row.width('100%');
-            // ==================================================================
-            // ç¼©æ”¾æ»‘å—
-            // ==================================================================
-            Row.padding({ left: 24, right: 24 });
-            // ==================================================================
-            // ç¼©æ”¾æ»‘å—
-            // ==================================================================
-            Row.hitTestBehavior(HitTestMode.Transparent);
-        }, Row);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Text.create('ç¼©å°');
-            Text.fontSize(11);
-            Text.fontColor('#999999');
-            Text.margin({ right: 8 });
-        }, Text);
-        Text.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Slider.create({
-                value: this.modelScale,
-                min: 0.3,
-                max: 2.5,
-                step: 0.05,
-                style: SliderStyle.InSet
-            });
-            Slider.showTips(true);
-            Slider.trackColor('#40000000');
-            Slider.selectedColor('#FFFFFF');
-            Slider.layoutWeight(1);
-            Slider.onChange((value) => {
-                this.modelScale = value;
-                // å®æ—¶é€šçŸ¥ Native å±‚æ›´æ–°ç¼©æ”¾
-                tetrahedron_napi.setScale(value);
-            });
-        }, Slider);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Text.create('æ”¾å¤§');
-            Text.fontSize(11);
-            Text.fontColor('#999999');
-            Text.margin({ left: 8 });
-        }, Text);
-        Text.pop();
-        // ==================================================================
-        // ç¼©æ”¾æ»‘å—
-        // ==================================================================
-        Row.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ==================================================================
-            // åº•éƒ¨ â€” æ—‹è½¬æ¨¡å¼æŒ‰é’®
-            // ==================================================================
-            Row.create({ space: 12 });
-            // ==================================================================
-            // åº•éƒ¨ â€” æ—‹è½¬æ¨¡å¼æŒ‰é’®
-            // ==================================================================
-            Row.hitTestBehavior(HitTestMode.Transparent);
-            // ==================================================================
-            // åº•éƒ¨ â€” æ—‹è½¬æ¨¡å¼æŒ‰é’®
-            // ==================================================================
-            Row.padding({
-                left: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-                right: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-                bottom: 50
-            });
-        }, Row);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ã€Œè‡ªåŠ¨æ—‹è½¬ / åœæ­¢ã€æŒ‰é’® â€” åˆ‡æ¢è‡ªåŠ¨æ—‹è½¬çŠ¶æ€
-            Button.createWithLabel(this.enableRotate ? { "id": 16777222, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" } : { "id": 16777220, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" }, { type: ButtonType.Capsule, stateEffect: true });
-            // ã€Œè‡ªåŠ¨æ—‹è½¬ / åœæ­¢ã€æŒ‰é’® â€” åˆ‡æ¢è‡ªåŠ¨æ—‹è½¬çŠ¶æ€
-            Button.fontSize(16);
-            // ã€Œè‡ªåŠ¨æ—‹è½¬ / åœæ­¢ã€æŒ‰é’® â€” åˆ‡æ¢è‡ªåŠ¨æ—‹è½¬çŠ¶æ€
-            Button.onClick(() => {
-                if (this.enableRotate) {
-                    // å½“å‰æ­£åœ¨è‡ªåŠ¨æ—‹è½¬ â†’ åœæ­¢
-                    tetrahedron_napi.setRotate(RotationType.STOP);
-                    this.enableRotate = false;
-                }
-                else {
-                    // å½“å‰é™æ­¢ â†’ å¼€å§‹è‡ªåŠ¨æ—‹è½¬
-                    tetrahedron_napi.setRotate(RotationType.AUTO);
-                    this.enableRotate = true;
-                }
-            });
-            // ã€Œè‡ªåŠ¨æ—‹è½¬ / åœæ­¢ã€æŒ‰é’® â€” åˆ‡æ¢è‡ªåŠ¨æ—‹è½¬çŠ¶æ€
-            Button.layoutWeight(1);
-        }, Button);
-        // ã€Œè‡ªåŠ¨æ—‹è½¬ / åœæ­¢ã€æŒ‰é’® â€” åˆ‡æ¢è‡ªåŠ¨æ—‹è½¬çŠ¶æ€
-        Button.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ã€Œé˜»å°¼æ—‹è½¬ã€æŒ‰é’® â€” æ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
-            Button.createWithLabel({ "id": 16777221, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" }, { type: ButtonType.Capsule, stateEffect: true });
-            // ã€Œé˜»å°¼æ—‹è½¬ã€æŒ‰é’® â€” æ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
-            Button.fontSize(16);
-            // ã€Œé˜»å°¼æ—‹è½¬ã€æŒ‰é’® â€” æ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
-            Button.onClick(() => {
-                this.enableRotate = false;
-                tetrahedron_napi.setRotate(RotationType.DAMPING);
-            });
-            // ã€Œé˜»å°¼æ—‹è½¬ã€æŒ‰é’® â€” æ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
-            Button.layoutWeight(1);
-        }, Button);
-        // ã€Œé˜»å°¼æ—‹è½¬ã€æŒ‰é’® â€” æ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
-        Button.pop();
-        // ==================================================================
-        // åº•éƒ¨ â€” æ—‹è½¬æ¨¡å¼æŒ‰é’®
-        // ==================================================================
-        Row.pop();
-        Stack.pop();
-    }
-    rerender() {
-        this.updateDirtyElements();
-    }
-    static getEntryName() {
-        return "Index";
-    }
-}
-registerNamedRoute(() => new Index(undefined, {}), "", { bundleName: "com.samples.ndkopengl", moduleName: "entry", pagePath: "pages/Index", pageFullPath: "entry/src/main/ets/pages/Index", integratedHsp: "false", moduleType: "followWithHap" });
-//# sourceMappingURL=Index.js.mapÂ–Ùc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÙ_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsÙDD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsÙ% hvigor_ignore_libtetrahedron_napi.soÙGD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsÙCD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\pages\Index.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath§checker¬shouldEmitJs¥entryÃÂÙ&D:\HUAWEI\Lab2\ndk-opengl-master\entryÙ D:\HUAWEI\Lab2\ndk-opengl-master¥entry¥1.0.0Ô  Ù&D:\HUAWEI\Lab2\ndk-opengl-master\entryÔrCÜ ®¬getNodeCount²getIdentifierCount®getSymbolCount¬getTypeCountµgetInstantiationCountµgetRelationCacheSizes±isUndefinedSymbol±isArgumentsSymbol¯isUnknownSymbol¯getMergedSymbol®getDiagnostics´getGlobalDiagnostics´getRecursionIdentity¶getUnmatchedProperties¹getTypeOfSymbolAtLocation¯getTypeOfSymbolÙ(getSymbolsOfParameterPropertyDeclaration·getDeclaredTypeOfSymbol³getPropertiesOfType±getPropertyOfTypeÙ"getPrivateIdentifierPropertyOfType·getTypeOfPropertyOfType²getIndexInfoOfType³getIndexInfosOfTypeºgetIndexInfosOfIndexSymbol³getSignaturesOfType²getIndexTypeOfType¬getIndexType¬getBaseTypes¸getBaseTypeOfLiteralType®getWidenedType³getTypeFromTypeNode°getParameterTypeÙ$getParameterIdentifierNameAtPosition¸getPromisedTypeOfPromise®getAwaitedType¸getReturnTypeOfSignature®isNullableType¯getNullableType²getNonNullableType²getNonOptionalType°getTypeArguments®typeToTypeNodeÙ$indexInfoToIndexSignatureDeclaration¿signatureToSignatureDeclaration²symbolToEntityName²symbolToExpression¬symbolToNodeÙ!symbolToTypeParameterDeclarations¼symbolToParameterDeclarationºtypeParameterToDeclaration±getSymbolsInScope³getSymbolAtLocation·getIndexInfosAtLocationÙ!getShorthandAssignmentValueSymbolÙ#getExportSpecifierLocalTargetSymbol·getExportSymbolOfSymbol±getTypeAtLocationºgetTypeAtLocationForLinterÙ tryGetTypeAtLocationWithoutCheckºgetTypeOfAssignmentPatternÙ*getPropertySymbolOfDestructuringAssignment±signatureToString¬typeToString®symbolToStringµtypePredicateToString®writeSignature©writeType«writeSymbol²writeTypePredicate¼getAugmentedPropertiesOfType®getRootSymbols²getSymbolOfExpando±getContextualTypeÙ(getContextualTypeForObjectLiteralElementÙ#getContextualTypeForArgumentAtIndexÙ getContextualTypeForJsxAttribute²isContextSensitiveÙ!getTypeOfPropertyOfContextualTypeµgetFullyQualifiedNameÙ#tryGetResolvedSignatureWithoutCheck´getResolvedSignatureÙ/getResolvedSignatureForStringLiteralCompletionsÙ$getResolvedSignatureForSignatureHelpµgetExpandedParameters¹hasEffectiveRestParameterºcontainsArgumentsReference°getConstantValueµisValidPropertyAccessÙ#isValidPropertyAccessForCompletions»getSignatureFromDeclarationºisImplementationOfOverload¹getImmediateAliasedSymbol°getAliasedSymbol¯getEmitResolver²getExportsOfModule¿getExportsAndPropertiesOfModuleÙ forEachExportAndPropertyOfModule¯getSymbolWalker±getAmbientModules¹getJsxIntrinsicTagNamesAt³isOptionalParameter»tryGetMemberInModuleExportsÙ(tryGetMemberInModuleExportsAndProperties´tryFindAmbientModuleÙ(tryFindAmbientModuleWithoutAugmentations¯getApparentType¬getUnionType²isTypeAssignableTo³createAnonymousType¯createSignature¬createSymbol¯createIndexInfoªgetAnyType­getStringType­getNumberType±createPromiseType¯createArrayType¹getElementTypeOfArrayType®getBooleanType¬getFalseType«getTrueType«getVoidType°getUndefinedType«getNullType¯getESSymbolType¬getNeverType¯getOptionalType®getPromiseType²getPromiseLikeType´getAsyncIterableType²isSymbolAccessible«isArrayType«isTupleType¯isArrayLikeTypeÙ#isTypeInvalidDueToUnionDiscriminantºgetExactOptionalProperties¿getAllPossiblePropertiesOfTypesÙ(getSuggestedSymbolForNonexistentPropertyÙ#getSuggestionForNonexistentPropertyÙ,getSuggestedSymbolForNonexistentJSXAttributeÙ&getSuggestedSymbolForNonexistentSymbolÙ!getSuggestionForNonexistentSymbolÙ&getSuggestedSymbolForNonexistentModuleÙ!getSuggestionForNonexistentExportÙ+getSuggestedSymbolForNonexistentClassMember·getBaseConstraintOfType»getDefaultFromTypeParameter«resolveName¯getJsxNamespaceµgetJsxFragmentFactory¸getAccessibleSymbolChain»getTypePredicateOfSignature¹resolveExternalModuleName»resolveExternalModuleSymbol°tryGetThisTypeAt¹getTypeArgumentConstraint¸getSuggestionDiagnostics¸runWithCancellationTokenÙ3getLocalTypeParametersOfClassOrInterfaceOrTypeAlias´isDeclarationVisible´isPropertyAccessible»getTypeOnlyAliasDeclaration¿getMemberOverrideModifierStatusÙ!isTypeParameterPossiblyReferenced²getConstEnumRelate´clearConstEnumRelateµdeleteConstEnumRelateÙ$getTypeArgumentsForResolvedSignatureµgetCheckedSourceFilesÙ"collectHaveTsNoCheckFilesForLinter·clearQualifiedNameCache®isStaticRecord²isStaticSourceFileÔ  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  ÃÃÚB¤/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * ä¸»é¡µé¢ â€” 3D å‡ ä½•ä½“æ¸²æŸ“ä¸äº¤äº’
- *
- * é¡µé¢å¸ƒå±€ï¼ˆä»ä¸Šåˆ°ä¸‹ï¼‰ï¼š
- *   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
- *   â”‚ â˜° æ¨¡å‹         å½“å‰: å››é¢ä½“      â”‚  â† å·¦ä¸Šè§’æ¨¡å‹åˆ‡æ¢æŒ‰é’® + åç§°
- *   â”‚                                  â”‚
- *   â”‚        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”         â”‚
- *   â”‚        â”‚   XComponent  â”‚         â”‚  â† OpenGL 3D æ¸²æŸ“åŒºåŸŸ
- *   â”‚        â”‚   (3D æ¨¡å‹)   â”‚         â”‚
- *   â”‚        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜         â”‚
- *   â”‚                                  â”‚
- *   â”‚ ç¼©å° â”€â”€â”€â—â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ æ”¾å¤§       â”‚  â† ç¼©æ”¾æ»‘å— (0.3x ~ 2.5x)
- *   â”‚                                  â”‚
- *   â”‚  [ è‡ªåŠ¨æ—‹è½¬ ]   [ é˜»å°¼æ—‹è½¬ ]     â”‚  â† æ—‹è½¬æ¨¡å¼æŒ‰é’®
- *   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
- *
- * äº¤äº’æ–¹å¼ï¼š
- *   - æ‰‹åŠ¿æ‹–æ‹½ï¼šæ—‹è½¬æ¨¡å‹ï¼ˆPanGestureï¼‰
- *   - è‡ªåŠ¨æ—‹è½¬ï¼šæ¨¡å‹ç»• Y è½´åŒ€é€Ÿæ—‹è½¬
- *   - é˜»å°¼æ—‹è½¬ï¼šæ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
- *   - ç¼©æ”¾æ»‘å—ï¼šè°ƒèŠ‚æ¨¡å‹æ˜¾ç¤ºå¤§å°
- *   - æ¨¡å‹æŒ‰é’®ï¼šè¿›å…¥æ¨¡å‹é€‰æ‹©é¡µé¢
- *
- * NAPI é€šä¿¡ï¼š
- *   tetrahedron_napi.updateAngle(x, y)  â†’ æ›´æ–°æ—‹è½¬è§’åº¦
- *   tetrahedron_napi.setRotate(mode)    â†’ è®¾ç½®æ—‹è½¬æ¨¡å¼
- *   tetrahedron_napi.selectShape(type)  â†’ åˆ‡æ¢æ¨¡å‹
- *   tetrahedron_napi.setShapeParams(p)  â†’ è®¾ç½®è‡ªå®šä¹‰å‚æ•°
- *   tetrahedron_napi.setScale(s)        â†’ è®¾ç½®ç¼©æ”¾
- */
-
-import { LengthMetrics, window, router } from '@kit.ArkUI';
-import { hilog } from '@kit.PerformanceAnalysisKit';
-import { Logger } from '../utils/Logger';
-import tetrahedron_napi from 'libtetrahedron_napi.so';
-import { RotationType } from '../utils/Constants';
-import { ShapeType, ShapeParams } from '../utils/ModelTypes';
-
-/** å®‰å…¨åŒºåŸŸæ•°æ®ç»“æ„ */
-interface Areas {
-  top: number,
-  right: number,
-  bottom: number,
-  left: number,
-  heightBreakpoint: number,
-  widthBreakpoint: number
-}
-
-/** ä»æ¨¡å‹é€‰æ‹©/å‚æ•°ç¼–è¾‘é¡µé¢è¿”å›çš„è·¯ç”±å‚æ•° */
-interface RouteResult {
-  shapeType: number;           // ShapeType æšä¸¾å€¼
-  shapeParams: ShapeParams | null; // è‡ªå®šä¹‰å‚æ•°ï¼ˆåŸºç¡€æ¨¡å‹ä¸º nullï¼‰
-}
-
-// ============================================================================
-// å®‰å…¨åŒºåŸŸè®¡ç®—è¾…åŠ©å‡½æ•°
-// ============================================================================
-
-/** è·å–é¡¶éƒ¨å®‰å…¨åŒºåŸŸé«˜åº¦ï¼ˆåˆ˜æµ·/çŠ¶æ€æ ï¼‰ */
-function getTop(avoidArea: window.AvoidAreaOptions | undefined): number {
-  let result: number = 0;
-  if (avoidArea !== undefined) {
-    if (avoidArea.area.topRect.height) {
-      result = avoidArea.area.topRect.top + avoidArea.area.topRect.height;
-    }
-  } else {
-    hilog.error(0x0000, '3D', 'Can not get TopSafeAreaPixel, avoidArea visible false');
-  }
-  return result;
-}
-
-/** è·å–åº•éƒ¨å®‰å…¨åŒºåŸŸé«˜åº¦ï¼ˆå¯¼èˆªæ ï¼‰ */
-function getBottom(avoidArea: window.AvoidAreaOptions | undefined, windowHeight: number): number {
-  let result: number = 0;
-  if (avoidArea !== undefined) {
-    if (avoidArea.area.bottomRect.height) {
-      result = windowHeight - avoidArea.area.bottomRect.top;
-    }
-  } else {
-    hilog.error(0x0000, '3D', 'Can not get BottomSafeAreaPixel, avoidArea visible false');
-  }
-  return result;
-}
-
-/** è·å–å·¦ä¾§å®‰å…¨åŒºåŸŸå®½åº¦ */
-function getLeft(avoidArea: window.AvoidAreaOptions | undefined): number {
-  let result: number = 0;
-  if (avoidArea !== undefined) {
-    if (avoidArea.area.leftRect.width) {
-      result = avoidArea.area.leftRect.left + avoidArea.area.leftRect.width;
-    }
-  } else {
-    hilog.error(0x0000, '3D', 'Can not get LeftSafeAreaPixel, avoidArea visible false');
-  }
-  return result;
-}
-
-/** è·å–å³ä¾§å®‰å…¨åŒºåŸŸå®½åº¦ */
-function getRight(avoidArea: window.AvoidAreaOptions | undefined, windowWidth: number): number {
-  let result: number = 0;
-  if (avoidArea !== undefined) {
-    if (avoidArea.area.rightRect.width) {
-      result = windowWidth - avoidArea.area.rightRect.left;
-    }
-  } else {
-    hilog.error(0x0000, '3D', 'Can not get RightSafeAreaPixel, avoidArea visible false');
-  }
-  return result;
-}
-
-@Entry
-@Component
-struct Index {
-  // ========================= æ¸²æŸ“çŠ¶æ€ =========================
-  /** å½“å‰æ—‹è½¬è§’åº¦æ•°ç»„ [angleX, angleY] */
-  @State angleArray: Array<number> = new Array<number>();
-  /** è‡ªåŠ¨æ—‹è½¬å¼€å…³çŠ¶æ€ */
-  @State enableRotate: boolean = false;
-  /** å½“å‰æ¨¡å‹ä¸­æ–‡åç§°ï¼ˆæ˜¾ç¤ºåœ¨å·¦ä¸Šè§’ï¼‰ */
-  @State currentShapeName: string = 'å››é¢ä½“';
-  /** æ¨¡å‹ç¼©æ”¾æ¯”ä¾‹ (0.3 ~ 2.5) */
-  @State modelScale: number = 1.0;
-
-  // ========================= å®‰å…¨åŒºåŸŸ =========================
-  @State cutoutAreas: Areas = {
-    top: 0, right: 0, bottom: 0, left: 0,
-    heightBreakpoint: 0, widthBreakpoint: 0
-  };
-
-  @State localPadding: LocalizedPadding = {
-    top: LengthMetrics.vp(0),
-    start: LengthMetrics.vp(0)
-  };
-
-  // ========================= å“åº”å¼æ–­ç‚¹ =========================
-  /** ç›‘å¬é«˜åº¦æ–­ç‚¹å˜åŒ–ï¼Œè§¦å‘é‡æ–°è®¡ç®—å®‰å…¨åŒºåŸŸ */
-  @StorageLink('currentHeightBreakpoint') @Watch('breakPointChange')
-  heightBreakpoint: HeightBreakpoint = HeightBreakpoint.HEIGHT_SM;
-  /** ç›‘å¬å®½åº¦æ–­ç‚¹å˜åŒ– */
-  @StorageLink('currentWidthBreakpoint') @Watch('breakPointChange')
-  widthBreakpoint: WidthBreakpoint = WidthBreakpoint.WIDTH_XS;
-
-  /** ç›‘å¬åˆ˜æµ·/å®‰å…¨åŒºåŸŸå˜åŒ– */
-  @StorageLink('cutout') @Watch('cutoutChange')
-  avoidAreas: window.AvoidAreaOptions | undefined = undefined;
-  @StorageLink('windowHeight') windowHeight: number = 0;
-  @StorageLink('windowWidth') windowWidth: number = 0;
-
-  // ========================= ç»„ä»¶æ ‡è¯† =========================
-  private xComponentId = 'tetrahedron';
-  /** æ‰‹åŠ¿é…ç½®ï¼šæ”¯æŒå…¨æ–¹å‘æ‹–æ‹½ */
-  private panOption: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.All });
-
-  // ==========================================================================
-  // æ–­ç‚¹å˜åŒ–å›è°ƒ
-  // ==========================================================================
-
-  /** å±å¹•æ–­ç‚¹å˜åŒ–æ—¶ï¼Œæ›´æ–°å®‰å…¨åŒºåŸŸå¹¶ä¼ é€’ç»™ Native å±‚ */
-  breakPointChange() {
-    this.cutoutAreas.heightBreakpoint = this.heightBreakpoint;
-    this.cutoutAreas.widthBreakpoint = this.widthBreakpoint;
-    tetrahedron_napi.objectPassing(this.cutoutAreas);
-  }
-
-  /** å®‰å…¨åŒºåŸŸ (åˆ˜æµ·/å¯¼èˆªæ ) å˜åŒ–æ—¶é‡æ–°è®¡ç®— */
-  cutoutChange() {
-    let topPX = getTop(this.avoidAreas);
-    let rightPX = getRight(this.avoidAreas, this.windowWidth);
-    let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
-    let leftPX = getLeft(this.avoidAreas);
-
-    this.cutoutAreas = {
-      top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
-      heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
-    };
-
-    this.localPadding = {
-      top: LengthMetrics.px(topPX),
-      end: LengthMetrics.px(rightPX),
-      bottom: LengthMetrics.px(bottomPX),
-      start: LengthMetrics.px(leftPX)
-    };
-    tetrahedron_napi.objectPassing(this.cutoutAreas);
-  }
-
-  // ==========================================================================
-  // ç”Ÿå‘½å‘¨æœŸ
-  // ==========================================================================
-
-  /** é¡µé¢å³å°†æ˜¾ç¤º â€” åˆå§‹åŒ–æ—‹è½¬è§’åº¦å’Œå®‰å…¨åŒºåŸŸ */
-  async aboutToAppear() {
-    Logger.info('aboutToAppear');
-    this.angleArray[0] = 30;  // åˆå§‹ X è½´ 30Â°
-    this.angleArray[1] = 45;  // åˆå§‹ Y è½´ 45Â°
-
-    let topPX = getTop(this.avoidAreas);
-    let rightPX = getRight(this.avoidAreas, this.windowWidth);
-    let bottomPX = getBottom(this.avoidAreas, this.windowHeight);
-    let leftPX = getLeft(this.avoidAreas);
-
-    this.cutoutAreas = {
-      top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
-      heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
-    };
-
-    this.localPadding = {
-      top: LengthMetrics.px(topPX),
-      end: LengthMetrics.px(rightPX),
-      bottom: LengthMetrics.px(bottomPX),
-      start: LengthMetrics.px(leftPX)
-    };
-
-    tetrahedron_napi.objectPassing(this.cutoutAreas);
-  }
-
-  /**
-   * é¡µé¢æ˜¾ç¤ºå›è°ƒ â€” å¤„ç†ä»æ¨¡å‹é€‰æ‹©/å‚æ•°ç¼–è¾‘é¡µè¿”å›çš„è·¯ç”±å‚æ•°
-   *
-   * å½“ä» ModelSelectPage æˆ– ParamEditPage è¿”å›æ—¶ï¼Œ
-   * router.getParams() ä¼šåŒ…å« shapeType å’Œå¯é€‰çš„ shapeParamsã€‚
-   * è°ƒç”¨ applyShapeSelection() é€šçŸ¥ Native å±‚åˆ‡æ¢æ¨¡å‹ã€‚
-   */
-  onPageShow(): void {
-    Logger.info('onPageShow');
-    let params = router.getParams() as RouteResult;
-    if (params && params.shapeType !== undefined) {
-      this.applyShapeSelection(params.shapeType, params.shapeParams);
-      // æ¸…é™¤è·¯ç”±å‚æ•°ï¼Œé¿å…ä¸‹æ¬¡ onPageShow é‡å¤æ‰§è¡Œ
-      router.clear();
-    }
-  }
-
-  /**
-   * åº”ç”¨æ¨¡å‹é€‰æ‹©ç»“æœ
-   *
-   * æµç¨‹ï¼š
-   *   1. è°ƒç”¨ NAPI selectShape åˆ‡æ¢åˆ°æŒ‡å®šæ¨¡å‹
-   *   2. å¦‚æœæœ‰è‡ªå®šä¹‰å‚æ•°ï¼Œè°ƒç”¨ NAPI setShapeParams åº”ç”¨
-   *   3. æ›´æ–°å·¦ä¸Šè§’çš„æ¨¡å‹åç§°æ˜¾ç¤º
-   */
-  applyShapeSelection(shapeType: number, shapeParams: ShapeParams | null): void {
-    Logger.info('applyShapeSelection type=' + shapeType);
-
-    // é€šçŸ¥ Native å±‚åˆ‡æ¢å‡ ä½•ä½“
-    tetrahedron_napi.selectShape(shapeType);
-
-    // å¦‚æœæœ‰è‡ªå®šä¹‰å‚æ•°ï¼ˆæ¥è‡ª ParamEditPageï¼‰ï¼ŒåŒæ­¥åº”ç”¨
-    if (shapeParams !== null) {
-      tetrahedron_napi.setShapeParams(shapeParams);
-    }
-
-    // æ›´æ–° UI æ˜¾ç¤ºçš„æ¨¡å‹åç§°
-    let names = [
-      'å››é¢ä½“', 'çƒä½“', 'æ­£æ–¹ä½“', 'åœ†é”¥',
-      'æ¤­çƒé¢', 'å•å¶åŒæ›²é¢', 'æ¤­åœ†æŠ›ç‰©é¢', 'æ¤­åœ†é”¥é¢'
-    ];
-    if (shapeType >= 0 && shapeType < names.length) {
-      this.currentShapeName = names[shapeType];
-    }
-  }
-
-  // ==========================================================================
-  // é¡µé¢æ„å»º
-  // ==========================================================================
-
-  build() {
-    Stack({ alignContent: Alignment.Bottom }) {
-      Column() {
-        Column() {
-          // ==============================================================
-          // XComponent â€” OpenGL ES æ¸²æŸ“è¡¨é¢
-          // ==============================================================
-          XComponent({
-            id: this.xComponentId,
-            type: XComponentType.SURFACE,          // æ¸²æŸ“è¡¨é¢æ¨¡å¼
-            libraryname: 'tetrahedron_napi'        // å¯¹åº”çš„ .so åç§°
-          })
-            .onLoad(() => {
-              Logger.info('onLoad');
-            })
-            .id('tetrahedron')
-            .onDestroy(() => {
-              Logger.info('onDestroy');
-            })
-            .id('xComponent')
-            .backgroundColor('#FFFFFF')
-        }
-        .justifyContent(FlexAlign.SpaceAround)
-        .alignItems(HorizontalAlign.Center)
-        .height('100%')
-        .width('100%')
-        .backgroundColor('#FFFFFF')
-        .borderRadius(24)
-      }
-      // ==================================================================
-      // æ‰‹åŠ¿è¯†åˆ« â€” å…¨æ–¹å‘æ‹–æ‹½æ—‹è½¬
-      // ==================================================================
-      .gesture(
-        PanGesture(this.panOption)
-          .onActionStart(() => {
-            Logger.info('Gesture onActionStart');
-          })
-          .onActionUpdate((event: GestureEvent) => {
-            // æ‰‹åŠ¿æ‹–æ‹½æ—¶åœæ­¢è‡ªåŠ¨æ—‹è½¬
-            tetrahedron_napi.setRotate(RotationType.STOP);
-            this.enableRotate = false;
-            // å°†æ‰‹åŠ¿åç§»ä¼ é€’ç»™ Native å±‚æ›´æ–°è§’åº¦
-            this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
-            Logger.info('Gesture onActionUpdate : offSet ' + event.offsetX + ',' + event.offsetY);
-          })
-          .onActionEnd(() => {
-            Logger.info('Gesture onActionEnd');
-          })
-      )
-      .height('100%')
-      .justifyContent(FlexAlign.SpaceBetween)
-
-      // ==================================================================
-      // å·¦ä¸Šè§’ â€” æ¨¡å‹åˆ‡æ¢æŒ‰é’®
-      // ==================================================================
-      Row() {
-        Button() {
-          Row({ space: 6 }) {
-            Text('\u2630')              // â˜° èœå•å›¾æ ‡
-              .fontSize(18)
-              .fontColor('#FFFFFF')
-            Text('æ¨¡å‹')
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .fontWeight(FontWeight.Medium)
-          }
-        }
-        .type(ButtonType.Capsule)       // èƒ¶å›Šå½¢çŠ¶
-        .backgroundColor('#80000000')   // åŠé€æ˜é»‘è‰²èƒŒæ™¯
-        .borderRadius(20)
-        .onClick(() => {
-          // è·³è½¬åˆ°æ¨¡å‹é€‰æ‹©é¡µé¢
-          router.pushUrl({ url: 'pages/ModelSelectPage' });
-        })
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Start)  // å·¦å¯¹é½
-      .padding({ left: 16, top: 16 })
-      .hitTestBehavior(HitTestMode.Transparent)  // ä¸æ‹¦æˆªè§¦æ‘¸äº‹ä»¶
-      .position({ x: 0, y: 0 })        // ç»å¯¹å®šä½åœ¨å·¦ä¸Šè§’
-      .zIndex(10)                       // ç¡®ä¿åœ¨æœ€ä¸Šå±‚
-
-      // ==================================================================
-      // å·¦ä¸Šè§’ â€” å½“å‰æ¨¡å‹åç§°æŒ‡ç¤ºå™¨
-      // ==================================================================
-      Text('å½“å‰: ' + this.currentShapeName)
-        .fontSize(11)
-        .fontColor('#99FFFFFF')
-        .backgroundColor('#40000000')
-        .borderRadius(10)
-        .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-        .position({ x: 16, y: 56 })
-        .zIndex(10)
-
-      // ==================================================================
-      // ç¼©æ”¾æ»‘å—
-      // ==================================================================
-      Row() {
-        Text('ç¼©å°')
-          .fontSize(11)
-          .fontColor('#999999')
-          .margin({ right: 8 })
-
-        Slider({
-          value: this.modelScale,
-          min: 0.3,       // æœ€å°ç¼©æ”¾ 30%
-          max: 2.5,       // æœ€å¤§ç¼©æ”¾ 250%
-          step: 0.05,     // æ­¥é•¿ 5%
-          style: SliderStyle.InSet
-        })
-          .showTips(true)           // æ‹–åŠ¨æ—¶æ˜¾ç¤ºæ•°å€¼
-          .trackColor('#40000000')  // æœªå¡«å……è½¨é“é¢œè‰²
-          .selectedColor('#FFFFFF') // å·²å¡«å……è½¨é“é¢œè‰²
-          .layoutWeight(1)          // å æ®å‰©ä½™å®½åº¦
-          .onChange((value: number) => {
-            this.modelScale = value;
-            // å®æ—¶é€šçŸ¥ Native å±‚æ›´æ–°ç¼©æ”¾
-            tetrahedron_napi.setScale(value);
-          })
-
-        Text('æ”¾å¤§')
-          .fontSize(11)
-          .fontColor('#999999')
-          .margin({ left: 8 })
-      }
-      .width('100%')
-      .padding({ left: 24, right: 24 })
-      .hitTestBehavior(HitTestMode.Transparent)  // ä¸æ‹¦æˆªåº•å±‚æ‰‹åŠ¿
-
-      // ==================================================================
-      // åº•éƒ¨ â€” æ—‹è½¬æ¨¡å¼æŒ‰é’®
-      // ==================================================================
-      Row({ space: 12 }) {
-        // ã€Œè‡ªåŠ¨æ—‹è½¬ / åœæ­¢ã€æŒ‰é’® â€” åˆ‡æ¢è‡ªåŠ¨æ—‹è½¬çŠ¶æ€
-        Button(this.enableRotate ? $r('app.string.btn_stop_rotation') : $r('app.string.btn_auto_rotation'),
-          { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(16)
-          .onClick(() => {
-            if (this.enableRotate) {
-              // å½“å‰æ­£åœ¨è‡ªåŠ¨æ—‹è½¬ â†’ åœæ­¢
-              tetrahedron_napi.setRotate(RotationType.STOP);
-              this.enableRotate = false;
-            } else {
-              // å½“å‰é™æ­¢ â†’ å¼€å§‹è‡ªåŠ¨æ—‹è½¬
-              tetrahedron_napi.setRotate(RotationType.AUTO);
-              this.enableRotate = true;
-            }
-          })
-          .layoutWeight(1)
-
-        // ã€Œé˜»å°¼æ—‹è½¬ã€æŒ‰é’® â€” æ‰‹åŠ¿é‡Šæ”¾åæƒ¯æ€§å‡é€Ÿ
-        Button($r('app.string.btn_damping_rotation'), { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(16)
-          .onClick(() => {
-            this.enableRotate = false;
-            tetrahedron_napi.setRotate(RotationType.DAMPING);
-          })
-          .layoutWeight(1)
-      }
-      .hitTestBehavior(HitTestMode.Transparent)
-      .padding({
-        left: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-        right: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-        bottom: 50
-      })
-    }
-    .padding(this.localPadding)  // åº”ç”¨å®‰å…¨åŒºåŸŸå†…è¾¹è·
-  }
-}
-ÀÔrD–°@ohos.arkui.node¬@ohos.router«@ohos.hilog¶libtetrahedron_napi.so¯../utils/Logger²../utils/ConstantsÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÔrF‘¯hostModulesInfo‘ÔrG’²hostDependencyName®hostModuleName°@ohos.arkui.node¥entryÃªoh-resolveÂEAÃÙ_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsAÃªoh-resolveÂEAÃÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsF“G«@ohos.hilog¥entryG«@ohos.hilog¥entryG«@ohos.hilog¥entryÃªoh-resolveÂEAÃÙ% hvigor_ignore_libtetrahedron_napi.soF‘G¶libtetrahedron_napi.so¥entryÃªoh-resolveÂEAÂÙDD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂEAÂÙGD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsAÃªoh-resolveÂ“ÔrH–§version¤fileªsourceRoot§sources¥names¨mappings¨Index.js ‘©Index.etsÜ³‘”    ‘” ‘”   ‘” -˜”  / ” /	”	 /	” /” /” /.”0 /:”1 /;‘”    ‘” ‘”   ‘” -–”  / ” / ” /&” /.”! /:”" /;–”  0 ” 0	” 0” 0” 03”  04˜”  1 ” 1”	 1	” 1” 1” 1”( 1(”) 1)–”  2 ” 2” 2” 2”5 25”6 26˜”  3 ” 3”	 3	” 3” 3” 3”1 31”2 32’”  ÌF ”ÌO ÌFÌO’”  ÌG ” ÌG’”  ÌH ”ÌO ÌHÌO’”  ÌJ ” ÌJ•”  ÌK ”	 ÌK	” ÌK” ÌK” ÌK>–” ÌL” ÌL” ÌL” ÌL” ÌL” ÌL–” ÌM” ÌM” ÌM” ÌM” ÌM”! ÌMš” ÌN” ÌN” ÌN” ÌN” ÌN” ÌN”" ÌN”# ÌN”) ÌN%”+ ÌN'Ü ” ÌO” ÌO” ÌO” ÌO” ÌO”# ÌO”$ ÌO”+ ÌO%”, ÌO&”/ ÌO)”2 ÌO,”; ÌO5”< ÌO6”Ì@ ÌO:”ÌA ÌO;”ÌH ÌOÌB”ÌI ÌOÌC”ÌO ÌOÌI”ÌP ÌOÌJ‘”	 ÌP‘” ÌQ‘”	 ÌQ	œ” ÌR” ÌR	” ÌR
-” ÌR” ÌR” ÌR” ÌR”  ÌR”" ÌR”ÌY ÌRÌU”ÌZ ÌRÌV”Ì[ ÌRÌW‘” ÌS”” ÌT” ÌT	” ÌT” ÌT’”  ÌU ” ÌU’”  ÌW ” ÌW—”  ÌX ”	 ÌX	” ÌX” ÌX” ÌXÌA” ÌXÌC”* ÌXÌW–” ÌY” ÌY” ÌY” ÌY” ÌY” ÌY–” ÌZ” ÌZ” ÌZ” ÌZ” ÌZ”! ÌZš” Ì[” Ì[” Ì[” Ì[” Ì[” Ì[”% Ì[!”& Ì["”, Ì[(”. Ì[*” Ì\” Ì\” Ì\”! Ì\”$ Ì\”- Ì\'”. Ì\(”2 Ì\,”3 Ì\-”= Ì\7”> Ì\8”ÌA Ì\;”ÌB Ì\<‘”	 Ì]‘” Ì^‘”	 Ì^	œ” Ì_” Ì_	” Ì_
-” Ì_” Ì_” Ì_” Ì_”  Ì_”" Ì_”Ì\ Ì_ÌX”Ì] Ì_ÌY”Ì^ Ì_ÌZ‘” Ì`”” Ìa” Ìa	” Ìa” Ìa’”  Ìb ” Ìb’”  Ìd ” Ìd•”  Ìe ”	 Ìe	” Ìe” Ìe” Ìe?–” Ìf” Ìf” Ìf” Ìf” Ìf” Ìf–” Ìg” Ìg” Ìg” Ìg” Ìg”! Ìgš” Ìh” Ìh” Ìh” Ìh” Ìh” Ìh”# Ìh”$ Ìh ”) Ìh%”+ Ìh'Ü ” Ìi” Ìi” Ìi” Ìi” Ìi”# Ìi”$ Ìi”, Ìi&”- Ìi'”1 Ìi+”4 Ìi.”= Ìi7”> Ìi8”ÌB Ìi<”ÌC Ìi=”ÌK ÌiÌE”ÌL ÌiÌF”ÌQ ÌiÌK”ÌR ÌiÌL‘”	 Ìj‘” Ìk‘”	 Ìk	œ” Ìl” Ìl	” Ìl
-” Ìl” Ìl” Ìl” Ìl”  Ìl”" Ìl”ÌZ ÌlÌV”Ì[ ÌlÌW”Ì\ ÌlÌX‘” Ìm”” Ìn” Ìn	” Ìn” Ìn’”  Ìo ” Ìo’”  Ìq ” Ìq—”  Ìr ”	 Ìr	” Ìr” Ìr” ÌrÌ@” ÌrÌB”( ÌrÌU–” Ìs” Ìs” Ìs” Ìs” Ìs” Ìs–” Ìt” Ìt” Ìt” Ìt” Ìt”! Ìtš” Ìu” Ìu” Ìu” Ìu” Ìu” Ìu”$ Ìu ”% Ìu!”* Ìu&”, Ìu(” Ìv” Ìv” Ìv”  Ìv”# Ìv”, Ìv&”- Ìv'”1 Ìv+”2 Ìv,”; Ìv5”< Ìv6”Ì@ Ìv:”ÌA Ìv;‘”	 Ìw‘” Ìx‘”	 Ìx	œ” Ìy” Ìy	” Ìy
-” Ìy” Ìy” Ìy” Ìy”  Ìy”" Ìy”Ì[ ÌyÌW”Ì\ ÌyÌX”Ì] ÌyÌY‘” Ìz”” Ì{” Ì{	” Ì{” Ì{’”  Ì| ” Ì|’” Ì€” Ì€‘” Ì~ ””9 Ìƒ%”= Ìƒ)”ÌB Ìƒ.”ÌD Ìƒ8’”; Ì…!”Ì@ Ì…&’”? Ì‡$”ÌD Ì‡)’”9 Ì‰”< Ì‰!‘”: ÌŒÜ ” Ì” Ì” Ì	” Ì
-” Ì” Ì” Ì” Ì” Ì”$ Ì”& Ì”' Ì”) Ì!”- Ì%”/ Ì'”0 Ì(˜” Ì” Ì” Ì” Ì”! Ì”0 Ì(”2 Ì*”3 Ì+‘”	 Ì‘”; Ì‘*™” Ì’” Ì’” Ì’	” Ì’” Ì’”! Ì’”" Ì’”# Ì’”$ Ì’™” Ì“” Ì“	” Ì“”  Ì“”! Ì“”# Ì“”$ Ì“”% Ì“”& Ì“‘”	 Ì”–”9 Ì˜”ÌR Ì˜(”ÌT Ì™'”Ìd Ì™7”Ìe Ì™8”Ìn Ì™ÌA–”8 Ì›”ÌP Ì›'”ÌR Ìœ%”Ìa Ìœ4”Ìb Ìœ5”Ìj Ìœ=””3 ÌŸ”; ÌŸ”= Ì 4”ÌF Ì =””5 Ì¡”ÌC Ì¡”ÌE Ì¡6”ÌF Ì¡7””4 Ì¢”ÌA Ì¢”ÌC Ì¢4”ÌD Ì¢5’” Ì¥”) Ì¥&œ” Ì§)” Ì§-”. Ì§>”/ Ì§?”1 Ì§ÌA”: Ì§ÌJ”< Ì§ÌL”ÌH Ì§ÌX”ÌI Ì§ÌY”ÌL Ì§Ì\”ÌN Ì§Ì^”ÌO Ì§Ì_‘” Ì|’” Ìƒ	” Ìƒ’” Ìƒ	” Ìƒ’” Ì…	” Ì…’” Ì…	” Ì…’” Ì‡	” Ì‡’” Ì‡	” Ì‡’” Ì‰	” Ì‰’” Ì‰	” Ì‰’” ÌŒ	” ÌŒ’” ÌŒ	” ÌŒ’” Ì‘	” Ì‘’” Ì‘	” Ì‘’” Ì™” Ì™’” Ì™” Ì™’” Ìœ” Ìœ’” Ìœ” Ìœ’” Ì ” Ì ’” Ì ” Ì ’” Ì¡” Ì¡+’” Ì¡” Ì¡+’” Ì¢” Ì¢)’” Ì¢” Ì¢)’” Ì©”ÌQ Ì©ÌO’” Ìª” Ìª’” Ì«”ÌQ Ì«ÌO’” Ì­”& Ì­$’” Ì®” Ì®›” Ì¯” Ì¯” Ì¯	” Ì¯” Ì¯”) Ì¯%”, Ì¯(”0 Ì¯,”1 Ì¯-”ÌA Ì¯=”ÌB Ì¯>›” Ì°” Ì°” Ì°	” Ì°” Ì°”( Ì°$”+ Ì°'”/ Ì°+”0 Ì°,”? Ì°;”Ì@ Ì°<š” Ì±” Ì±” Ì±”& Ì±"”' Ì±#”+ Ì±'”, Ì±(”7 Ì±3”8 Ì±4”9 Ì±5’” Ì²” Ì²’” Ì´”  Ì´’” Ìµ” Ìµ›” Ì¶” Ì¶” Ì¶” Ì¶” Ì¶” Ì¶” Ì¶”  Ì¶”* Ì¶&”+ Ì¶'”, Ì¶(Ÿ” Ì·” Ì·” Ì·” Ì·” Ì·” Ì·”# Ì·”$ Ì· ”. Ì·*”0 Ì·,”4 Ì·0”5 Ì·1”Ì@ Ì·<”ÌA Ì·=”ÌB Ì·>Ÿ” Ì¸” Ì¸” Ì¸” Ì¸”  Ì¸”! Ì¸”% Ì¸!”& Ì¸"”0 Ì¸,”2 Ì¸.”6 Ì¸2”7 Ì¸3”ÌC Ì¸?”ÌD Ì¸Ì@”ÌE Ì¸ÌA›” Ì¹” Ì¹” Ì¹” Ì¹” Ì¹” Ì¹”! Ì¹”" Ì¹”, Ì¹(”- Ì¹)”. Ì¹*•” Ì»” Ì»” Ì»	” Ì»” Ì»Ü ” Ì¼” Ì¼	” Ì¼” Ì¼” Ì¼” Ì¼” Ì¼”& Ì¼ ”( Ì¼"”. Ì¼(”0 Ì¼*”8 Ì¼2”: Ì¼4”> Ì¼8”Ì@ Ì¼:”ÌF Ì¼Ì@œ” Ì½” Ì½” Ì½”" Ì½”# Ì½”3 Ì½-”5 Ì½/”ÌD Ì½>”ÌF Ì½Ì@”ÌJ Ì½ÌD”ÌK Ì½ÌE”ÌZ Ì½ÌT’”	 Ì¾”
- Ì¾•” ÌÀ” ÌÀ” ÌÀ	” ÌÀ” ÌÀ™” ÌÁ” ÌÁ	” ÌÁ” ÌÁ” ÌÁ”! ÌÁ”" ÌÁ”' ÌÁ!”( ÌÁ"™” ÌÂ” ÌÂ	” ÌÂ” ÌÂ” ÌÂ”! ÌÂ”" ÌÂ”) ÌÂ#”* ÌÂ$™” ÌÃ” ÌÃ” ÌÃ”! ÌÃ”" ÌÃ”$ ÌÃ”% ÌÃ”- ÌÃ'”. ÌÃ(™” ÌÄ” ÌÄ” ÌÄ”  ÌÄ”! ÌÄ”# ÌÄ”$ ÌÄ”* ÌÄ$”+ ÌÄ%’”	 ÌÅ”
- ÌÅš” ÌÆ” ÌÆ” ÌÆ”& ÌÆ"”' ÌÆ#”+ ÌÆ'”, ÌÆ(”7 ÌÆ3”8 ÌÆ4”9 ÌÆ5’” ÌÇ” ÌÇ’” ÌÉ”ÌQ ÌÉÌO’” ÌÊ” ÌÊ	’” ÌË”ÌQ ÌËÌO’” ÌÍ”  ÌÍ”” ÌÎ”	 ÌÎ”
- ÌÎ” ÌÎ˜” ÌÏ” ÌÏ
-” ÌÏ” ÌÏ” ÌÏ”# ÌÏ”$ ÌÏ ”% ÌÏ!œ” ÌĞ” ÌĞ” ÌĞ	” ÌĞ” ÌĞ” ÌĞ” ÌĞ” ÌĞ” ÌĞ”  ÌĞ”! ÌĞ”. ÌĞ+œ” ÌÑ” ÌÑ” ÌÑ	” ÌÑ” ÌÑ” ÌÑ” ÌÑ” ÌÑ” ÌÑ”  ÌÑ”! ÌÑ”. ÌÑ+›” ÌÓ” ÌÓ” ÌÓ” ÌÓ” ÌÓ” ÌÓ” ÌÓ”  ÌÓ”* ÌÓ&”+ ÌÓ'”, ÌÓ(Ÿ” ÌÔ” ÌÔ” ÌÔ” ÌÔ” ÌÔ” ÌÔ”# ÌÔ”$ ÌÔ ”. ÌÔ*”0 ÌÔ,”4 ÌÔ0”5 ÌÔ1”Ì@ ÌÔ<”ÌA ÌÔ=”ÌB ÌÔ>Ÿ” ÌÕ” ÌÕ” ÌÕ” ÌÕ”  ÌÕ”! ÌÕ”% ÌÕ!”& ÌÕ"”0 ÌÕ,”2 ÌÕ.”6 ÌÕ2”7 ÌÕ3”ÌC ÌÕ?”ÌD ÌÕÌ@”ÌE ÌÕÌA›” ÌÖ” ÌÖ” ÌÖ” ÌÖ” ÌÖ” ÌÖ”! ÌÖ”" ÌÖ”, ÌÖ(”- ÌÖ)”. ÌÖ*•” ÌØ” ÌØ” ÌØ	” ÌØ” ÌØÜ ” ÌÙ” ÌÙ	” ÌÙ” ÌÙ” ÌÙ” ÌÙ” ÌÙ”& ÌÙ ”( ÌÙ"”. ÌÙ(”0 ÌÙ*”8 ÌÙ2”: ÌÙ4”> ÌÙ8”Ì@ ÌÙ:”ÌF ÌÙÌ@œ” ÌÚ” ÌÚ” ÌÚ”" ÌÚ”# ÌÚ”3 ÌÚ-”5 ÌÚ/”ÌD ÌÚ>”ÌF ÌÚÌ@”ÌJ ÌÚÌD”ÌK ÌÚÌE”ÌZ ÌÚÌT’”	 ÌÛ”
- ÌÛ•” Ìİ” Ìİ” Ìİ	” Ìİ” Ìİ™” ÌŞ” ÌŞ	” ÌŞ” ÌŞ” ÌŞ”! ÌŞ”" ÌŞ”' ÌŞ!”( ÌŞ"™” Ìß” Ìß	” Ìß” Ìß” Ìß”! Ìß”" Ìß”) Ìß#”* Ìß$™” Ìà” Ìà” Ìà”! Ìà”" Ìà”$ Ìà”% Ìà”- Ìà'”. Ìà(™” Ìá” Ìá” Ìá”  Ìá”! Ìá”# Ìá”$ Ìá”* Ìá$”+ Ìá%’”	 Ìâ”
- Ìâš” Ìä” Ìä” Ìä”& Ìä"”' Ìä#”+ Ìä'”, Ìä(”7 Ìä3”8 Ìä4”9 Ìä5’” Ìå” Ìå‘” Ìç‘” Ìí’” Ìî” Ìî˜” Ìï” Ìï
-” Ìï” Ìï” Ìï”  Ìï”! Ìï”" Ìï™” Ìğ” Ìğ” Ìğ” Ìğ” Ìğ” Ìğ”% Ìğ!”' Ìğ2”( Ìğ3š” Ìñ” Ìñ” Ìñ” Ìñ” Ìñ” Ìñ”& Ìñ"”+ Ìñ'”4 Ìñ0”6 Ìñ2” Ìò” Ìò
-” Ìò”$ Ìò”% Ìò”+ Ìò%”, Ìò&”5 Ìò/”7 Ìò1”= Ìò7”> Ìò8”ÌI ÌòÌC”ÌJ ÌòÌD”ÌK ÌòÌE’” Ìó”* Ìó$–” Ìô” Ìô” Ìô” Ìô” Ìô” Ìô‘”	 Ìõ’” Ìö” Ìö‘” Ìø‘” Ìÿ–” Í ” Í ” Í ”! Í '”# Í )”. Í ÌHš” Í” Í
-” Í” Í” Í”/ Í+”2 Í.”; Í7”< Í8”= Í9’” Í” Í˜” Í” Í” Í”$ Í ”% Í!”. Í*”/ Í+”0 Í,’” Í”* Í&–” Í” Í” Í” Í”  Í”" Í˜” Í” Í” Í”+ Í%”, Í&”7 Í1”8 Í2”9 Í3‘”	 Í	’” Í” Í”” Í” Í” Í” Í˜” Í” Í” Í” Í” Í” Í”  Í”$ Í˜” Í” Í” Í” Í” Í”# Í”% Í”+ Í%’”	 Í”
- Íœ” Í” Í” Í” Í” Í” Í”' Í#”* Í&”/ Í+”0 Í,”6 Í2”8 Í4š” Í” Í
-” Í”! Í”$ Í”) Í#”* Í$”3 Í-”4 Í.”5 Í/‘”	 Í’” Í” Í’” Í”ÌQ ÍÌO’” Í” Í	’” Í”ÌQ ÍÌO‘” Íš” Í” Í	” Í
-” Í”' Í”) Í”2 Í#”3 Í$”9 Í*”; Í,˜” Í” Í	” Í¿” Í¿”6 Í¿”: Í¿”; Í¿”ÌG Í¿’” Í” Í–” Í:” Í:” Í:”" Í:”# Í:”, Í:!—” Í:” Í:” Í;”$ Í;”% Í;”( Í;”* Í;˜” Í<” Í<” Í<” Í<” Í<”3 Í</”4 Í<0”5 Í<1’” Í=
-” Í=™” Í:” Í:” Í>”% Í>”& Í>”' Í>”, Í>.”. Í>0”0 Í>2’” Í?” Í?š” Í@”  Í@”! Í@”* Í@&”+ Í@'”7 Í@3”8 Í@4”< Í@8”= Í@9”> Í@:—” ÍA” ÍA” ÍA”! ÍA”$ ÍA ”) ÍA%”* ÍA&’” ÍB”( ÍB$Ü ” ÍC” ÍC” ÍC” ÍC”" ÍC”2 ÍC.”3 ÍC/”> ÍC:”? ÍC;”ÌD ÍCÌ@”ÌE ÍCÌA”ÌL ÍCÌH”ÌN ÍCÌJ”ÌS ÍCÌO”ÌT ÍCÌP”Ì[ ÍCÌW”Ì\ ÍCÌX”Ì] ÍCÌYÜ ” ÍD” ÍD” ÍD” ÍD” ÍD”> ÍD:”ÌA ÍD=”ÌF ÍDÌB”ÌG ÍDÌC”ÌN ÍDÌJ”ÌQ ÍDÌM”ÌT ÍDÌP”ÌW ÍDÌS”Ì\ ÍDÌX”Ì] ÍDÌY”Ìd ÍDÌ`”Ìe ÍDÌa”Ìf ÍDÌb’” ÍE
-” ÍE—” Í:” Í:” ÍF”" ÍF”# ÍF”& ÍF”( ÍF˜” ÍG” ÍG” ÍG” ÍG” ÍG”1 ÍG-”2 ÍG.”3 ÍG/’” ÍH
-” ÍH’” Í:” Í:–” Í” Í” ÍJ” ÍJ” ÍJ”  ÍJ˜” Í” Í” ÍK”! ÍK”" ÍK”+ ÍK”, ÍK ”8 ÍK,’” Í” Í˜” Í” Í” Í/	”! Í/”" Í/”+ Í/!”, Í/"”7 Í/-˜” Í” Í” Í0	” Í0” Í0”- Í0#”. Í0$”4 Í0*–” Í” Í” Í1	” Í1” Í1”  Í1–” Í” Í” Í2	” Í2” Í2” Í2–” Í” Í” Í3	”" Í3”# Í3”, Í3"–” Í” Í” Í4	” Í4”  Í4”" Í4’” Í
-”ÌM ÍÌK’” Í
-”* Í(’” Í
-”ÌM ÍÌK“” Í 
-” Í ” Í –” Í!” Í!” Í!” Í!” Í!”% Í!!–” Í"” Í"” Í"”$ Í" ”% Í"!”, Í"(–” Í#” Í#” Í#”/ Í#+”0 Í#3”= Í#Ì@‘” Í$’” Í
-”ÌM ÍÌK’” Í
-”* Í(’” Í
-”ÌM ÍÌK—” Í 
-” Í ” Í%” Í%” Í%”! Í%”# Í%˜” Í&” Í&” Í&” Í&” Í&”$ Í&"”% Í&#”& Í&$’” Í'” Í'’” Í
-”ÌM ÍÌK’” Í
-”* Í(’” Í
-”ÌM ÍÌK–” Í 
-” Í ” Í(” Í(” Í(”' Í(’” Í
-”ÌM ÍÌK’” Í
-”* Í(’” Í
-”ÌM ÍÌK—” Í 
-” Í ” Í)”  Í)”! Í)”$ Í)”& Í)˜” Í*” Í*” Í*” Í*” Í*”' Í*%”( Í*&”) Í*'’” Í+” Í+’” Í
-”ÌM ÍÌK’” Í
-”* Í(’” Í
-”ÌM ÍÌK–” Í 
-” Í ” Í,” Í,” Í,”& Í,’” Í
-”ÌM ÍÌK’” Í
-”* Í(’” Í
-”ÌM ÍÌK–” Í 
-” Í ” Í-”& Í-”' Í-”0 Í-&’” Í” Í’” Í” Í’” ÍM”ÌQ ÍMÌK’” ÍN” ÍN’” ÍO”ÌQ ÍOÌK’” ÍP” ÍP	’” ÍM”ÌQ ÍMÌK’” ÍN” ÍN’” ÍO”ÌQ ÍOÌK–” ÍP” ÍP	” Íd” Íd” Íd” Íd’” ÍM”ÌQ ÍMÌK’” ÍN” ÍN’” ÍO”ÌQ ÍOÌK˜” ÍP” ÍP	” Íe” Íe” Íe”( Íe”) Íe ”. Íe%’” ÍM”ÌQ ÍMÌK’” ÍN” ÍN’” ÍO”ÌQ ÍOÌK” ÍP” ÍP	” Íf” Íf” Íf” Íf” Íf”  Íf”" Íf”$ Íf”' Íf”) Íf ”+ Íf"”- Íf$’” ÍM”ÌQ ÍMÌK’” ÍN” ÍN’” ÍO”ÌQ ÍOÌK˜” ÍP” ÍP	” Íg” Íg”  Íg”+ Íg"”, Íg#”7 Íg.’” ÍM”ÌQ ÍMÌK’” ÍN” ÍN’” ÍO”ÌQ ÍOÌK” ÍP” ÍP	” Íh” Íh” Íh” Íh” Íh” Íh” Íh”! Íh”" Íh”$ Íh”% Íh”' Íh’” ÍM”ÌQ ÍMÌK’” ÍN” ÍN’” ÍO”ÌQ ÍOÌK–” ÍP” ÍP	” Íi” Íi” Íi” Íi’” ÍQ” ÍQ˜” ÍQ” ÍQ” Í\	” Í\” Í\”" Í\”# Í\”* Í\ –” ÍQ” ÍQ” Í]	”" Í]”# Í]”. Í]$–” ÍQ” ÍQ” Í^	” Í^”  Í^”" Í^—” ÍQ” ÍQ” Í_	” Í_” Í_” Í_”  Í_’” Í`
-” Í`œ” Ía
-” Ía” Ía” Ía” Ía”! Ía”$ Ía”& Ía ”= Ía7”? Ía9”Ì@ Ía:”ÌA Ía;’” Íb” Íb	˜” ÍR
-” ÍR” ÍR” ÍR” ÍR”  ÍR”! ÍR”# ÍR”” ÍS” ÍS” ÍS”  ÍS–” ÍS” ÍS” ÍT” ÍT” ÍT” ÍT–” ÍS” ÍS” ÍU” ÍU” ÍU”$ ÍU"’” ÍS” ÍS”” ÍV” ÍV” ÍV” ÍV–” ÍV” ÍV” ÍW” ÍW” ÍW” ÍW–” ÍV” ÍV” ÍX” ÍX” ÍX”$ ÍX"˜” ÍV” ÍV” ÍY” ÍY” ÍY”& ÍY$”' ÍY%”- ÍY+’” ÍV” ÍV’” ÍR
-” ÍR’” ÍQ” ÍQ’” ÍM”ÌM ÍMÌK’” ÍN” ÍN’” ÍO”ÌM ÍOÌK’” ÍP” ÍP	’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌK˜” Ín” Ín
-” Ín” Ín”! Ín”% Ín”& Ín”6 Ín)’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌK–” Ín” Ín
-” Ío	” Ío” Ío” Ío’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌK–” Ín” Ín
-” Íp	” Íp” Íp”& Íp’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌK–” Ín” Ín
-” Íq	”  Íq”! Íq”, Íq$’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌK–” Ín” Ín
-” Ír	” Ír” Ír”  Ír’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌKÜ ” Ín” Ín
-” Ís	” Ís” Ís” Ís” Ís”! Ís”# Ís”% Ís”* Ís"”, Ís$”. Ís&”0 Ís(”3 Ís+”5 Ís-”6 Ís.”8 Ís0”> Ís6”Ì@ Ís8”ÌA Ís9”ÌC Ís;’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌK” Ín” Ín
-” Ít	” Ít” Ít” Ít” Ít” Ít”! Ít”# Ít”$ Ít”& Ít”( Ít ”* Ít"’” Ík”ÌQ ÍkÌK’” Íl” Íl’” Ím”ÌQ ÍmÌK–” Ín” Ín
-” Íu	” Íu” Íu” Íu’” Ík”ÌM ÍkÌK’” Íl” Íl’” Ím”ÌM ÍmÌK’” Ín” Ín
-’” Íw”ÌQ ÍwÌK’” Íx” Íx’” Íy”ÌQ ÍyÌK’” Íz” Íz	’” Íw”ÌQ ÍwÌK’” Íx” Íx’” Íy”ÌQ ÍyÌK–” Íz” Íz	” Í–” Í–” Í–” Í–’” Íw”ÌQ ÍwÌK’” Íx” Íx’” Íy”ÌQ ÍyÌK” Íz” Íz	” Í—” Í—” Í—” Í—” Í—”  Í—”" Í—”$ Í—”) Í— ”+ Í—"”- Í—$”/ Í—&’” Íw”ÌQ ÍwÌK’” Íx” Íx’” Íy”ÌQ ÍyÌK˜” Íz” Íz	” Í˜” Í˜”  Í˜”+ Í˜"”, Í˜#”7 Í˜.”” Í{” Í{” Í{” Í{–” Í{” Í{” Í|” Í|” Í|” Í|–” Í{” Í{” Í}” Í}” Í}”$ Í}š” Í{” Í{” Í~” Í~” Í~” Í~” Í~”! Í~”" Í~”$ Í~’” Í{” Í{“” Í€” Í€” Í€–” Í
-” Í” Í” Í” Í”& Í ”” Í‚
-” Í‚” Í‚” Í‚”” Íƒ
-” Íƒ” Íƒ” Íƒ”” Í„
-” Í„” Í„” Í„–” Í…
-” Í…” Í…”" Í…”# Í…”( Í…"‘” Í†	–” Í€” Í€” Í‡” Í‡” Í‡”  Í‡–” Í€” Í€” Íˆ” Íˆ” Íˆ”) Íˆ!–” Í€” Í€” Í‰”  Í‰”! Í‰”* Í‰"–” Í€” Í€” ÍŠ” ÍŠ”  ÍŠ”! ÍŠ™” Í€” Í€” Í‹” Í‹” Í‹” Í‹”" Í‹"”$ Í‹$”& Í‹&—” ÍŒ” ÍŒ” ÍŒ” ÍŒ”" ÍŒ”' ÍŒ#”( ÍŒ$’” Í”$ Í ˜” Í”  Í”! Í”) Í%”* Í&”/ Í+”0 Í,”1 Í-’” Í
-” Í”” Í‘” Í‘” Í‘” Í‘–” Í‘” Í‘” Í’” Í’” Í’” Í’–” Í‘” Í‘” Í“” Í“” Í“”$ Í“š” Í‘” Í‘” Í”” Í”” Í”” Í”” Í””  Í””! Í””# Í”’” Í‘” Í‘’” Íw”ÌM ÍwÌK’” Íx” Íx’” Íy”ÌM ÍyÌK’” Íz” Íz	’” Íš”ÌQ ÍšÌK’” Í›” Í›’” Íœ”ÌQ ÍœÌK˜” Í” Í	” Í
-” Í” Í”  Í”" Í”$ Í’” Íš”ÌQ ÍšÌK’” Í›” Í›’” Íœ”ÌQ ÍœÌK˜” Í” Í	” Í¸” Í¸”  Í¸”+ Í¸"”, Í¸#”7 Í¸.’” Íš”ÌQ ÍšÌK’” Í›” Í›’” Íœ”ÌQ ÍœÌK•” Í” Í	” Í¹” Í¹” Í¹Ü ” Íº” Íº” Íº” Íº” Íº”* Íº"”/ Íº'”> Íº6”? Íº7”ÌG Íº?”ÌH ÍºÌ@”ÌI ÍºÌA”ÌJ ÍºÌB”ÌL ÍºÌD”ÌM ÍºÌE”ÌN ÍºÌF”ÌO ÍºÌG”ÌQ ÍºÌIÜ ” Í»” Í»” Í»” Í»” Í»”+ Í»#”0 Í»(”? Í»7”Ì@ Í»8”ÌH Í»Ì@”ÌI Í»ÌA”ÌJ Í»ÌB”ÌK Í»ÌC”ÌM Í»ÌE”ÌN Í»ÌF”ÌO Í»ÌG”ÌP Í»ÌH”ÌR Í»ÌJ”” Í¼” Í¼” Í¼” Í¼‘” Í½’” Í”' Í#Ü ” ÍŸ” ÍŸ”# ÍŸ”' ÍŸ”( ÍŸ”4 ÍŸ ”5 ÍŸ!”6 ÍŸ"”Ì£ ÍŸÌF”Ì¤ ÍŸÌG”Í ÍŸÌj”Í Í 
-”Í Í ”Í Í ”Í Í ”Í$ Í ”Í% Í ”Í, Í $”Í. Í &”Í9 Í 1”Í; Í 3”Í? Í 7”ÍA Í 9’” Í”' Í#–” ÍŸ” ÍŸ” Í¡” Í¡” Í¡” Í¡’” Í”' Í#—” ÍŸ” ÍŸ” Í¢” Í¢” Í¢” Í¢”  Í¢–” Í£” Í£” Í£” Í£”% Í£!”' Í£#’” Í¤”$ Í¤š” Í¥”$ Í¥”% Í¥”. Í¥(”/ Í¥)”; Í¥5”< Í¥6”Ì@ Í¥:”ÌA Í¥;”ÌB Í¥<—” Í¦” Í¦” Í¦”% Í¦”( Í¦"”- Í¦'”. Í¦(‘” Í§‘” Í§’” Í¨”$ Í¨š” Í©”$ Í©”% Í©”. Í©(”/ Í©)”; Í©5”< Í©6”Ì@ Í©:”ÌA Í©;”ÌB Í©<—” Íª” Íª” Íª”% Íª”( Íª"”, Íª&”- Íª'‘” Í«’” Í¬
-” Í¬’” Í”' Í#–” ÍŸ” ÍŸ” Í­” Í­”  Í­”! Í­’” Í”# Í#’” ÍŸ” ÍŸ’” Í¯”# Í¯” Í°” Í°”Ì Í°6”Ì’ Í°8”Ì– Í°<”Ì˜ Í°>”Ì¢ Í°ÌH”Ì£ Í°ÌI”Ìª Í°ÌP”Ì¬ Í°ÌR”Ì· Í°Ì]”Ì¹ Í°Ì_”Ì½ Í°Ìc”Ì¿ Í°Ìe’” Í¯”# Í¯–” Í°” Í°” Í±” Í±” Í±” Í±’” Í¯”# Í¯—” Í°” Í°” Í²” Í²” Í²” Í²”  Í²—” Í³” Í³” Í³”! Í³”$ Í³ ”) Í³%”* Í³&š” Í´”  Í´”! Í´”* Í´&”+ Í´'”7 Í´3”8 Í´4”? Í´;”Ì@ Í´<”ÌA Í´=’” Íµ
-” Íµ’” Í¯”# Í¯–” Í°” Í°” Í¶” Í¶”  Í¶”! Í¶’” Í¯” Í¯’” Í°” Í°’” Íš”ÌM ÍšÌK’” Í›” Í›’” Íœ”ÌM ÍœÌK’” Í” Í	’” Í” Í	‘” ÍÀÔrI–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ¼‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
- ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ì ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌĞ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  Ìİ ‘”  ÌŞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìğ ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìı ‘”  Ìş ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
- ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Í ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ‘”  Í¼ ‘”  Í½ ‘”  Í¾ ‘”  Í¿ ‘”  ÍÀ ‘”  ÍÁ ‘”  ÍÂ ‘”  ÍÃ ‘”  ÍÄ ‘”  ÍÅ ‘”  ÍÆ ‘”  ÍÇ ‘”  ÍÈ ‘”  ÍÉ ‘”  ÍÊ ‘”  ÍË ‘”  ÍÌ ‘”  ÍÍ ‘”  ÍÎ ‘”  ÍÏ ‘”  ÍĞ ‘”  ÍÑ ‘”  ÍÒ ‘”  ÍÓ ‘”  ÍÔ ‘”  ÍÕ ‘”  ÍÖ ‘”  Í× ‘”  ÍØ ‘”  ÍÙ ‘”  ÍÚ ‘”  ÍÛ ‘”  ÍÜ ‘”  Íİ ‘”  ÍŞ ‘”  Íß ‘”  Íà ‘”  Íá ‘”  Íâ ‘”  Íã ‘”  Íä ‘”  Íå ‘”  Íæ ‘”  Íç ‘”  Íè ‘”  Íé ‘”  Íê ‘”  Íë ‘”  Íì ‘”  Íí ‘”  Íî ‘”  Íï ‘”  Íğ ‘”  Íñ ‘”  Íò ‘”  Íó ‘”  Íô ‘”  Íõ ‘”  Íö ‘”  Í÷ ‘”  Íø ‘”  Íù ‘”  Íú ‘”  Íû ‘”  Íü ‘”  Íı ‘”  Íş ‘”  Íÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
- ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Í ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ÔrJ’§missing¦pluginÃ¦genAbcÂÔ  ÔrK”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache–ÔrL•¤type¥start£endªspecifiers¦source±ImportDeclarationÍçÍ‘ÔrM•¤type¥start£end¨imported¥local¯ImportSpecifierÍğÍıÔrN”¤type¥start£end¤nameªIdentifierÍğÍı­LengthMetricsNªIdentifierÍğÍı­LengthMetricsÔrO•¤type¥start£end¥value£raw§LiteralÍÍ°@ohos.arkui.node²"@ohos.arkui.node"L±ImportDeclarationÍÍ£‘ÔrP”¤type¥start£end¥local¶ImportDefaultSpecifierÍˆÍNªIdentifierÍˆÍ¦routerO§LiteralÍ”Í¢¬@ohos.router®"@ohos.router"L±ImportDeclarationÍ¥ÍÅ‘P¶ImportDefaultSpecifierÍ¬Í±NªIdentifierÍ¬Í±¥hilogO§LiteralÍ·ÍÄ«@ohos.hilog­"@ohos.hilog"L±ImportDeclarationÍÇÍğ‘M¯ImportSpecifierÍĞÍÖNªIdentifierÍĞÍÖ¦LoggerNªIdentifierÍĞÍÖ¦LoggerO§LiteralÍŞÍï¯../utils/Logger±'../utils/Logger'L±ImportDeclarationÍòÍ(‘P¶ImportDefaultSpecifierÍùÍ	NªIdentifierÍùÍ	°tetrahedron_napiO§LiteralÍÍ'¶libtetrahedron_napi.so¸'libtetrahedron_napi.so'L±ImportDeclarationÍ*Í\‘M¯ImportSpecifierÍ3Í?NªIdentifierÍ3Í?¬RotationTypeNªIdentifierÍ3Í?¬RotationTypeO§LiteralÍGÍ[²../utils/Constants´'../utils/Constants'

@@ -1,0 +1,4 @@
+ninja: Entering directory `D:\HUAWEI\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\arm64-v8a'
+[1/2] Building CXX object CMakeFiles/tetrahedron_napi.dir/app_napi.cpp.o
+clang++: warning: argument unused during compilation: '--gcc-toolchain=D:/HUAWEI/DevEco/DevEco Studio/sdk/default/openharmony/native/llvm' [-Wunused-command-line-argument]
+[2/2] Linking CXX shared library D:\HUAWEI\Lab2\ndk-opengl-master\entry\build\default\intermediates\cmake\default\obj\arm64-v8a\libtetrahedron_napi.so

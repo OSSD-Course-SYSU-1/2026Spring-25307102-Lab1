@@ -1,840 +1,0 @@
-Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚ_if (!("finalizeConstruction" in ViewPU.prototype)) {
-    Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
-}
-/*
- * å‚æ•°ç¼–è¾‘é¡µé¢ â€” è‡ªå®šä¹‰ç©ºé—´è§£æžæ›²é¢çš„å‚æ•°è°ƒèŠ‚
- *
- * åŠŸèƒ½ï¼š
- *   1. æ˜¾ç¤ºå½“å‰æ›²é¢çš„æ•°å­¦æ–¹ç¨‹ï¼ˆå®žæ—¶åæ˜ å‚æ•°å˜åŒ–ï¼‰
- *   2. æä¾›å¯æ‹–åŠ¨æ»‘å—è°ƒèŠ‚åŠè½´é•¿åº¦å’Œç½‘æ ¼åˆ†è¾¨çŽ‡
- *   3. ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’®é‡ç½®ä¸ºé¢„è®¾å‚æ•°
- *   4. ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’®å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶æ¸²æŸ“
- *
- * è·¯ç”±å‚æ•°ï¼ˆä»Ž ModelSelectPage ä¼ å…¥ï¼‰ï¼š
- *   { shapeType: number, shapeName: string, defaultParams: ShapeParams }
- *
- * è¿”å›žå‚æ•°ï¼ˆå›žä¼  Index.etsï¼‰ï¼š
- *   { shapeType: number, shapeParams: ShapeParams }
- *
- * å‚æ•°å«ä¹‰éšæ›²é¢ç±»åž‹å˜åŒ–ï¼š
- *   æ¤­çƒé¢: paramA/B/C = ä¸‰ä¸ªåŠè½´
- *   åŒæ›²é¢: paramA/B/C = æ–¹ç¨‹ç³»æ•°ï¼Œè…°çš„ç²—ç»†ç”± paramC å†³å®š
- *   æŠ›ç‰©é¢: paramA/B æŽ§åˆ¶å¼€å£å½¢çŠ¶ï¼ŒparamC æŽ§åˆ¶ z è½´ç¼©æ”¾
- *   æ¤­åœ†é”¥é¢: paramA/B æŽ§åˆ¶æˆªé¢æ¤­åœ†ï¼ŒparamC æŽ§åˆ¶é”¥ä½“é«˜åº¦
- */
-import router from "@ohos.router";
-import { ShapeType, getParamDescriptions, getDefaultParams } from '../utils/ModelTypes';
-class ParamEditPage extends ViewPU {
-    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
-        super(parent, __localStorage, elmtId, extraInfo);
-        if (typeof paramsLambda === "function") {
-            this.paramsGenerator_ = paramsLambda;
-        }
-        this.__shapeType = new ObservedPropertySimplePU(ShapeType.PARAMETRIC_ELLIPSOID, this, "shapeType");
-        this.__shapeName = new ObservedPropertySimplePU('', this, "shapeName");
-        this.__paramA = new ObservedPropertySimplePU(1.5, this, "paramA");
-        this.__paramB = new ObservedPropertySimplePU(1.2, this, "paramB");
-        this.__paramC = new ObservedPropertySimplePU(1.0, this, "paramC");
-        this.__resolutionU = new ObservedPropertySimplePU(32, this, "resolutionU");
-        this.__resolutionV = new ObservedPropertySimplePU(32, this, "resolutionV");
-        this.__paramDescriptions = new ObservedPropertyObjectPU([], this, "paramDescriptions");
-        this.setInitiallyProvidedValue(params);
-        this.finalizeConstruction();
-    }
-    setInitiallyProvidedValue(params) {
-        if (params.shapeType !== undefined) {
-            this.shapeType = params.shapeType;
-        }
-        if (params.shapeName !== undefined) {
-            this.shapeName = params.shapeName;
-        }
-        if (params.paramA !== undefined) {
-            this.paramA = params.paramA;
-        }
-        if (params.paramB !== undefined) {
-            this.paramB = params.paramB;
-        }
-        if (params.paramC !== undefined) {
-            this.paramC = params.paramC;
-        }
-        if (params.resolutionU !== undefined) {
-            this.resolutionU = params.resolutionU;
-        }
-        if (params.resolutionV !== undefined) {
-            this.resolutionV = params.resolutionV;
-        }
-        if (params.paramDescriptions !== undefined) {
-            this.paramDescriptions = params.paramDescriptions;
-        }
-    }
-    updateStateVars(params) {
-    }
-    purgeVariableDependenciesOnElmtId(rmElmtId) {
-        this.__shapeType.purgeDependencyOnElmtId(rmElmtId);
-        this.__shapeName.purgeDependencyOnElmtId(rmElmtId);
-        this.__paramA.purgeDependencyOnElmtId(rmElmtId);
-        this.__paramB.purgeDependencyOnElmtId(rmElmtId);
-        this.__paramC.purgeDependencyOnElmtId(rmElmtId);
-        this.__resolutionU.purgeDependencyOnElmtId(rmElmtId);
-        this.__resolutionV.purgeDependencyOnElmtId(rmElmtId);
-        this.__paramDescriptions.purgeDependencyOnElmtId(rmElmtId);
-    }
-    aboutToBeDeleted() {
-        this.__shapeType.aboutToBeDeleted();
-        this.__shapeName.aboutToBeDeleted();
-        this.__paramA.aboutToBeDeleted();
-        this.__paramB.aboutToBeDeleted();
-        this.__paramC.aboutToBeDeleted();
-        this.__resolutionU.aboutToBeDeleted();
-        this.__resolutionV.aboutToBeDeleted();
-        this.__paramDescriptions.aboutToBeDeleted();
-        SubscriberManager.Get().delete(this.id__());
-        this.aboutToBeDeletedInternal();
-    }
-    get shapeType() {
-        return this.__shapeType.get();
-    }
-    set shapeType(newValue) {
-        this.__shapeType.set(newValue);
-    }
-    get shapeName() {
-        return this.__shapeName.get();
-    }
-    set shapeName(newValue) {
-        this.__shapeName.set(newValue);
-    }
-    get paramA() {
-        return this.__paramA.get();
-    }
-    set paramA(newValue) {
-        this.__paramA.set(newValue);
-    }
-    get paramB() {
-        return this.__paramB.get();
-    }
-    set paramB(newValue) {
-        this.__paramB.set(newValue);
-    }
-    get paramC() {
-        return this.__paramC.get();
-    }
-    set paramC(newValue) {
-        this.__paramC.set(newValue);
-    }
-    get resolutionU() {
-        return this.__resolutionU.get();
-    }
-    set resolutionU(newValue) {
-        this.__resolutionU.set(newValue);
-    }
-    get resolutionV() {
-        return this.__resolutionV.get();
-    }
-    set resolutionV(newValue) {
-        this.__resolutionV.set(newValue);
-    }
-    get paramDescriptions() {
-        return this.__paramDescriptions.get();
-    }
-    set paramDescriptions(newValue) {
-        this.__paramDescriptions.set(newValue);
-    }
-    /**
-     * é¡µé¢åˆå§‹åŒ– â€” ä»Žè·¯ç”±å‚æ•°ä¸­è¯»å–æ›²é¢ç±»åž‹å’Œé»˜è®¤å‚æ•°
-     */
-    aboutToAppear() {
-        let params = router.getParams();
-        if (params) {
-            this.shapeType = params.shapeType;
-            this.shapeName = params.shapeName;
-            if (params.defaultParams) {
-                this.paramA = params.defaultParams.paramA;
-                this.paramB = params.defaultParams.paramB;
-                this.paramC = params.defaultParams.paramC;
-                this.resolutionU = params.defaultParams.resolutionU;
-                this.resolutionV = params.defaultParams.resolutionV;
-            }
-            // æ ¹æ®æ›²é¢ç±»åž‹åŠ è½½å¯¹åº”çš„å‚æ•°æè¿°ï¼ˆæ ‡ç­¾ã€èŒƒå›´ã€æ­¥é•¿ï¼‰
-            this.paramDescriptions = getParamDescriptions(this.shapeType);
-        }
-    }
-    initialRender() {
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Column.create();
-            Column.width('100%');
-            Column.height('100%');
-            Column.backgroundColor('#F5F5F5');
-        }, Column);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // =====================================================================
-            // é¡¶éƒ¨å¯¼èˆªæ 
-            // =====================================================================
-            Row.create();
-            // =====================================================================
-            // é¡¶éƒ¨å¯¼èˆªæ 
-            // =====================================================================
-            Row.width('100%');
-            // =====================================================================
-            // é¡¶éƒ¨å¯¼èˆªæ 
-            // =====================================================================
-            Row.padding({ left: 16, right: 16, top: 12, bottom: 12 });
-            // =====================================================================
-            // é¡¶éƒ¨å¯¼èˆªæ 
-            // =====================================================================
-            Row.alignItems(VerticalAlign.Center);
-        }, Row);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Button.createWithChild({ type: ButtonType.Circle, stateEffect: true });
-            Button.width(40);
-            Button.height(40);
-            Button.backgroundColor('#20000000');
-            Button.onClick(() => {
-                router.back(); // è¿”å›žæ¨¡åž‹é€‰æ‹©é¡µ
-            });
-        }, Button);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Text.create('\u2190');
-            Text.fontSize(20);
-            Text.fontColor('#333333');
-        }, Text);
-        Text.pop();
-        Button.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Text.create(this.shapeName + ' - å‚æ•°è®¾ç½®');
-            Text.fontSize(18);
-            Text.fontWeight(FontWeight.Bold);
-            Text.margin({ left: 12 });
-            Text.maxLines(1);
-            Text.textOverflow({ overflow: TextOverflow.Ellipsis });
-        }, Text);
-        Text.pop();
-        // =====================================================================
-        // é¡¶éƒ¨å¯¼èˆªæ 
-        // =====================================================================
-        Row.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // =====================================================================
-            // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-            // =====================================================================
-            Column.create();
-            // =====================================================================
-            // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-            // =====================================================================
-            Column.width('100%');
-            // =====================================================================
-            // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-            // =====================================================================
-            Column.padding(16);
-            // =====================================================================
-            // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-            // =====================================================================
-            Column.backgroundColor('#FFFFFF');
-            // =====================================================================
-            // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-            // =====================================================================
-            Column.borderRadius(12);
-            // =====================================================================
-            // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-            // =====================================================================
-            Column.margin({ left: 16, right: 16, top: 12, bottom: 12 });
-        }, Column);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Text.create(this.getEquationText());
-            Text.fontSize(14);
-            Text.fontColor('#333333');
-            Text.fontFamily('monospace');
-            Text.textAlign(TextAlign.Center);
-        }, Text);
-        Text.pop();
-        // =====================================================================
-        // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-        // =====================================================================
-        Column.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // =====================================================================
-            // å‚æ•°æ»‘å—åŒºåŸŸ â€” å¯æ»šåŠ¨
-            // =====================================================================
-            Scroll.create();
-            // =====================================================================
-            // å‚æ•°æ»‘å—åŒºåŸŸ â€” å¯æ»šåŠ¨
-            // =====================================================================
-            Scroll.layoutWeight(1);
-            // =====================================================================
-            // å‚æ•°æ»‘å—åŒºåŸŸ â€” å¯æ»šåŠ¨
-            // =====================================================================
-            Scroll.scrollBar(BarState.Off);
-        }, Scroll);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Column.create();
-        }, Column);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            ForEach.create();
-            const forEachItemGenFunction = (_item, index) => {
-                const desc = _item;
-                this.observeComponentCreation2((elmtId, isInitialRender) => {
-                    Column.create();
-                    Column.width('100%');
-                    Column.padding({ left: 20, right: 20, top: 12, bottom: 4 });
-                    Column.backgroundColor('#FFFFFF');
-                    Column.borderRadius(12);
-                    Column.margin({ left: 16, right: 16, top: 4, bottom: 4 });
-                }, Column);
-                this.observeComponentCreation2((elmtId, isInitialRender) => {
-                    // æ»‘å—æ ‡ç­¾ + å½“å‰å€¼
-                    Row.create();
-                    // æ»‘å—æ ‡ç­¾ + å½“å‰å€¼
-                    Row.width('100%');
-                }, Row);
-                this.observeComponentCreation2((elmtId, isInitialRender) => {
-                    Text.create(desc.label);
-                    Text.fontSize(14);
-                    Text.fontColor('#333333');
-                    Text.fontWeight(FontWeight.Medium);
-                }, Text);
-                Text.pop();
-                this.observeComponentCreation2((elmtId, isInitialRender) => {
-                    Blank.create();
-                }, Blank);
-                Blank.pop();
-                this.observeComponentCreation2((elmtId, isInitialRender) => {
-                    // æ˜¾ç¤ºå½“å‰å‚æ•°å€¼ï¼ˆä¿ç•™ 1 ä½å°æ•°ï¼‰
-                    Text.create(this.getParamValue(desc.key).toFixed(1));
-                    // æ˜¾ç¤ºå½“å‰å‚æ•°å€¼ï¼ˆä¿ç•™ 1 ä½å°æ•°ï¼‰
-                    Text.fontSize(14);
-                    // æ˜¾ç¤ºå½“å‰å‚æ•°å€¼ï¼ˆä¿ç•™ 1 ä½å°æ•°ï¼‰
-                    Text.fontColor('#007DFF');
-                    // æ˜¾ç¤ºå½“å‰å‚æ•°å€¼ï¼ˆä¿ç•™ 1 ä½å°æ•°ï¼‰
-                    Text.fontWeight(FontWeight.Bold);
-                }, Text);
-                // æ˜¾ç¤ºå½“å‰å‚æ•°å€¼ï¼ˆä¿ç•™ 1 ä½å°æ•°ï¼‰
-                Text.pop();
-                // æ»‘å—æ ‡ç­¾ + å½“å‰å€¼
-                Row.pop();
-                this.observeComponentCreation2((elmtId, isInitialRender) => {
-                    // æ»‘å—æŽ§ä»¶
-                    Slider.create({
-                        value: this.getParamValue(desc.key),
-                        min: desc.min,
-                        max: desc.max,
-                        step: desc.step,
-                        style: SliderStyle.InSet // åµŒå…¥å¼é£Žæ ¼
-                    });
-                    // æ»‘å—æŽ§ä»¶
-                    Slider.showTips(true);
-                    // æ»‘å—æŽ§ä»¶
-                    Slider.trackColor('#E0E0E0');
-                    // æ»‘å—æŽ§ä»¶
-                    Slider.selectedColor('#007DFF');
-                    // æ»‘å—æŽ§ä»¶
-                    Slider.onChange((value) => {
-                        // å®žæ—¶æ›´æ–°çŠ¶æ€å˜é‡ â†’ æ–¹ç¨‹é¢„è§ˆåŒæ­¥åˆ·æ–°
-                        this.setParamValue(desc.key, value);
-                    });
-                    // æ»‘å—æŽ§ä»¶
-                    Slider.width('100%');
-                    // æ»‘å—æŽ§ä»¶
-                    Slider.margin({ top: 4, bottom: 12 });
-                }, Slider);
-                Column.pop();
-            };
-            this.forEachUpdateFunction(elmtId, this.paramDescriptions, forEachItemGenFunction, undefined, true, false);
-        }, ForEach);
-        ForEach.pop();
-        Column.pop();
-        // =====================================================================
-        // å‚æ•°æ»‘å—åŒºåŸŸ â€” å¯æ»šåŠ¨
-        // =====================================================================
-        Scroll.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // =====================================================================
-            // åº•éƒ¨æ“ä½œæŒ‰é’®
-            // =====================================================================
-            Row.create({ space: 16 });
-            // =====================================================================
-            // åº•éƒ¨æ“ä½œæŒ‰é’®
-            // =====================================================================
-            Row.width('100%');
-            // =====================================================================
-            // åº•éƒ¨æ“ä½œæŒ‰é’®
-            // =====================================================================
-            Row.padding({ left: 16, right: 16, top: 12, bottom: 24 });
-            // =====================================================================
-            // åº•éƒ¨æ“ä½œæŒ‰é’®
-            // =====================================================================
-            Row.backgroundColor('#FAFAFA');
-        }, Row);
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.createWithLabel('æ¢å¤é»˜è®¤');
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.fontSize(16);
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.type(ButtonType.Normal);
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.backgroundColor('#F0F0F0');
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.fontColor('#333333');
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.borderRadius(24);
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.layoutWeight(1);
-            // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-            Button.onClick(() => {
-                let defaults = getDefaultParams();
-                this.paramA = defaults.paramA;
-                this.paramB = defaults.paramB;
-                this.paramC = defaults.paramC;
-                this.resolutionU = defaults.resolutionU;
-                this.resolutionV = defaults.resolutionV;
-            });
-        }, Button);
-        // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-        Button.pop();
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.createWithLabel('ç¡®è®¤åº”ç”¨');
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.fontSize(16);
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.type(ButtonType.Normal);
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.backgroundColor('#007DFF');
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.fontColor('#FFFFFF');
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.borderRadius(24);
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.layoutWeight(1);
-            // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-            Button.onClick(() => {
-                // ç»„è£…å‚æ•°å¯¹è±¡
-                let shapeParams = {
-                    paramA: this.paramA,
-                    paramB: this.paramB,
-                    paramC: this.paramC,
-                    resolutionU: this.resolutionU,
-                    resolutionV: this.resolutionV
-                };
-                // è¿”å›žä¸»é¡µé¢å¹¶ä¼ é€’å‚æ•°
-                // æ³¨æ„ï¼šè¿™é‡Œç”¨çš„æ˜¯ router.back() ä¼šè¿”å›žåˆ° Index.etsï¼Œ
-                // Index.ets çš„ onPageShow() ä¼šæŽ¥æ”¶å‚æ•°å¹¶è°ƒç”¨ NAPI
-                router.back({
-                    url: 'pages/Index',
-                    params: {
-                        shapeType: this.shapeType,
-                        shapeParams: shapeParams
-                    }
-                });
-            });
-        }, Button);
-        // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-        Button.pop();
-        // =====================================================================
-        // åº•éƒ¨æ“ä½œæŒ‰é’®
-        // =====================================================================
-        Row.pop();
-        Column.pop();
-    }
-    // =====================================================================
-    // å‚æ•°å€¼å­˜å–è¾…åŠ©å‡½æ•° â€” é€šè¿‡ key å­—ç¬¦ä¸²åŠ¨æ€è¯»å†™çŠ¶æ€å˜é‡
-    // =====================================================================
-    /** æ ¹æ®å‚æ•°é”®åèŽ·å–å½“å‰å€¼ */
-    getParamValue(key) {
-        switch (key) {
-            case 'paramA': return this.paramA;
-            case 'paramB': return this.paramB;
-            case 'paramC': return this.paramC;
-            case 'resolutionU': return this.resolutionU;
-            case 'resolutionV': return this.resolutionV;
-            default: return 0;
-        }
-    }
-    /** æ ¹æ®å‚æ•°é”®åè®¾ç½®æ–°å€¼ */
-    setParamValue(key, value) {
-        switch (key) {
-            case 'paramA':
-                this.paramA = value;
-                break;
-            case 'paramB':
-                this.paramB = value;
-                break;
-            case 'paramC':
-                this.paramC = value;
-                break;
-            case 'resolutionU':
-                this.resolutionU = value;
-                break;
-            case 'resolutionV':
-                this.resolutionV = value;
-                break;
-        }
-    }
-    // =====================================================================
-    // æ–¹ç¨‹é¢„è§ˆæ–‡æœ¬ç”Ÿæˆ â€” å°†å½“å‰å‚æ•°ä»£å…¥æ ‡å‡†æ–¹ç¨‹
-    // =====================================================================
-    /**
-     * @brief æ ¹æ®å½“å‰æ›²é¢ç±»åž‹å’Œå‚æ•°å€¼ç”Ÿæˆå¯è¯»çš„æ•°å­¦æ–¹ç¨‹å­—ç¬¦ä¸²
-     *
-     * ä½¿ç”¨ Unicode ä¸Šæ ‡æ•°å­—å­—ç¬¦ (Â²) ä½¿æ–¹ç¨‹æ›´æŽ¥è¿‘æ•°å­¦ä¹¦å†™ä¹ æƒ¯ã€‚
-     */
-    getEquationText() {
-        switch (this.shapeType) {
-            case ShapeType.PARAMETRIC_ELLIPSOID:
-                // æ¤­çƒé¢: xÂ²/aÂ² + yÂ²/bÂ² + zÂ²/cÂ² = 1
-                return 'x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-                    this.paramB.toFixed(1) + '\u00B2 + z\u00B2/' +
-                    this.paramC.toFixed(1) + '\u00B2 = 1';
-            case ShapeType.PARAMETRIC_HYPERBOLOID:
-                // å•å¶åŒæ›²é¢: xÂ²/aÂ² + yÂ²/bÂ² âˆ’ zÂ²/cÂ² = 1
-                return 'x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-                    this.paramB.toFixed(1) + '\u00B2 \u2212 z\u00B2/' +
-                    this.paramC.toFixed(1) + '\u00B2 = 1';
-            case ShapeType.PARAMETRIC_PARABOLOID:
-                // æ¤­åœ†æŠ›ç‰©é¢: z = xÂ²/aÂ² + yÂ²/bÂ²
-                return 'z = x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-                    this.paramB.toFixed(1) + '\u00B2';
-            case ShapeType.PARAMETRIC_ELLIPTIC_CONE:
-                // æ¤­åœ†é”¥é¢: xÂ²/aÂ² + yÂ²/bÂ² = zÂ²/cÂ²
-                return 'x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-                    this.paramB.toFixed(1) + '\u00B2 = z\u00B2/' +
-                    this.paramC.toFixed(1) + '\u00B2';
-            default:
-                return '';
-        }
-    }
-    rerender() {
-        this.updateDirtyElements();
-    }
-    static getEntryName() {
-        return "ParamEditPage";
-    }
-}
-registerNamedRoute(() => new ParamEditPage(undefined, {}), "", { bundleName: "com.samples.ndkopengl", moduleName: "entry", pagePath: "pages/ParamEditPage", pageFullPath: "entry/src/main/ets/pages/ParamEditPage", integratedHsp: "false", moduleType: "followWithHap" });
-//# sourceMappingURL=ParamEditPage.js.mapÂ’Ù_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsÙHD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\ModelTypes.etsÙKD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\pages\ParamEditPage.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath§checker¬shouldEmitJs¥entryÃÂÙ&D:\HUAWEI\Lab2\ndk-opengl-master\entryÙ D:\HUAWEI\Lab2\ndk-opengl-master¥entry¥1.0.0Ô  Ù&D:\HUAWEI\Lab2\ndk-opengl-master\entryÔrCÜ ®¬getNodeCount²getIdentifierCount®getSymbolCount¬getTypeCountµgetInstantiationCountµgetRelationCacheSizes±isUndefinedSymbol±isArgumentsSymbol¯isUnknownSymbol¯getMergedSymbol®getDiagnostics´getGlobalDiagnostics´getRecursionIdentity¶getUnmatchedProperties¹getTypeOfSymbolAtLocation¯getTypeOfSymbolÙ(getSymbolsOfParameterPropertyDeclaration·getDeclaredTypeOfSymbol³getPropertiesOfType±getPropertyOfTypeÙ"getPrivateIdentifierPropertyOfType·getTypeOfPropertyOfType²getIndexInfoOfType³getIndexInfosOfTypeºgetIndexInfosOfIndexSymbol³getSignaturesOfType²getIndexTypeOfType¬getIndexType¬getBaseTypes¸getBaseTypeOfLiteralType®getWidenedType³getTypeFromTypeNode°getParameterTypeÙ$getParameterIdentifierNameAtPosition¸getPromisedTypeOfPromise®getAwaitedType¸getReturnTypeOfSignature®isNullableType¯getNullableType²getNonNullableType²getNonOptionalType°getTypeArguments®typeToTypeNodeÙ$indexInfoToIndexSignatureDeclaration¿signatureToSignatureDeclaration²symbolToEntityName²symbolToExpression¬symbolToNodeÙ!symbolToTypeParameterDeclarations¼symbolToParameterDeclarationºtypeParameterToDeclaration±getSymbolsInScope³getSymbolAtLocation·getIndexInfosAtLocationÙ!getShorthandAssignmentValueSymbolÙ#getExportSpecifierLocalTargetSymbol·getExportSymbolOfSymbol±getTypeAtLocationºgetTypeAtLocationForLinterÙ tryGetTypeAtLocationWithoutCheckºgetTypeOfAssignmentPatternÙ*getPropertySymbolOfDestructuringAssignment±signatureToString¬typeToString®symbolToStringµtypePredicateToString®writeSignature©writeType«writeSymbol²writeTypePredicate¼getAugmentedPropertiesOfType®getRootSymbols²getSymbolOfExpando±getContextualTypeÙ(getContextualTypeForObjectLiteralElementÙ#getContextualTypeForArgumentAtIndexÙ getContextualTypeForJsxAttribute²isContextSensitiveÙ!getTypeOfPropertyOfContextualTypeµgetFullyQualifiedNameÙ#tryGetResolvedSignatureWithoutCheck´getResolvedSignatureÙ/getResolvedSignatureForStringLiteralCompletionsÙ$getResolvedSignatureForSignatureHelpµgetExpandedParameters¹hasEffectiveRestParameterºcontainsArgumentsReference°getConstantValueµisValidPropertyAccessÙ#isValidPropertyAccessForCompletions»getSignatureFromDeclarationºisImplementationOfOverload¹getImmediateAliasedSymbol°getAliasedSymbol¯getEmitResolver²getExportsOfModule¿getExportsAndPropertiesOfModuleÙ forEachExportAndPropertyOfModule¯getSymbolWalker±getAmbientModules¹getJsxIntrinsicTagNamesAt³isOptionalParameter»tryGetMemberInModuleExportsÙ(tryGetMemberInModuleExportsAndProperties´tryFindAmbientModuleÙ(tryFindAmbientModuleWithoutAugmentations¯getApparentType¬getUnionType²isTypeAssignableTo³createAnonymousType¯createSignature¬createSymbol¯createIndexInfoªgetAnyType­getStringType­getNumberType±createPromiseType¯createArrayType¹getElementTypeOfArrayType®getBooleanType¬getFalseType«getTrueType«getVoidType°getUndefinedType«getNullType¯getESSymbolType¬getNeverType¯getOptionalType®getPromiseType²getPromiseLikeType´getAsyncIterableType²isSymbolAccessible«isArrayType«isTupleType¯isArrayLikeTypeÙ#isTypeInvalidDueToUnionDiscriminantºgetExactOptionalProperties¿getAllPossiblePropertiesOfTypesÙ(getSuggestedSymbolForNonexistentPropertyÙ#getSuggestionForNonexistentPropertyÙ,getSuggestedSymbolForNonexistentJSXAttributeÙ&getSuggestedSymbolForNonexistentSymbolÙ!getSuggestionForNonexistentSymbolÙ&getSuggestedSymbolForNonexistentModuleÙ!getSuggestionForNonexistentExportÙ+getSuggestedSymbolForNonexistentClassMember·getBaseConstraintOfType»getDefaultFromTypeParameter«resolveName¯getJsxNamespaceµgetJsxFragmentFactory¸getAccessibleSymbolChain»getTypePredicateOfSignature¹resolveExternalModuleName»resolveExternalModuleSymbol°tryGetThisTypeAt¹getTypeArgumentConstraint¸getSuggestionDiagnostics¸runWithCancellationTokenÙ3getLocalTypeParametersOfClassOrInterfaceOrTypeAlias´isDeclarationVisible´isPropertyAccessible»getTypeOnlyAliasDeclaration¿getMemberOverrideModifierStatusÙ!isTypeParameterPossiblyReferenced²getConstEnumRelate´clearConstEnumRelateµdeleteConstEnumRelateÙ$getTypeArgumentsForResolvedSignatureµgetCheckedSourceFilesÙ"collectHaveTsNoCheckFilesForLinter·clearQualifiedNameCache®isStaticRecord²isStaticSourceFileÔ  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  ÃÃÚ*/*
- * å‚æ•°ç¼–è¾‘é¡µé¢ â€” è‡ªå®šä¹‰ç©ºé—´è§£æžæ›²é¢çš„å‚æ•°è°ƒèŠ‚
- *
- * åŠŸèƒ½ï¼š
- *   1. æ˜¾ç¤ºå½“å‰æ›²é¢çš„æ•°å­¦æ–¹ç¨‹ï¼ˆå®žæ—¶åæ˜ å‚æ•°å˜åŒ–ï¼‰
- *   2. æä¾›å¯æ‹–åŠ¨æ»‘å—è°ƒèŠ‚åŠè½´é•¿åº¦å’Œç½‘æ ¼åˆ†è¾¨çŽ‡
- *   3. ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’®é‡ç½®ä¸ºé¢„è®¾å‚æ•°
- *   4. ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’®å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶æ¸²æŸ“
- *
- * è·¯ç”±å‚æ•°ï¼ˆä»Ž ModelSelectPage ä¼ å…¥ï¼‰ï¼š
- *   { shapeType: number, shapeName: string, defaultParams: ShapeParams }
- *
- * è¿”å›žå‚æ•°ï¼ˆå›žä¼  Index.etsï¼‰ï¼š
- *   { shapeType: number, shapeParams: ShapeParams }
- *
- * å‚æ•°å«ä¹‰éšæ›²é¢ç±»åž‹å˜åŒ–ï¼š
- *   æ¤­çƒé¢: paramA/B/C = ä¸‰ä¸ªåŠè½´
- *   åŒæ›²é¢: paramA/B/C = æ–¹ç¨‹ç³»æ•°ï¼Œè…°çš„ç²—ç»†ç”± paramC å†³å®š
- *   æŠ›ç‰©é¢: paramA/B æŽ§åˆ¶å¼€å£å½¢çŠ¶ï¼ŒparamC æŽ§åˆ¶ z è½´ç¼©æ”¾
- *   æ¤­åœ†é”¥é¢: paramA/B æŽ§åˆ¶æˆªé¢æ¤­åœ†ï¼ŒparamC æŽ§åˆ¶é”¥ä½“é«˜åº¦
- */
-
-import { router } from '@kit.ArkUI';
-import {
-  ShapeType,
-  ShapeParams,
-  ParamDescription,
-  getParamDescriptions,
-  getDefaultParams
-} from '../utils/ModelTypes';
-
-/** è·¯ç”±ä¼ å…¥å‚æ•°çš„ç±»åž‹å®šä¹‰ */
-interface ParamEditParams {
-  shapeType: number;
-  shapeName: string;
-  defaultParams: ShapeParams;
-}
-
-@Entry
-@Component
-struct ParamEditPage {
-  /** å½“å‰ç¼–è¾‘çš„æ›²é¢ç±»åž‹ */
-  @State shapeType: ShapeType = ShapeType.PARAMETRIC_ELLIPSOID;
-  /** æ›²é¢ä¸­æ–‡åç§° */
-  @State shapeName: string = '';
-  /** å‚æ•° a â€” åŠè½´é•¿åº¦ / æ–¹ç¨‹ç³»æ•° */
-  @State paramA: number = 1.5;
-  /** å‚æ•° b â€” åŠè½´é•¿åº¦ / æ–¹ç¨‹ç³»æ•° */
-  @State paramB: number = 1.2;
-  /** å‚æ•° c â€” åŠè½´é•¿åº¦ / æ–¹ç¨‹ç³»æ•° */
-  @State paramC: number = 1.0;
-  /** u æ–¹å‘ç½‘æ ¼åˆ†è¾¨çŽ‡ï¼ˆçŽ¯å‘/ç»åº¦ï¼‰ */
-  @State resolutionU: number = 32;
-  /** v æ–¹å‘ç½‘æ ¼åˆ†è¾¨çŽ‡ï¼ˆçºµå‘/çº¬åº¦/å¾„å‘ï¼‰ */
-  @State resolutionV: number = 32;
-  /** å‚æ•°æ»‘å—æè¿°åˆ—è¡¨ï¼ˆç”±æ›²é¢ç±»åž‹å†³å®šï¼‰ */
-  @State paramDescriptions: ParamDescription[] = [];
-
-  /**
-   * é¡µé¢åˆå§‹åŒ– â€” ä»Žè·¯ç”±å‚æ•°ä¸­è¯»å–æ›²é¢ç±»åž‹å’Œé»˜è®¤å‚æ•°
-   */
-  aboutToAppear(): void {
-    let params = router.getParams() as ParamEditParams;
-    if (params) {
-      this.shapeType = params.shapeType as ShapeType;
-      this.shapeName = params.shapeName;
-      if (params.defaultParams) {
-        this.paramA = params.defaultParams.paramA;
-        this.paramB = params.defaultParams.paramB;
-        this.paramC = params.defaultParams.paramC;
-        this.resolutionU = params.defaultParams.resolutionU;
-        this.resolutionV = params.defaultParams.resolutionV;
-      }
-      // æ ¹æ®æ›²é¢ç±»åž‹åŠ è½½å¯¹åº”çš„å‚æ•°æè¿°ï¼ˆæ ‡ç­¾ã€èŒƒå›´ã€æ­¥é•¿ï¼‰
-      this.paramDescriptions = getParamDescriptions(this.shapeType);
-    }
-  }
-
-  build() {
-    Column() {
-      // =====================================================================
-      // é¡¶éƒ¨å¯¼èˆªæ 
-      // =====================================================================
-      Row() {
-        Button({ type: ButtonType.Circle, stateEffect: true }) {
-          Text('\u2190')           // â† å·¦ç®­å¤´
-            .fontSize(20)
-            .fontColor('#333333')
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor('#20000000')
-        .onClick(() => {
-          router.back();  // è¿”å›žæ¨¡åž‹é€‰æ‹©é¡µ
-        })
-
-        Text(this.shapeName + ' - å‚æ•°è®¾ç½®')
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .margin({ left: 12 })
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-      .alignItems(VerticalAlign.Center)
-
-      // =====================================================================
-      // æ–¹ç¨‹é¢„è§ˆåŒºåŸŸ â€” å®žæ—¶åæ˜ å‚æ•°å˜åŒ–
-      // =====================================================================
-      Column() {
-        Text(this.getEquationText())
-          .fontSize(14)
-          .fontColor('#333333')
-          .fontFamily('monospace')   // ç­‰å®½å­—ä½“ï¼Œæ•°å­¦è¡¨è¾¾å¼æ›´æ•´é½
-          .textAlign(TextAlign.Center)
-      }
-      .width('100%')
-      .padding(16)
-      .backgroundColor('#FFFFFF')
-      .borderRadius(12)
-      .margin({ left: 16, right: 16, top: 12, bottom: 12 })
-
-      // =====================================================================
-      // å‚æ•°æ»‘å—åŒºåŸŸ â€” å¯æ»šåŠ¨
-      // =====================================================================
-      Scroll() {
-        Column() {
-          ForEach(this.paramDescriptions, (desc: ParamDescription, index: number) => {
-            Column() {
-              // æ»‘å—æ ‡ç­¾ + å½“å‰å€¼
-              Row() {
-                Text(desc.label)
-                  .fontSize(14)
-                  .fontColor('#333333')
-                  .fontWeight(FontWeight.Medium)
-
-                Blank()
-
-                // æ˜¾ç¤ºå½“å‰å‚æ•°å€¼ï¼ˆä¿ç•™ 1 ä½å°æ•°ï¼‰
-                Text(this.getParamValue(desc.key).toFixed(1))
-                  .fontSize(14)
-                  .fontColor('#007DFF')
-                  .fontWeight(FontWeight.Bold)
-              }
-              .width('100%')
-
-              // æ»‘å—æŽ§ä»¶
-              Slider({
-                value: this.getParamValue(desc.key),
-                min: desc.min,
-                max: desc.max,
-                step: desc.step,
-                style: SliderStyle.InSet   // åµŒå…¥å¼é£Žæ ¼
-              })
-                .showTips(true)            // æ‹–åŠ¨æ—¶æ˜¾ç¤ºæ•°å€¼æ°”æ³¡
-                .trackColor('#E0E0E0')     // æœªå¡«å……è½¨é“é¢œè‰²
-                .selectedColor('#007DFF')  // å·²å¡«å……è½¨é“é¢œè‰²
-                .onChange((value: number) => {
-                  // å®žæ—¶æ›´æ–°çŠ¶æ€å˜é‡ â†’ æ–¹ç¨‹é¢„è§ˆåŒæ­¥åˆ·æ–°
-                  this.setParamValue(desc.key, value);
-                })
-                .width('100%')
-                .margin({ top: 4, bottom: 12 })
-            }
-            .width('100%')
-            .padding({ left: 20, right: 20, top: 12, bottom: 4 })
-            .backgroundColor('#FFFFFF')
-            .borderRadius(12)
-            .margin({ left: 16, right: 16, top: 4, bottom: 4 })
-          })
-        }
-      }
-      .layoutWeight(1)        // å æ®å‰©ä½™ç©ºé—´
-      .scrollBar(BarState.Off) // éšè—æ»šåŠ¨æ¡
-
-      // =====================================================================
-      // åº•éƒ¨æ“ä½œæŒ‰é’®
-      // =====================================================================
-      Row({ space: 16 }) {
-        // ã€Œæ¢å¤é»˜è®¤ã€æŒ‰é’® â€” é‡ç½®æ‰€æœ‰å‚æ•°ä¸ºé¢„è®¾å€¼
-        Button('æ¢å¤é»˜è®¤')
-          .fontSize(16)
-          .type(ButtonType.Normal)
-          .backgroundColor('#F0F0F0')
-          .fontColor('#333333')
-          .borderRadius(24)
-          .layoutWeight(1)
-          .onClick(() => {
-            let defaults = getDefaultParams();
-            this.paramA = defaults.paramA;
-            this.paramB = defaults.paramB;
-            this.paramC = defaults.paramC;
-            this.resolutionU = defaults.resolutionU;
-            this.resolutionV = defaults.resolutionV;
-          })
-
-        // ã€Œç¡®è®¤åº”ç”¨ã€æŒ‰é’® â€” å°†å‚æ•°ä¼ å›žä¸»é¡µé¢å¹¶è§¦å‘æ¸²æŸ“
-        Button('ç¡®è®¤åº”ç”¨')
-          .fontSize(16)
-          .type(ButtonType.Normal)
-          .backgroundColor('#007DFF')
-          .fontColor('#FFFFFF')
-          .borderRadius(24)
-          .layoutWeight(1)
-          .onClick(() => {
-            // ç»„è£…å‚æ•°å¯¹è±¡
-            let shapeParams: ShapeParams = {
-              paramA: this.paramA,
-              paramB: this.paramB,
-              paramC: this.paramC,
-              resolutionU: this.resolutionU,
-              resolutionV: this.resolutionV
-            };
-
-            // è¿”å›žä¸»é¡µé¢å¹¶ä¼ é€’å‚æ•°
-            // æ³¨æ„ï¼šè¿™é‡Œç”¨çš„æ˜¯ router.back() ä¼šè¿”å›žåˆ° Index.etsï¼Œ
-            // Index.ets çš„ onPageShow() ä¼šæŽ¥æ”¶å‚æ•°å¹¶è°ƒç”¨ NAPI
-            router.back({
-              url: 'pages/Index',
-              params: {
-                shapeType: this.shapeType,
-                shapeParams: shapeParams
-              }
-            });
-          })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 24 })
-      .backgroundColor('#FAFAFA')
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F5F5F5')
-  }
-
-  // =====================================================================
-  // å‚æ•°å€¼å­˜å–è¾…åŠ©å‡½æ•° â€” é€šè¿‡ key å­—ç¬¦ä¸²åŠ¨æ€è¯»å†™çŠ¶æ€å˜é‡
-  // =====================================================================
-
-  /** æ ¹æ®å‚æ•°é”®åèŽ·å–å½“å‰å€¼ */
-  getParamValue(key: string): number {
-    switch (key) {
-      case 'paramA': return this.paramA;
-      case 'paramB': return this.paramB;
-      case 'paramC': return this.paramC;
-      case 'resolutionU': return this.resolutionU;
-      case 'resolutionV': return this.resolutionV;
-      default: return 0;
-    }
-  }
-
-  /** æ ¹æ®å‚æ•°é”®åè®¾ç½®æ–°å€¼ */
-  setParamValue(key: string, value: number): void {
-    switch (key) {
-      case 'paramA': this.paramA = value; break;
-      case 'paramB': this.paramB = value; break;
-      case 'paramC': this.paramC = value; break;
-      case 'resolutionU': this.resolutionU = value; break;
-      case 'resolutionV': this.resolutionV = value; break;
-    }
-  }
-
-  // =====================================================================
-  // æ–¹ç¨‹é¢„è§ˆæ–‡æœ¬ç”Ÿæˆ â€” å°†å½“å‰å‚æ•°ä»£å…¥æ ‡å‡†æ–¹ç¨‹
-  // =====================================================================
-
-  /**
-   * @brief æ ¹æ®å½“å‰æ›²é¢ç±»åž‹å’Œå‚æ•°å€¼ç”Ÿæˆå¯è¯»çš„æ•°å­¦æ–¹ç¨‹å­—ç¬¦ä¸²
-   *
-   * ä½¿ç”¨ Unicode ä¸Šæ ‡æ•°å­—å­—ç¬¦ (Â²) ä½¿æ–¹ç¨‹æ›´æŽ¥è¿‘æ•°å­¦ä¹¦å†™ä¹ æƒ¯ã€‚
-   */
-  getEquationText(): string {
-    switch (this.shapeType) {
-      case ShapeType.PARAMETRIC_ELLIPSOID:
-        // æ¤­çƒé¢: xÂ²/aÂ² + yÂ²/bÂ² + zÂ²/cÂ² = 1
-        return 'x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-          this.paramB.toFixed(1) + '\u00B2 + z\u00B2/' +
-          this.paramC.toFixed(1) + '\u00B2 = 1';
-      case ShapeType.PARAMETRIC_HYPERBOLOID:
-        // å•å¶åŒæ›²é¢: xÂ²/aÂ² + yÂ²/bÂ² âˆ’ zÂ²/cÂ² = 1
-        return 'x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-          this.paramB.toFixed(1) + '\u00B2 \u2212 z\u00B2/' +
-          this.paramC.toFixed(1) + '\u00B2 = 1';
-      case ShapeType.PARAMETRIC_PARABOLOID:
-        // æ¤­åœ†æŠ›ç‰©é¢: z = xÂ²/aÂ² + yÂ²/bÂ²
-        return 'z = x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-          this.paramB.toFixed(1) + '\u00B2';
-      case ShapeType.PARAMETRIC_ELLIPTIC_CONE:
-        // æ¤­åœ†é”¥é¢: xÂ²/aÂ² + yÂ²/bÂ² = zÂ²/cÂ²
-        return 'x\u00B2/' + this.paramA.toFixed(1) + '\u00B2 + y\u00B2/' +
-          this.paramB.toFixed(1) + '\u00B2 = z\u00B2/' +
-          this.paramC.toFixed(1) + '\u00B2';
-      default:
-        return '';
-    }
-  }
-}
-ÀÔrD’¬@ohos.router³../utils/ModelTypesÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙ_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsÔrF‘¯hostModulesInfo“ÔrG’²hostDependencyName®hostModuleName¬@ohos.router¥entryG¬@ohos.router¥entryG¬@ohos.router¥entryÃªoh-resolveÂEAÂÙHD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\ModelTypes.etsAÃªoh-resolveÂ“ÔrH–§version¤fileªsourceRoot§sources¥names¨mappings°ParamEditPage.js ‘±ParamEditPage.etsÜø‘”    ‘” –”   ” 	” ” ”! #”" $œ”   ” ”	 ” ” ”( ”* ”: ”< ”ÌB ”ÌW ”ÌX ’” (” (‘” & ””8 * ”ÌA *)”ÌB **”ÌV *>’”8 ,”: ,’”5 .”8 .’”5 0”8 0’”5 2”8 2’”: 4”< 4!’”: 6”< 6!’”Ì@ 81”ÌB 83‘” $’” *	” *’” *	” *’” ,	” ,’” ,	” ,’” .	” .’” .	” .’” 0	” 0’” 0	” 0’” 2	” 2’” 2	” 2’” 4	” 4’” 4	” 4’” 6	” 6’” 6	” 6’” 8	” 8’” 8	” 8‘” :‘” <’” =” =™” >” >” >” >” >” >”% >!”' >6”( >7”” ?” ?” ?” ?™” Ì@” Ì@
-” Ì@” Ì@” Ì@”# Ì@”$ Ì@”- Ì@4”. Ì@5™” ÌA” ÌA
-” ÌA” ÌA” ÌA”# ÌA”$ ÌA”- ÌA'”. ÌA(–” ÌB” ÌB
-” ÌB” ÌB”$ ÌB”& ÌB ›” ÌC” ÌC” ÌC” ÌC” ÌC”$ ÌC”% ÌC”2 ÌC*”3 ÌC+”9 ÌC1”: ÌC2›” ÌD” ÌD” ÌD” ÌD” ÌD”$ ÌD”% ÌD”2 ÌD*”3 ÌD+”9 ÌD1”: ÌD2›” ÌE” ÌE” ÌE” ÌE” ÌE”$ ÌE”% ÌE”2 ÌE*”3 ÌE+”9 ÌE1”: ÌE2›” ÌF” ÌF” ÌF”  ÌF”# ÌF”) ÌF!”* ÌF"”7 ÌF/”8 ÌF0”ÌC ÌF;”ÌD ÌF<›” ÌG” ÌG” ÌG”  ÌG”# ÌG”) ÌG!”* ÌG"”7 ÌG/”8 ÌG0”ÌC ÌG;”ÌD ÌG<‘” ÌH’” ÌI”( ÌI"œ” ÌJ” ÌJ
-” ÌJ”" ÌJ”% ÌJ”9 ÌJ3”: ÌJ4”> ÌJ8”? ÌJ9”ÌH ÌJÌB”ÌI ÌJÌC”ÌJ ÌJÌD‘”	 ÌK’” ÌL” ÌL‘” ÌN’” ÌO” ÌO
-–” ÌO” ÌO
-” Ìç” Ìç
-” Ìç” Ìç–” ÌO” ÌO
-” Ìè” Ìè” Ìè”  Ìè–” ÌO” ÌO
-” Ìé”" Ìé”# Ìé”, Ìé’” ÌP”ÌT ÌPÌN’” ÌQ” ÌQ’” ÌR”ÌT ÌRÌN’” ÌS” ÌS	’” ÌP”ÌT ÌPÌN’” ÌQ” ÌQ’” ÌR”ÌT ÌRÌN–” ÌS” ÌS	” Ìg” Ìg” Ìg” Ìg’” ÌP”ÌT ÌPÌN’” ÌQ” ÌQ’” ÌR”ÌT ÌRÌNÜ ” ÌS” ÌS	” Ìh” Ìh” Ìh” Ìh” Ìh”  Ìh”" Ìh”$ Ìh”) Ìh ”+ Ìh"”- Ìh$”/ Ìh&”2 Ìh)”4 Ìh+”6 Ìh-”8 Ìh/”> Ìh5”Ì@ Ìh7”ÌB Ìh9”ÌD Ìh;’” ÌP”ÌT ÌPÌN’” ÌQ” ÌQ’” ÌR”ÌT ÌRÌN˜” ÌS” ÌS	” Ìi” Ìi” Ìi”( Ìi”) Ìi ”/ Ìi&ž” ÌT” ÌT”# ÌT”% ÌT”) ÌT”+ ÌT”5 ÌT!”6 ÌT"”< ÌT(”> ÌT*”ÌI ÌT5”ÌK ÌT7”ÌO ÌT;”ÌQ ÌT=–” ÌT” ÌT” ÌY	” ÌY” ÌY” ÌY–” ÌT” ÌT” ÌZ	” ÌZ” ÌZ” ÌZ–” ÌT” ÌT” Ì[	”" Ì[”# Ì[”. Ì[$—” ÌT” ÌT” Ì\	” Ì\” Ì\” Ì\”  Ì\˜” Ì]
-” Ì]” Ì]” Ì]” Ì]” Ì]” Ì]”) Ì]$’” Ì^” Ì^	”” ÌU
-” ÌU” ÌU”  ÌU–” ÌU
-” ÌU” ÌV” ÌV” ÌV” ÌV–” ÌU
-” ÌU” ÌW” ÌW” ÌW”$ ÌW ’” ÌU
-” ÌU’” ÌT” ÌT˜” Ì`” Ì`” Ì`” Ì`” Ì`”& Ì`”) Ì`”2 Ì`'–” Ì`” Ì`” Ìa” Ìa” Ìa” Ìa˜” Ì`” Ì`” Ìb” Ìb” Ìb”& Ìb ”' Ìb!”+ Ìb%š” Ì`” Ì`” Ìc” Ìc” Ìc” Ìc” Ìc”  Ìc”" Ìc”$ Ìc–” Ì`” Ì`” Ìd” Ìd” Ìd” Ìdœ” Ì`” Ì`” Ìe” Ìe” Ìe”  Ìe”( Ìe"”* Ìe$”6 Ìe0”7 Ìe1”? Ìe9”ÌA Ìe;’” Ì`” Ì`’” ÌP”ÌP ÌPÌN’” ÌQ” ÌQ’” ÌR”ÌP ÌRÌN’” ÌS” ÌS	’” Ìk”ÌT ÌkÌN’” Ìl”  Ìl’” Ìm”ÌT ÌmÌN’” Ìn” Ìn’” Ìk”ÌT ÌkÌN’” Ìl”  Ìl’” Ìm”ÌT ÌmÌN–” Ìn” Ìn” Ìu” Ìu” Ìu” Ìu’” Ìk”ÌT ÌkÌN’” Ìl”  Ìl’” Ìm”ÌT ÌmÌN–” Ìn” Ìn” Ìv” Ìv” Ìv” Ìv’” Ìk”ÌT ÌkÌN’” Ìl”  Ìl’” Ìm”ÌT ÌmÌN–” Ìn” Ìn” Ìw”" Ìw”# Ìw”, Ìw ’” Ìk”ÌT ÌkÌN’” Ìl”  Ìl’” Ìm”ÌT ÌmÌN–” Ìn” Ìn” Ìx” Ìx”  Ìx”" Ìx’” Ìk”ÌT ÌkÌN’” Ìl”  Ìl’” Ìm”ÌT ÌmÌNÜ ” Ìn” Ìn” Ìy” Ìy” Ìy” Ìy”  Ìy”" Ìy”$ Ìy”& Ìy”+ Ìy”- Ìy!”/ Ìy#”1 Ìy%”4 Ìy(”6 Ìy*”8 Ìy,”: Ìy.”Ì@ Ìy4”ÌB Ìy6”ÌD Ìy8”ÌF Ìy:—” Ìo” Ìo” Ìo” Ìo” Ìo”, Ìo!”. Ìo#–” Ìo” Ìo” Ìp” Ìp” Ìp” Ìp–” Ìo” Ìo” Ìq” Ìq” Ìq”$ Ìq–” Ìo” Ìo” Ìr” Ìr” Ìr”' Ìr!˜” Ìo” Ìo” Ìs” Ìs” Ìs”$ Ìs”% Ìs”+ Ìs%’” Ìo” Ìo’” Ìk”ÌP ÌkÌN’” Ìl” Ìl’” Ìm”ÌP ÌmÌN’” Ìn” Ìn’” Ì{”ÌT Ì{ÌN’” Ì|” Ì|’” Ì}”ÌT Ì}ÌN’” Ì~” Ì~’” Ì{”ÌT Ì{ÌN’” Ì|” Ì|’” Ì}”ÌT Ì}ÌN–” Ì~” Ì~” Ì­” Ì­”  Ì­”! Ì­’” Ì{”ÌT Ì{ÌN’” Ì|” Ì|’” Ì}”ÌT Ì}ÌN˜” Ì~” Ì~” Ì®” Ì®” Ì®”% Ì®”& Ì®”) Ì®’” Ì” Ì’” Ì€
-” Ì€’”3 Ì€ÌC”8 Ì€ÌP’” Ì” Ì–” Ì” Ì” Ì¥”  Ì¥”! Ì¥”' Ì¥Ü ” Ì” Ì” Ì¦”" Ì¦”# Ì¦”% Ì¦”) Ì¦”+ Ì¦”- Ì¦”/ Ì¦!”4 Ì¦&”6 Ì¦(”8 Ì¦*”: Ì¦,”= Ì¦/”? Ì¦1”ÌA Ì¦3”ÌC Ì¦5”ÌI Ì¦;”ÌK Ì¦=”ÌL Ì¦>”ÌN Ì¦Ì@–” Ì” Ì” Ì§”* Ì§”+ Ì§”4 Ì§&–” Ì” Ì” Ì¨”' Ì¨”( Ì¨”* Ì¨Ü ” Ì” Ì” Ì©”! Ì©”" Ì©”$ Ì©”( Ì©”* Ì©”, Ì©”. Ì© ”3 Ì©%”5 Ì©'”7 Ì©)”9 Ì©+”< Ì©.”> Ì©0”? Ì©1”ÌA Ì©3”ÌG Ì©9”ÌI Ì©;”ÌJ Ì©<”ÌL Ì©>’” Ì‚”! Ì‚’” Ìƒ” Ìƒ’” Ì‚”! Ì‚–” Ìƒ” Ìƒ” Ì‘” Ì‘” Ì‘”$ Ì‘–” Ì„” Ì„”  Ì„”$ Ì„”% Ì„”* Ì„–” Ì„” Ì„” Ì…”! Ì…”" Ì…”$ Ì…–” Ì„” Ì„” Ì†”" Ì†”# Ì†”, Ì†&˜” Ì„” Ì„” Ì‡”# Ì‡”$ Ì‡”. Ì‡(”/ Ì‡)”5 Ì‡/’” Ì„” Ì„’” Ì‰” Ì‰’” Ì‰” Ì‰’” Ì‹”( Ì‹$Ü ” ÌŒ” ÌŒ”  ÌŒ”$ ÌŒ”% ÌŒ”2 ÌŒ'”3 ÌŒ(”7 ÌŒ,”8 ÌŒ-”; ÌŒ0”< ÌŒ1”= ÌŒ2”ÌD ÌŒ9”ÌE ÌŒ:”ÌF ÌŒ;”ÌG ÌŒ<’” Ì‹”( Ì‹$–” ÌŒ” ÌŒ” Ì”! Ì”" Ì”$ Ì’” Ì‹”( Ì‹$–” ÌŒ” ÌŒ” ÌŽ”" ÌŽ”# ÌŽ”, ÌŽ&’” Ì‹”( Ì‹$˜” ÌŒ” ÌŒ” Ì”# Ì”$ Ì”. Ì(”/ Ì)”3 Ì-’” Ì‹”$ Ì‹$’” ÌŒ” ÌŒ’” Ì‚” Ì‚’” Ìƒ” Ìƒ’” Ì“” Ì““” Ì”” Ì””" Ì”›” Ì•” Ì•” Ì•”# Ì•”$ Ì•”1 Ì•)”2 Ì•*”6 Ì•.”7 Ì•/”: Ì•2”; Ì•3–” Ì–” Ì–” Ì–”! Ì–”" Ì–”% Ì––” Ì—” Ì—” Ì—”! Ì—”" Ì—”% Ì—–” Ì˜” Ì˜” Ì˜”" Ì˜”# Ì˜”' Ì˜˜” Ì™” Ì™” Ì™”* Ì™"”+ Ì™#”0 Ì™(”1 Ì™+”9 Ì™3‘” Ìš’” Ì“” Ì“–” Ì”” Ì”” Ì›”# Ì›”$ Ì›”( Ì›’” Ì“” Ì“–” Ì”” Ì”” Ìœ”% Ìœ”& Ìœ”/ Ìœ%’” Ì“” Ì“–” Ì”” Ì”” Ì”( Ì”) Ì”2 Ì(’” Ì“” Ì“™” Ì”” Ì”” Ìž”# Ìž”$ Ìž”% Ìž”* Ìž(”, Ìž*”. Ìž,’” ÌŸ”. ÌŸ(œ” Ì ” Ì ” Ì ”* Ì $”+ Ì %”/ Ì )”0 Ì *”3 Ì -”5 Ì /”: Ì 4”; Ì 5”< Ì 6’” Ì¡” Ì¡’” Ì“” Ì“–” Ì”” Ì”” Ì¢”  Ì¢”! Ì¢”' Ì¢’” Ì“” Ì“ž” Ì”” Ì”” Ì£”! Ì£”" Ì£”$ Ì£”' Ì£”) Ì£”* Ì£ ”, Ì£"”2 Ì£(”4 Ì£*”6 Ì£,”8 Ì£.’” Ì” Ì””/ Ì€”3 Ì€”4 Ì€”ÌE Ì€(’” Ì€
-” Ì€’” Ì” Ì’” Ì{”ÌP Ì{ÌN’” Ì|” Ì|’” Ì}”ÌP Ì}ÌN’” Ì~” Ì~’” Ì°”ÌT Ì°ÌN’” Ì±” Ì±’” Ì²”ÌT Ì²ÌN˜” Ì³” Ì³	” Ì³
-” Ì³” Ì³”  Ì³”" Ì³”$ Ì³’” Ì°”ÌT Ì°ÌN’” Ì±” Ì±’” Ì²”ÌT Ì²ÌN–” Ì³” Ì³	” Ìã” Ìã” Ìã” Ìã’” Ì°”ÌT Ì°ÌN’” Ì±” Ì±’” Ì²”ÌT Ì²ÌNÜ ” Ì³” Ì³	” Ìä” Ìä” Ìä” Ìä” Ìä”  Ìä”" Ìä”$ Ìä”) Ìä ”+ Ìä"”- Ìä$”/ Ìä&”2 Ìä)”4 Ìä+”6 Ìä-”8 Ìä/”> Ìä5”Ì@ Ìä7”ÌB Ìä9”ÌD Ìä;’” Ì°”ÌT Ì°ÌN’” Ì±” Ì±’” Ì²”ÌT Ì²ÌN–” Ì³” Ì³	” Ìå” Ìå”  Ìå”) Ìå ’” Ì´”$ Ì´ ”” Ìµ” Ìµ”# Ìµ”) Ìµ’” Ì´”$ Ì´ –” Ìµ” Ìµ” Ì¶” Ì¶” Ì¶” Ì¶’” Ì´”$ Ì´ ˜” Ìµ” Ìµ” Ì·” Ì·” Ì·”" Ì·”# Ì·”) Ì·!’” Ì´”$ Ì´ –” Ìµ” Ìµ” Ì¸”" Ì¸”# Ì¸”, Ì¸$’” Ì´”$ Ì´ –” Ìµ” Ìµ” Ì¹” Ì¹” Ì¹”& Ì¹’” Ì´”$ Ì´ –” Ìµ” Ìµ” Ìº” Ìº”  Ìº”" Ìº’” Ì´”$ Ì´ –” Ìµ” Ìµ” Ì»” Ì»”  Ì»”! Ì»’” Ì´”$ Ì´ —” Ìµ” Ìµ” Ì¼” Ì¼” Ì¼” Ì¼”  Ì¼—” Ì½” Ì½” Ì½” Ì½”/ Ì½+”1 Ì½-”2 Ì½.™” Ì¾” Ì¾” Ì¾” Ì¾” Ì¾”& Ì¾"”' Ì¾#”- Ì¾)”. Ì¾*™” Ì¿” Ì¿” Ì¿” Ì¿” Ì¿”& Ì¿"”' Ì¿#”- Ì¿)”. Ì¿*™” ÌÀ” ÌÀ” ÌÀ” ÌÀ” ÌÀ”& ÌÀ"”' ÌÀ#”- ÌÀ)”. ÌÀ*™” ÌÁ” ÌÁ” ÌÁ”  ÌÁ”# ÌÁ”+ ÌÁ'”, ÌÁ(”7 ÌÁ3”8 ÌÁ4™” ÌÂ” ÌÂ” ÌÂ”  ÌÂ”# ÌÂ”+ ÌÂ'”, ÌÂ(”7 ÌÂ3”8 ÌÂ4’” ÌÃ
-” ÌÃ’” Ì´”  Ì´ ’” Ìµ” Ìµ’” ÌÅ”' ÌÅ#”” ÌÆ” ÌÆ”# ÌÆ”) ÌÆ’” ÌÅ”' ÌÅ#–” ÌÆ” ÌÆ” ÌÇ” ÌÇ” ÌÇ” ÌÇ’” ÌÅ”' ÌÅ#˜” ÌÆ” ÌÆ” ÌÈ” ÌÈ” ÌÈ”" ÌÈ”# ÌÈ”) ÌÈ!’” ÌÅ”' ÌÅ#–” ÌÆ” ÌÆ” ÌÉ”" ÌÉ”# ÌÉ”, ÌÉ$’” ÌÅ”' ÌÅ#–” ÌÆ” ÌÆ” ÌÊ” ÌÊ” ÌÊ”& ÌÊ’” ÌÅ”' ÌÅ#–” ÌÆ” ÌÆ” ÌË” ÌË”  ÌË”" ÌË’” ÌÅ”' ÌÅ#–” ÌÆ” ÌÆ” ÌÌ” ÌÌ”  ÌÌ”! ÌÌ’” ÌÅ”' ÌÅ#—” ÌÆ” ÌÆ” ÌÍ” ÌÍ” ÌÍ” ÌÍ”  ÌÍ’” ÌÎ” ÌÎ”” ÌÏ” ÌÏ” ÌÏ”" ÌÏ+–” ÌÐ” ÌÐ” ÌÐ”  ÌÐ”! ÌÐ”' ÌÐ!–” ÌÑ” ÌÑ” ÌÑ”  ÌÑ”! ÌÑ”' ÌÑ!–” ÌÒ” ÌÒ” ÌÒ”  ÌÒ”! ÌÒ”' ÌÒ!–” ÌÓ” ÌÓ”! ÌÓ”% ÌÓ”& ÌÓ ”1 ÌÓ+–” ÌÔ” ÌÔ”! ÌÔ”% ÌÔ”& ÌÔ ”1 ÌÔ+’” ÌÕ” ÌÕ’” Ì×” Ì×’” ÌØ”9 ÌØ5’” ÌÙ”9 ÌÙ5•” ÌÚ” ÌÚ” ÌÚ” ÌÚ” ÌÚ”” ÌÛ” ÌÛ” ÌÛ”& ÌÛ “” ÌÜ” ÌÜ” ÌÜ–” ÌÝ”! ÌÝ”# ÌÝ”' ÌÝ”( ÌÝ ”1 ÌÝ)”” ÌÞ”# ÌÞ”% ÌÞ”0 ÌÞ(‘” Ìß“” Ìà” Ìà” Ìà’” Ìá
-” Ìá’” ÌÅ”# ÌÅ#’” ÌÆ” ÌÆ’” Ì°”ÌP Ì°ÌN’” Ì±” Ì±’” Ì²”ÌP Ì²ÌN’” Ì³” Ì³	’” ÌO” ÌO
-‘” Ìê’” Ìì”ÌL ÌìÌJ’” Ìí”% Ìí#’” Ìî”ÌL ÌîÌJ’” Ìð” Ìð”” Ìñ” Ìñ” Ìñ” Ìñ”” Ìò” Ìò” Ìò” Ìòš” Ìó” Ìó” Ìó” Ìó” Ìó”" Ìó”& Ìó ”' Ìó!”- Ìó'”. Ìó(š” Ìô” Ìô” Ìô” Ìô” Ìô”" Ìô”& Ìô ”' Ìô!”- Ìô'”. Ìô(š” Ìõ” Ìõ” Ìõ” Ìõ” Ìõ”" Ìõ”& Ìõ ”' Ìõ!”- Ìõ'”. Ìõ(š” Ìö” Ìö” Ìö” Ìö”  Ìö”' Ìö!”+ Ìö%”, Ìö&”7 Ìö1”8 Ìö2š” Ì÷” Ì÷” Ì÷” Ì÷”  Ì÷”' Ì÷!”+ Ì÷%”, Ì÷&”7 Ì÷1”8 Ì÷2—” Ìø” Ìø” Ìø” Ìø” Ìø” Ìø” Ìø‘”	 Ìù’” Ìú” Ìú’” Ìü” Ìü–” Ìý” Ìý” Ìý” Ìý” Ìý” Ìý*”” Ìþ” Ìþ” Ìþ” Ìþ“” Ìÿ” Ìÿ” Ìÿ—” Ìÿ” Ìÿ” Ìÿ” Ìÿ ” Ìÿ#”# Ìÿ(”$ Ìÿ)’” Ìÿ*” Ìÿ0“” Í ” Í ” Í —” Í ” Í ” Í ” Í  ” Í #”# Í (”$ Í )’” Í *” Í 0“” Í” Í” Í—” Í” Í” Í” Í ” Í#”# Í(”$ Í)’” Í*” Í0“” Í” Í” Í—” Í” Í” Í”  Í*”# Í-”( Í2”) Í3’” Í4” Í:“” Í” Í” Í—” Í” Í” Í”  Í*”# Í-”( Í2”) Í3’” Í4” Í:‘”	 Í’” Í” Í’” Í”ÌL ÍÌJ’” Í” Í’” Í	”ÌL Í	ÌJ‘” Í‘” Í’” Í” Í–” Í” Í” Í” Í” Í”  Í•” Í” Í” Í” Í”/ Í)’” Í”1 Í)ž” Í” Í”! Í”$ Í”( Í ”) Í!”/ Í'”0 Í(”7 Í/”8 Í0”9 Í1”: Í2”= Í5”ÌP ÍÌH›” Í
-” Í” Í” Í”  Í”' Í”( Í”) Í”* Í ”- Í#”Ì@ Í6œ” Í
-” Í” Í” Í”  Í”' Í”( Í”) Í”* Í ”- Í#”9 Í/”: Í0•” Í” Í” Í” Í”1 Í+’” Í”3 Í+ž” Í” Í”! Í”$ Í”( Í ”) Í!”/ Í'”0 Í(”7 Í/”8 Í0”9 Í1”: Í2”= Í5”ÌP ÍÌH›” Í
-” Í” Í” Í”  Í”' Í”( Í”) Í”* Í ”- Í#”ÌE Í;œ” Í
-” Í” Í” Í”  Í”' Í”( Í”) Í”* Í ”- Í#”9 Í/”: Í0•” Í” Í” Í” Í”0 Í*’” Í”+ Í#ž” Í” Í”% Í”( Í ”, Í$”- Í%”3 Í+”4 Í,”; Í3”< Í4”= Í5”> Í6”ÌA Í9”ÌT ÍÌLœ” Í
-” Í” Í” Í”  Í”' Í”( Í”) Í”* Í ”- Í#”5 Í+”6 Í,•” Í ” Í ” Í ” Í ”3 Í -’” Í!”. Í!&ž” Í"” Í"”! Í"”$ Í"”( Í" ”) Í"!”/ Í"'”0 Í"(”7 Í"/”8 Í"0”9 Í"1”: Í"2”= Í"5”ÌP Í"ÌH›” Í#
-” Í#” Í#” Í#”  Í#”' Í#”( Í#”) Í#”* Í# ”- Í##”Ì@ Í#6œ” Í$
-” Í$” Í$” Í$”  Í$”' Í$”( Í$”) Í$”* Í$ ”- Í$#”5 Í$+”6 Í$,‘” Í%”” Í&” Í&” Í&” Í&‘”	 Í'’” Í(” Í(ÔrI–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
- ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  ÌŽ ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ìž ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌÐ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  ÌÝ ‘”  ÌÞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìð ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìý ‘”  Ìþ ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
- ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  ÍŽ ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Íž ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ‘”  Í¼ ‘”  Í½ ‘”  Í¾ ‘”  Í¿ ‘”  ÍÀ ‘”  ÍÁ ‘”  ÍÂ ‘”  ÍÃ ‘”  ÍÄ ‘”  ÍÅ ‘”  ÍÆ ‘”  ÍÇ ‘”  ÍÈ ‘”  ÍÉ ‘”  ÍÊ ‘”  ÍË ‘”  ÍÌ ‘”  ÍÍ ‘”  ÍÎ ‘”  ÍÏ ‘”  ÍÐ ‘”  ÍÑ ‘”  ÍÒ ‘”  ÍÓ ‘”  ÍÔ ‘”  ÍÕ ‘”  ÍÖ ‘”  Í× ‘”  ÍØ ‘”  ÍÙ ‘”  ÍÚ ‘”  ÍÛ ‘”  ÍÜ ‘”  ÍÝ ‘”  ÍÞ ‘”  Íß ‘”  Íà ‘”  Íá ‘”  Íâ ‘”  Íã ‘”  Íä ‘”  Íå ‘”  Íæ ‘”  Íç ‘”  Íè ‘”  Íé ‘”  Íê ‘”  Íë ‘”  Íì ‘”  Íí ‘”  Íî ‘”  Íï ‘”  Íð ‘”  Íñ ‘”  Íò ‘”  Íó ‘”  Íô ‘”  Íõ ‘”  Íö ‘”  Í÷ ‘”  Íø ‘”  Íù ‘”  Íú ‘”  Íû ‘”  Íü ‘”  Íý ‘”  Íþ ‘”  Íÿ ‘”  Í  ÔrJ’§missing¦pluginÃ¦genAbcÂÔ  ÔrK”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache’ÔrL•¤type¥start£endªspecifiers¦source±ImportDeclarationÍ˜Íº‘ÔrM”¤type¥start£end¥local¶ImportDefaultSpecifierÍŸÍ¥ÔrN”¤type¥start£end¤nameªIdentifierÍŸÍ¥¦routerÔrO•¤type¥start£end¥value£raw§LiteralÍ«Í¹¬@ohos.router®"@ohos.router"L±ImportDeclarationÍ¼Í“ÔrP•¤type¥start£end¨imported¥local¯ImportSpecifierÍÅÍÎNªIdentifierÍÅÍÎ©ShapeTypeNªIdentifierÍÅÍÎ©ShapeTypeP¯ImportSpecifierÍÐÍäNªIdentifierÍÐÍä´getParamDescriptionsNªIdentifierÍÐÍä´getParamDescriptionsP¯ImportSpecifierÍæÍöNªIdentifierÍæÍö°getDefaultParamsNªIdentifierÍæÍö°getDefaultParamsO§LiteralÍþÍ³../utils/ModelTypesµ'../utils/ModelTypes'
