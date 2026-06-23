@@ -2,11 +2,11 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "3D Geometry Viewer with cross-device continuation"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "OpenGL Tetrahedron"
+      "value": "OpenGL 3D Geometry Viewer"
     },
     {
       "name": "x_shaft_rotation",
@@ -18,7 +18,7 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "Tetrahedron"
+      "value": "3D Geometry"
     },
     {
       "name": "btn_auto_rotation",
@@ -31,6 +31,10 @@
     {
       "name": "btn_damping_rotation",
       "value": "Damped"
+    },
+    {
+      "name": "distributed_reason",
+      "value": "Transfer 3D model viewing state between devices"
     }
   ]
 }

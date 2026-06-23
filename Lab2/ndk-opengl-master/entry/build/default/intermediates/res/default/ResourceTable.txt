@@ -4,6 +4,7 @@ string app_name 0x01000000
 string btn_auto_rotation 0x01000004
 string btn_damping_rotation 0x01000005
 string btn_stop_rotation 0x01000006
+string distributed_reason 0x01000123
 string module_desc 0x01000007
 string x_shaft_rotation 0x01000008
 string y_shaft_rotation 0x01000009

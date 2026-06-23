@@ -42,7 +42,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = "D:\HUAWEI\DevEco\DevEco Studio\sdk\default\openharmony\native\build-tools\cmake\bin\cmake.exe" --regenerate-during-build -SD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\cpp -BD:\HUAWEI\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\arm64-v8a
+  command = "D:\HUAWEI\DevEco\DevEco Studio\sdk\default\openharmony\native\build-tools\cmake\bin\cmake.exe" --regenerate-during-build -SD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\cpp -BD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\arm64-v8a
   description = Re-running CMake...
   generator = 1
 

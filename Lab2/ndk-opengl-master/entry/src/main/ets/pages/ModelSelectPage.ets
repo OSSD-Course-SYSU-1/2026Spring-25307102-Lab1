@@ -5,13 +5,14 @@ import { MODELS, ModelEntry } from '../utils/ModelTypes';
 @Component
 struct ModelSelectPage {
   @State selectedIndex: number = -1;
+  @StorageLink('currentBreakpoint') breakpoint: string = 'sm';
 
   build() {
     Column() {
       Row() {
         Button({ type: ButtonType.Circle, stateEffect: true }) {
           Text('\u2190')
-            .fontSize(20)
+            .fontSize(this.breakpoint === 'sm' ? 18 : 22)
             .fontColor('#333333')
         }
         .width(40)
@@ -22,16 +23,21 @@ struct ModelSelectPage {
         })
 
         Text('选择模型')
-          .fontSize(20)
+          .fontSize(this.breakpoint === 'sm' ? 18 : 22)
           .fontWeight(FontWeight.Bold)
           .margin({ left: 12 })
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+      .padding({
+        left: this.breakpoint === 'sm' ? 16 : 24,
+        right: this.breakpoint === 'sm' ? 16 : 24,
+        top: 12,
+        bottom: 12
+      })
       .alignItems(VerticalAlign.Center)
 
       Text('3D 几何模型')
-        .fontSize(14)
+        .fontSize(this.breakpoint === 'sm' ? 13 : 15)
         .fontColor('#888888')
         .padding({ left: 20, top: 16, bottom: 8 })
         .width('100%')
@@ -42,11 +48,11 @@ struct ModelSelectPage {
             Row() {
               Column() {
                 Text(item.name)
-                  .fontSize(16)
+                  .fontSize(this.breakpoint === 'sm' ? 15 : 17)
                   .fontWeight(FontWeight.Medium)
                   .fontColor('#1A1A1A')
                 Text(item.description)
-                  .fontSize(12)
+                  .fontSize(this.breakpoint === 'sm' ? 12 : 13)
                   .fontColor('#999999')
                   .margin({ top: 2 })
               }
@@ -59,10 +65,20 @@ struct ModelSelectPage {
                 .fontColor('#CCCCCC')
             }
             .width('100%')
-            .padding({ left: 20, right: 20, top: 16, bottom: 16 })
+            .padding({
+              left: this.breakpoint === 'sm' ? 18 : 24,
+              right: this.breakpoint === 'sm' ? 18 : 24,
+              top: 14,
+              bottom: 14
+            })
             .backgroundColor(this.selectedIndex === index ? '#1A007DFF' : '#FFFFFF')
             .borderRadius(12)
-            .margin({ left: 12, right: 12, top: 4, bottom: 4 })
+            .margin({
+              left: this.breakpoint === 'sm' ? 12 : 20,
+              right: this.breakpoint === 'sm' ? 12 : 20,
+              top: 4,
+              bottom: 4
+            })
           }
           .onClick(() => {
             this.selectedIndex = index;

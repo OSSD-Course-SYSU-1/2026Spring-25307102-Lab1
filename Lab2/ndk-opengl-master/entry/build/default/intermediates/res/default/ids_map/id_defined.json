@@ -1163,5 +1163,9 @@
 			"type":	"profile",
 			"name":	"main_pages",
 			"id":	"0x01000122"
+		}, {
+			"type":	"string",
+			"name":	"distributed_reason",
+			"id":	"0x01000123"
 		}]
 }

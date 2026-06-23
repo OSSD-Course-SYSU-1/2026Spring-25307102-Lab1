@@ -1,1 +1,1 @@
-D:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\cpp\CMakeLists.txt
+D:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\cpp\CMakeLists.txt

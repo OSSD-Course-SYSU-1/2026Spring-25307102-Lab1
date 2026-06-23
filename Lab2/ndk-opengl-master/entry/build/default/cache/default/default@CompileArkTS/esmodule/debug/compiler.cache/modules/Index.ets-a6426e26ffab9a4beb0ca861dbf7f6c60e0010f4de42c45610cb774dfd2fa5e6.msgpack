@@ -1,40 +1,13 @@
-Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚNÎif (!("finalizeConstruction" in ViewPU.prototype)) {
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚgÆif (!("finalizeConstruction" in ViewPU.prototype)) {
     Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
 }
-/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 import { LengthMetrics } from "@ohos.arkui.node";
-/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 import router from "@ohos.router";
 import hilog from "@ohos.hilog";
 import { Logger } from '../utils/Logger';
 import tetrahedron_napi from 'libtetrahedron_napi.so';
 import { RotationType } from '../utils/Constants';
+import { ModelState } from '../utils/ContinuationHelper';
 function getTop(avoidArea) {
     let result = 0;
     if (avoidArea !== undefined) {
@@ -92,7 +65,10 @@ class Index extends ViewPU {
         this.__angleArray = new ObservedPropertyObjectPU(new Array(), this, "angleArray");
         this.__enableRotate = new ObservedPropertySimplePU(false, this, "enableRotate");
         this.__currentShapeName = new ObservedPropertySimplePU('å››é¢ä½“', this, "currentShapeName");
+        this.__currentShapeType = new ObservedPropertySimplePU(0, this, "currentShapeType");
         this.__modelScale = new ObservedPropertySimplePU(1.0, this, "modelScale");
+        this.__isWireframe = new ObservedPropertySimplePU(false, this, "isWireframe");
+        this.__isFromContinuation = new ObservedPropertySimplePU(false, this, "isFromContinuation");
         this.__cutoutAreas = new ObservedPropertyObjectPU({
             top: 0, right: 0, bottom: 0, left: 0,
             heightBreakpoint: 0, widthBreakpoint: 0
@@ -103,6 +79,7 @@ class Index extends ViewPU {
         }, this, "localPadding");
         this.__heightBreakpoint = this.createStorageLink('currentHeightBreakpoint', HeightBreakpoint.HEIGHT_SM, "heightBreakpoint");
         this.__widthBreakpoint = this.createStorageLink('currentWidthBreakpoint', WidthBreakpoint.WIDTH_XS, "widthBreakpoint");
+        this.__breakpoint = this.createStorageLink('currentBreakpoint', 'sm', "breakpoint");
         this.__avoidAreas = this.createStorageLink('cutout', undefined, "avoidAreas");
         this.__windowHeight = this.createStorageLink('windowHeight', 0, "windowHeight");
         this.__windowWidth = this.createStorageLink('windowWidth', 0, "windowWidth");
@@ -124,8 +101,17 @@ class Index extends ViewPU {
         if (params.currentShapeName !== undefined) {
             this.currentShapeName = params.currentShapeName;
         }
+        if (params.currentShapeType !== undefined) {
+            this.currentShapeType = params.currentShapeType;
+        }
         if (params.modelScale !== undefined) {
             this.modelScale = params.modelScale;
+        }
+        if (params.isWireframe !== undefined) {
+            this.isWireframe = params.isWireframe;
+        }
+        if (params.isFromContinuation !== undefined) {
+            this.isFromContinuation = params.isFromContinuation;
         }
         if (params.cutoutAreas !== undefined) {
             this.cutoutAreas = params.cutoutAreas;
@@ -146,11 +132,15 @@ class Index extends ViewPU {
         this.__angleArray.purgeDependencyOnElmtId(rmElmtId);
         this.__enableRotate.purgeDependencyOnElmtId(rmElmtId);
         this.__currentShapeName.purgeDependencyOnElmtId(rmElmtId);
+        this.__currentShapeType.purgeDependencyOnElmtId(rmElmtId);
         this.__modelScale.purgeDependencyOnElmtId(rmElmtId);
+        this.__isWireframe.purgeDependencyOnElmtId(rmElmtId);
+        this.__isFromContinuation.purgeDependencyOnElmtId(rmElmtId);
         this.__cutoutAreas.purgeDependencyOnElmtId(rmElmtId);
         this.__localPadding.purgeDependencyOnElmtId(rmElmtId);
         this.__heightBreakpoint.purgeDependencyOnElmtId(rmElmtId);
         this.__widthBreakpoint.purgeDependencyOnElmtId(rmElmtId);
+        this.__breakpoint.purgeDependencyOnElmtId(rmElmtId);
         this.__avoidAreas.purgeDependencyOnElmtId(rmElmtId);
         this.__windowHeight.purgeDependencyOnElmtId(rmElmtId);
         this.__windowWidth.purgeDependencyOnElmtId(rmElmtId);
@@ -159,11 +149,15 @@ class Index extends ViewPU {
         this.__angleArray.aboutToBeDeleted();
         this.__enableRotate.aboutToBeDeleted();
         this.__currentShapeName.aboutToBeDeleted();
+        this.__currentShapeType.aboutToBeDeleted();
         this.__modelScale.aboutToBeDeleted();
+        this.__isWireframe.aboutToBeDeleted();
+        this.__isFromContinuation.aboutToBeDeleted();
         this.__cutoutAreas.aboutToBeDeleted();
         this.__localPadding.aboutToBeDeleted();
         this.__heightBreakpoint.aboutToBeDeleted();
         this.__widthBreakpoint.aboutToBeDeleted();
+        this.__breakpoint.aboutToBeDeleted();
         this.__avoidAreas.aboutToBeDeleted();
         this.__windowHeight.aboutToBeDeleted();
         this.__windowWidth.aboutToBeDeleted();
@@ -188,11 +182,29 @@ class Index extends ViewPU {
     set currentShapeName(newValue) {
         this.__currentShapeName.set(newValue);
     }
+    get currentShapeType() {
+        return this.__currentShapeType.get();
+    }
+    set currentShapeType(newValue) {
+        this.__currentShapeType.set(newValue);
+    }
     get modelScale() {
         return this.__modelScale.get();
     }
     set modelScale(newValue) {
         this.__modelScale.set(newValue);
+    }
+    get isWireframe() {
+        return this.__isWireframe.get();
+    }
+    set isWireframe(newValue) {
+        this.__isWireframe.set(newValue);
+    }
+    get isFromContinuation() {
+        return this.__isFromContinuation.get();
+    }
+    set isFromContinuation(newValue) {
+        this.__isFromContinuation.set(newValue);
     }
     get cutoutAreas() {
         return this.__cutoutAreas.get();
@@ -217,6 +229,12 @@ class Index extends ViewPU {
     }
     set widthBreakpoint(newValue) {
         this.__widthBreakpoint.set(newValue);
+    }
+    get breakpoint() {
+        return this.__breakpoint.get();
+    }
+    set breakpoint(newValue) {
+        this.__breakpoint.set(newValue);
     }
     get avoidAreas() {
         return this.__avoidAreas.get();
@@ -277,6 +295,33 @@ class Index extends ViewPU {
             start: LengthMetrics.px(leftPX)
         };
         tetrahedron_napi.objectPassing(this.cutoutAreas);
+        let isCont = AppStorage.get('isContinuation');
+        if (isCont) {
+            let state = AppStorage.get('continuationState');
+            AppStorage.setOrCreate('isContinuation', false);
+            AppStorage.setOrCreate('continuationState', null);
+            if (state) {
+                this.isFromContinuation = true;
+                this.restoreFromContinuation(state);
+            }
+        }
+    }
+    restoreFromContinuation(state) {
+        Logger.info('restoreFromContinuation shape=' + state.shapeType);
+        this.currentShapeType = state.shapeType;
+        this.modelScale = state.scale;
+        this.angleArray[0] = state.angleX;
+        this.angleArray[1] = state.angleY;
+        this.isWireframe = state.wireframe;
+        tetrahedron_napi.selectShape(state.shapeType);
+        tetrahedron_napi.setScale(state.scale);
+        if (state.wireframe) {
+            tetrahedron_napi.toggleWireframe();
+        }
+        let names = ['å››é¢ä½“', 'çƒä½“', 'æ­£æ–¹ä½“', 'åœ†é”¥'];
+        if (state.shapeType >= 0 && state.shapeType < names.length) {
+            this.currentShapeName = names[state.shapeType];
+        }
     }
     onPageShow() {
         Logger.info('onPageShow');
@@ -288,37 +333,25 @@ class Index extends ViewPU {
     }
     applyShapeSelection(shapeType) {
         Logger.info('applyShapeSelection type=' + shapeType);
+        this.currentShapeType = shapeType;
         tetrahedron_napi.selectShape(shapeType);
         let names = ['å››é¢ä½“', 'çƒä½“', 'æ­£æ–¹ä½“', 'åœ†é”¥'];
         if (shapeType >= 0 && shapeType < names.length) {
             this.currentShapeName = names[shapeType];
         }
     }
-    initialRender() {
-        this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Stack.create({ alignContent: Alignment.Bottom });
-            Stack.padding(ObservedObject.GetRawObject(this.localPadding));
-        }, Stack);
+    getModelState() {
+        let state = new ModelState();
+        state.shapeType = this.currentShapeType;
+        state.scale = this.modelScale;
+        state.angleX = this.angleArray[0] || 30;
+        state.angleY = this.angleArray[1] || 45;
+        state.wireframe = this.isWireframe;
+        return state;
+    }
+    canvasView(parent = null) {
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Column.create();
-            Gesture.create(GesturePriority.Low);
-            PanGesture.create(this.panOption);
-            PanGesture.onActionStart(() => {
-                Logger.info('Gesture onActionStart');
-            });
-            PanGesture.onActionUpdate((event) => {
-                tetrahedron_napi.setRotate(RotationType.STOP);
-                this.enableRotate = false;
-                this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
-                Logger.info('Gesture onActionUpdate : offSet ' + event.offsetX + ',' + event.offsetY);
-            });
-            PanGesture.onActionEnd(() => {
-                Logger.info('Gesture onActionEnd');
-            });
-            PanGesture.pop();
-            Gesture.pop();
-            Column.height('100%');
-            Column.justifyContent(FlexAlign.SpaceBetween);
         }, Column);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Column.create();
@@ -327,7 +360,7 @@ class Index extends ViewPU {
             Column.height('100%');
             Column.width('100%');
             Column.backgroundColor('#FFFFFF');
-            Column.borderRadius(24);
+            Column.borderRadius(this.breakpoint === 'sm' ? 0 : 24);
         }, Column);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             XComponent.create({
@@ -335,26 +368,46 @@ class Index extends ViewPU {
                 type: XComponentType.SURFACE,
                 libraryname: 'tetrahedron_napi'
             }, "com.samples.ndkopengl/entry");
-            XComponent.onLoad(() => {
-                Logger.info('onLoad');
-            });
+            XComponent.onLoad(() => { Logger.info('onLoad'); });
             XComponent.id('tetrahedron');
-            XComponent.onDestroy(() => {
-                Logger.info('onDestroy');
-            });
+            XComponent.onDestroy(() => { Logger.info('onDestroy'); });
             XComponent.id('xComponent');
             XComponent.backgroundColor('#FFFFFF');
         }, XComponent);
         Column.pop();
         Column.pop();
+    }
+    controlsPanel(parent = null) {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            If.create();
+            if (this.isFromContinuation) {
+                this.ifElseBranchUpdateFunction(0, () => {
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Text.create('å·²ä»å…¶ä»–è®¾å¤‡æ¢å¤');
+                        Text.fontSize(11);
+                        Text.fontColor('#4caf50');
+                        Text.backgroundColor('#1A4caf50');
+                        Text.borderRadius(6);
+                        Text.padding({ left: 8, right: 8, top: 3, bottom: 3 });
+                        Text.margin({ bottom: this.breakpoint === 'sm' ? 6 : 10 });
+                    }, Text);
+                    Text.pop();
+                });
+            }
+            else {
+                this.ifElseBranchUpdateFunction(1, () => {
+                });
+            }
+        }, If);
+        If.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Row.create();
             Row.width('100%');
-            Row.justifyContent(FlexAlign.Start);
-            Row.padding({ left: 16, top: 16 });
-            Row.hitTestBehavior(HitTestMode.Transparent);
-            Row.position({ x: 0, y: 0 });
-            Row.zIndex(10);
+            Row.justifyContent(FlexAlign.Center);
+            Row.margin({ bottom: this.breakpoint === 'sm' ? 6 : 10 });
         }, Row);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Button.createWithChild();
@@ -370,13 +423,13 @@ class Index extends ViewPU {
         }, Row);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Text.create('\u2630');
-            Text.fontSize(18);
+            Text.fontSize(this.breakpoint === 'sm' ? 16 : 18);
             Text.fontColor('#FFFFFF');
         }, Text);
         Text.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Text.create('æ¨¡å‹');
-            Text.fontSize(14);
+            Text.fontSize(this.breakpoint === 'sm' ? 13 : 14);
             Text.fontColor('#FFFFFF');
             Text.fontWeight(FontWeight.Medium);
         }, Text);
@@ -386,24 +439,22 @@ class Index extends ViewPU {
         Row.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Text.create('å½“å‰: ' + this.currentShapeName);
-            Text.fontSize(11);
+            Text.fontSize(this.breakpoint === 'sm' ? 11 : 13);
             Text.fontColor('#99FFFFFF');
             Text.backgroundColor('#40000000');
             Text.borderRadius(10);
             Text.padding({ left: 10, right: 10, top: 4, bottom: 4 });
-            Text.position({ x: 16, y: 56 });
-            Text.zIndex(10);
+            Text.margin({ bottom: this.breakpoint === 'sm' ? 8 : 14 });
         }, Text);
         Text.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Row.create();
             Row.width('100%');
-            Row.padding({ left: 24, right: 24 });
-            Row.hitTestBehavior(HitTestMode.Transparent);
+            Row.margin({ bottom: this.breakpoint === 'sm' ? 6 : 12 });
         }, Row);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Text.create('ç¼©å°');
-            Text.fontSize(11);
+            Text.fontSize(this.breakpoint === 'sm' ? 10 : 12);
             Text.fontColor('#999999');
             Text.margin({ right: 8 });
         }, Text);
@@ -427,24 +478,20 @@ class Index extends ViewPU {
         }, Slider);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
             Text.create('æ”¾å¤§');
-            Text.fontSize(11);
+            Text.fontSize(this.breakpoint === 'sm' ? 10 : 12);
             Text.fontColor('#999999');
             Text.margin({ left: 8 });
         }, Text);
         Text.pop();
         Row.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Row.create({ space: 12 });
-            Row.hitTestBehavior(HitTestMode.Transparent);
-            Row.padding({
-                left: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-                right: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-                bottom: 50
-            });
+            Row.create({ space: 8 });
+            Row.width('100%');
         }, Row);
         this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Button.createWithLabel(this.enableRotate ? { "id": 16777222, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" } : { "id": 16777220, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" }, { type: ButtonType.Capsule, stateEffect: true });
-            Button.fontSize(16);
+            Button.createWithLabel(this.enableRotate ? 'åœæ­¢' : 'è‡ªåŠ¨', { type: ButtonType.Capsule, stateEffect: true });
+            Button.fontSize(this.breakpoint === 'sm' ? 13 : 14);
+            Button.layoutWeight(1);
             Button.onClick(() => {
                 if (this.enableRotate) {
                     tetrahedron_napi.setRotate(RotationType.STOP);
@@ -455,29 +502,116 @@ class Index extends ViewPU {
                     this.enableRotate = true;
                 }
             });
-            Button.layoutWeight(1);
         }, Button);
         Button.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Button.createWithLabel({ "id": 16777221, "type": 10003, params: [], "bundleName": "com.samples.ndkopengl", "moduleName": "entry" }, { type: ButtonType.Capsule, stateEffect: true });
-            Button.fontSize(16);
+            Button.createWithLabel('é˜»å°¼', { type: ButtonType.Capsule, stateEffect: true });
+            Button.fontSize(this.breakpoint === 'sm' ? 13 : 14);
+            Button.layoutWeight(1);
             Button.onClick(() => {
                 this.enableRotate = false;
                 tetrahedron_napi.setRotate(RotationType.DAMPING);
             });
-            Button.layoutWeight(1);
         }, Button);
         Button.pop();
         this.observeComponentCreation2((elmtId, isInitialRender) => {
-            Button.createWithLabel('çº¿æ¡†', { type: ButtonType.Capsule, stateEffect: true });
-            Button.fontSize(14);
+            Button.createWithLabel(this.isWireframe ? 'å®ä½“' : 'çº¿æ¡†', { type: ButtonType.Capsule, stateEffect: true });
+            Button.fontSize(this.breakpoint === 'sm' ? 12 : 13);
+            Button.layoutWeight(0.6);
             Button.onClick(() => {
+                this.isWireframe = !this.isWireframe;
                 tetrahedron_napi.toggleWireframe();
             });
-            Button.layoutWeight(0.5);
         }, Button);
         Button.pop();
         Row.pop();
+        Column.pop();
+    }
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Stack.create();
+        }, Stack);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            If.create();
+            if (this.breakpoint === 'sm') {
+                this.ifElseBranchUpdateFunction(0, () => {
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Column.create();
+                        Column.height('100%');
+                        Column.width('100%');
+                        Column.backgroundColor('#1A1A2E');
+                        Column.padding(ObservedObject.GetRawObject(this.localPadding));
+                    }, Column);
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Column.create();
+                        Gesture.create(GesturePriority.Low);
+                        PanGesture.create(this.panOption);
+                        PanGesture.onActionStart(() => { Logger.info('Gesture onActionStart'); });
+                        PanGesture.onActionUpdate((event) => {
+                            tetrahedron_napi.setRotate(RotationType.STOP);
+                            this.enableRotate = false;
+                            this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+                        });
+                        PanGesture.onActionEnd(() => { Logger.info('Gesture onActionEnd'); });
+                        PanGesture.pop();
+                        Gesture.pop();
+                        Column.height('58%');
+                        Column.width('100%');
+                    }, Column);
+                    this.canvasView.bind(this)();
+                    Column.pop();
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Column.create();
+                        Column.width('92%');
+                        Column.margin({ top: 12 });
+                    }, Column);
+                    this.controlsPanel.bind(this)();
+                    Column.pop();
+                    Column.pop();
+                });
+            }
+            else {
+                this.ifElseBranchUpdateFunction(1, () => {
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Row.create();
+                        Row.height('100%');
+                        Row.width('100%');
+                        Row.backgroundColor('#1A1A2E');
+                        Row.padding(ObservedObject.GetRawObject(this.localPadding));
+                    }, Row);
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Column.create();
+                        Gesture.create(GesturePriority.Low);
+                        PanGesture.create(this.panOption);
+                        PanGesture.onActionStart(() => { Logger.info('Gesture onActionStart'); });
+                        PanGesture.onActionUpdate((event) => {
+                            tetrahedron_napi.setRotate(RotationType.STOP);
+                            this.enableRotate = false;
+                            this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+                        });
+                        PanGesture.onActionEnd(() => { Logger.info('Gesture onActionEnd'); });
+                        PanGesture.pop();
+                        Gesture.pop();
+                        Column.layoutWeight(1);
+                        Column.height('100%');
+                    }, Column);
+                    this.canvasView.bind(this)();
+                    Column.pop();
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Column.create();
+                        Column.width(this.breakpoint === 'md' ? 220 : 280);
+                        Column.height('100%');
+                        Column.justifyContent(FlexAlign.Center);
+                        Column.padding({ left: 16, right: 16, top: 40, bottom: 40 });
+                        Column.backgroundColor('#16213E');
+                    }, Column);
+                    this.controlsPanel.bind(this)();
+                    Column.pop();
+                    Row.pop();
+                });
+            }
+        }, If);
+        If.pop();
         Stack.pop();
     }
     rerender() {
@@ -488,35 +622,21 @@ class Index extends ViewPU {
     }
 }
 registerNamedRoute(() => new Index(undefined, {}), "", { bundleName: "com.samples.ndkopengl", moduleName: "entry", pagePath: "pages/Index", pageFullPath: "entry/src/main/ets/pages/Index", integratedHsp: "false", moduleType: "followWithHap" });
-//# sourceMappingURL=Index.js.mapÂ–Ùc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÙ_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsÙDD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsÙ% hvigor_ignore_libtetrahedron_napi.soÙGD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsÙCD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\pages\Index.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath§checker¬shouldEmitJs¥entryÃÂÙ&D:\HUAWEI\Lab2\ndk-opengl-master\entryÙ D:\HUAWEI\Lab2\ndk-opengl-master¥entry¥1.0.0Ô  Ù&D:\HUAWEI\Lab2\ndk-opengl-master\entryÔrCÜ ®¬getNodeCount²getIdentifierCount®getSymbolCount¬getTypeCountµgetInstantiationCountµgetRelationCacheSizes±isUndefinedSymbol±isArgumentsSymbol¯isUnknownSymbol¯getMergedSymbol®getDiagnostics´getGlobalDiagnostics´getRecursionIdentity¶getUnmatchedProperties¹getTypeOfSymbolAtLocation¯getTypeOfSymbolÙ(getSymbolsOfParameterPropertyDeclaration·getDeclaredTypeOfSymbol³getPropertiesOfType±getPropertyOfTypeÙ"getPrivateIdentifierPropertyOfType·getTypeOfPropertyOfType²getIndexInfoOfType³getIndexInfosOfTypeºgetIndexInfosOfIndexSymbol³getSignaturesOfType²getIndexTypeOfType¬getIndexType¬getBaseTypes¸getBaseTypeOfLiteralType®getWidenedType³getTypeFromTypeNode°getParameterTypeÙ$getParameterIdentifierNameAtPosition¸getPromisedTypeOfPromise®getAwaitedType¸getReturnTypeOfSignature®isNullableType¯getNullableType²getNonNullableType²getNonOptionalType°getTypeArguments®typeToTypeNodeÙ$indexInfoToIndexSignatureDeclaration¿signatureToSignatureDeclaration²symbolToEntityName²symbolToExpression¬symbolToNodeÙ!symbolToTypeParameterDeclarations¼symbolToParameterDeclarationºtypeParameterToDeclaration±getSymbolsInScope³getSymbolAtLocation·getIndexInfosAtLocationÙ!getShorthandAssignmentValueSymbolÙ#getExportSpecifierLocalTargetSymbol·getExportSymbolOfSymbol±getTypeAtLocationºgetTypeAtLocationForLinterÙ tryGetTypeAtLocationWithoutCheckºgetTypeOfAssignmentPatternÙ*getPropertySymbolOfDestructuringAssignment±signatureToString¬typeToString®symbolToStringµtypePredicateToString®writeSignature©writeType«writeSymbol²writeTypePredicate¼getAugmentedPropertiesOfType®getRootSymbols²getSymbolOfExpando±getContextualTypeÙ(getContextualTypeForObjectLiteralElementÙ#getContextualTypeForArgumentAtIndexÙ getContextualTypeForJsxAttribute²isContextSensitiveÙ!getTypeOfPropertyOfContextualTypeµgetFullyQualifiedNameÙ#tryGetResolvedSignatureWithoutCheck´getResolvedSignatureÙ/getResolvedSignatureForStringLiteralCompletionsÙ$getResolvedSignatureForSignatureHelpµgetExpandedParameters¹hasEffectiveRestParameterºcontainsArgumentsReference°getConstantValueµisValidPropertyAccessÙ#isValidPropertyAccessForCompletions»getSignatureFromDeclarationºisImplementationOfOverload¹getImmediateAliasedSymbol°getAliasedSymbol¯getEmitResolver²getExportsOfModule¿getExportsAndPropertiesOfModuleÙ forEachExportAndPropertyOfModule¯getSymbolWalker±getAmbientModules¹getJsxIntrinsicTagNamesAt³isOptionalParameter»tryGetMemberInModuleExportsÙ(tryGetMemberInModuleExportsAndProperties´tryFindAmbientModuleÙ(tryFindAmbientModuleWithoutAugmentations¯getApparentType¬getUnionType²isTypeAssignableTo³createAnonymousType¯createSignature¬createSymbol¯createIndexInfoªgetAnyType­getStringType­getNumberType±createPromiseType¯createArrayType¹getElementTypeOfArrayType®getBooleanType¬getFalseType«getTrueType«getVoidType°getUndefinedType«getNullType¯getESSymbolType¬getNeverType¯getOptionalType®getPromiseType²getPromiseLikeType´getAsyncIterableType²isSymbolAccessible«isArrayType«isTupleType¯isArrayLikeTypeÙ#isTypeInvalidDueToUnionDiscriminantºgetExactOptionalProperties¿getAllPossiblePropertiesOfTypesÙ(getSuggestedSymbolForNonexistentPropertyÙ#getSuggestionForNonexistentPropertyÙ,getSuggestedSymbolForNonexistentJSXAttributeÙ&getSuggestedSymbolForNonexistentSymbolÙ!getSuggestionForNonexistentSymbolÙ&getSuggestedSymbolForNonexistentModuleÙ!getSuggestionForNonexistentExportÙ+getSuggestedSymbolForNonexistentClassMember·getBaseConstraintOfType»getDefaultFromTypeParameter«resolveName¯getJsxNamespaceµgetJsxFragmentFactory¸getAccessibleSymbolChain»getTypePredicateOfSignature¹resolveExternalModuleName»resolveExternalModuleSymbol°tryGetThisTypeAt¹getTypeArgumentConstraint¸getSuggestionDiagnostics¸runWithCancellationTokenÙ3getLocalTypeParametersOfClassOrInterfaceOrTypeAlias´isDeclarationVisible´isPropertyAccessible»getTypeOnlyAliasDeclaration¿getMemberOverrideModifierStatusÙ!isTypeParameterPossiblyReferenced²getConstEnumRelate´clearConstEnumRelateµdeleteConstEnumRelateÙ$getTypeArgumentsForResolvedSignatureµgetCheckedSourceFilesÙ"collectHaveTsNoCheckFilesForLinter·clearQualifiedNameCache®isStaticRecord²isStaticSourceFileÔ  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  ÃÃÚ(ò/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import { LengthMetrics, window, router } from '@kit.ArkUI';
+//# sourceMappingURL=Index.js.mapÂ—Ùc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÙ_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsÙID:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsÙ% hvigor_ignore_libtetrahedron_napi.soÙLD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsÙUD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\ets\utils\ContinuationHelper.etsÙHD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\ets\pages\Index.etsÔrB›ªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath§checker¬shouldEmitJs¥entryÃÂÙ+D:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entryÙ%D:\HUAWEI\Lab2\Lab2\ndk-opengl-master¥entry¥1.0.0Ô  Ù+D:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entryÔrCÜ ®¬getNodeCount²getIdentifierCount®getSymbolCount¬getTypeCountµgetInstantiationCountµgetRelationCacheSizes±isUndefinedSymbol±isArgumentsSymbol¯isUnknownSymbol¯getMergedSymbol®getDiagnostics´getGlobalDiagnostics´getRecursionIdentity¶getUnmatchedProperties¹getTypeOfSymbolAtLocation¯getTypeOfSymbolÙ(getSymbolsOfParameterPropertyDeclaration·getDeclaredTypeOfSymbol³getPropertiesOfType±getPropertyOfTypeÙ"getPrivateIdentifierPropertyOfType·getTypeOfPropertyOfType²getIndexInfoOfType³getIndexInfosOfTypeºgetIndexInfosOfIndexSymbol³getSignaturesOfType²getIndexTypeOfType¬getIndexType¬getBaseTypes¸getBaseTypeOfLiteralType®getWidenedType³getTypeFromTypeNode°getParameterTypeÙ$getParameterIdentifierNameAtPosition¸getPromisedTypeOfPromise®getAwaitedType¸getReturnTypeOfSignature®isNullableType¯getNullableType²getNonNullableType²getNonOptionalType°getTypeArguments®typeToTypeNodeÙ$indexInfoToIndexSignatureDeclaration¿signatureToSignatureDeclaration²symbolToEntityName²symbolToExpression¬symbolToNodeÙ!symbolToTypeParameterDeclarations¼symbolToParameterDeclarationºtypeParameterToDeclaration±getSymbolsInScope³getSymbolAtLocation·getIndexInfosAtLocationÙ!getShorthandAssignmentValueSymbolÙ#getExportSpecifierLocalTargetSymbol·getExportSymbolOfSymbol±getTypeAtLocationºgetTypeAtLocationForLinterÙ tryGetTypeAtLocationWithoutCheckºgetTypeOfAssignmentPatternÙ*getPropertySymbolOfDestructuringAssignment±signatureToString¬typeToString®symbolToStringµtypePredicateToString®writeSignature©writeType«writeSymbol²writeTypePredicate¼getAugmentedPropertiesOfType®getRootSymbols²getSymbolOfExpando±getContextualTypeÙ(getContextualTypeForObjectLiteralElementÙ#getContextualTypeForArgumentAtIndexÙ getContextualTypeForJsxAttribute²isContextSensitiveÙ!getTypeOfPropertyOfContextualTypeµgetFullyQualifiedNameÙ#tryGetResolvedSignatureWithoutCheck´getResolvedSignatureÙ/getResolvedSignatureForStringLiteralCompletionsÙ$getResolvedSignatureForSignatureHelpµgetExpandedParameters¹hasEffectiveRestParameterºcontainsArgumentsReference°getConstantValueµisValidPropertyAccessÙ#isValidPropertyAccessForCompletions»getSignatureFromDeclarationºisImplementationOfOverload¹getImmediateAliasedSymbol°getAliasedSymbol¯getEmitResolver²getExportsOfModule¿getExportsAndPropertiesOfModuleÙ forEachExportAndPropertyOfModule¯getSymbolWalker±getAmbientModules¹getJsxIntrinsicTagNamesAt³isOptionalParameter»tryGetMemberInModuleExportsÙ(tryGetMemberInModuleExportsAndProperties´tryFindAmbientModuleÙ(tryFindAmbientModuleWithoutAugmentations¯getApparentType¬getUnionType²isTypeAssignableTo³createAnonymousType¯createSignature¬createSymbol¯createIndexInfoªgetAnyType­getStringType­getNumberType±createPromiseType¯createArrayType¹getElementTypeOfArrayType®getBooleanType¬getFalseType«getTrueType«getVoidType°getUndefinedType«getNullType¯getESSymbolType¬getNeverType¯getOptionalType®getPromiseType²getPromiseLikeType´getAsyncIterableType²isSymbolAccessible«isArrayType«isTupleType¯isArrayLikeTypeÙ#isTypeInvalidDueToUnionDiscriminantºgetExactOptionalProperties¿getAllPossiblePropertiesOfTypesÙ(getSuggestedSymbolForNonexistentPropertyÙ#getSuggestionForNonexistentPropertyÙ,getSuggestedSymbolForNonexistentJSXAttributeÙ&getSuggestedSymbolForNonexistentSymbolÙ!getSuggestionForNonexistentSymbolÙ&getSuggestedSymbolForNonexistentModuleÙ!getSuggestionForNonexistentExportÙ+getSuggestedSymbolForNonexistentClassMember·getBaseConstraintOfType»getDefaultFromTypeParameter«resolveName¯getJsxNamespaceµgetJsxFragmentFactory¸getAccessibleSymbolChain»getTypePredicateOfSignature¹resolveExternalModuleName»resolveExternalModuleSymbol°tryGetThisTypeAt¹getTypeArgumentConstraint¸getSuggestionDiagnostics¸runWithCancellationTokenÙ3getLocalTypeParametersOfClassOrInterfaceOrTypeAlias´isDeclarationVisible´isPropertyAccessible»getTypeOnlyAliasDeclaration¿getMemberOverrideModifierStatusÙ!isTypeParameterPossiblyReferenced²getConstEnumRelate´clearConstEnumRelateµdeleteConstEnumRelateÙ$getTypeArgumentsForResolvedSignatureµgetCheckedSourceFilesÙ"collectHaveTsNoCheckFilesForLinter·clearQualifiedNameCache®isStaticRecord²isStaticSourceFileÔ  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  Ô  ÃÃÚ3Uimport { LengthMetrics, window, router } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Logger } from '../utils/Logger';
 import tetrahedron_napi from 'libtetrahedron_napi.so';
 import { RotationType } from '../utils/Constants';
 import { ShapeType } from '../utils/ModelTypes';
+import { ModelState, ContinuationHelper } from '../utils/ContinuationHelper';
 
 interface Areas {
-  top: number,
-  right: number,
-  bottom: number,
-  left: number,
-  heightBreakpoint: number,
-  widthBreakpoint: number
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+  heightBreakpoint: number;
+  widthBreakpoint: number;
 }
 
 interface RouteResult {
@@ -577,13 +697,15 @@ struct Index {
   @State angleArray: Array<number> = new Array<number>();
   @State enableRotate: boolean = false;
   @State currentShapeName: string = 'å››é¢ä½“';
+  @State currentShapeType: number = 0;
   @State modelScale: number = 1.0;
+  @State isWireframe: boolean = false;
+  @State isFromContinuation: boolean = false;
 
   @State cutoutAreas: Areas = {
     top: 0, right: 0, bottom: 0, left: 0,
     heightBreakpoint: 0, widthBreakpoint: 0
   };
-
   @State localPadding: LocalizedPadding = {
     top: LengthMetrics.vp(0),
     start: LengthMetrics.vp(0)
@@ -593,13 +715,14 @@ struct Index {
   heightBreakpoint: HeightBreakpoint = HeightBreakpoint.HEIGHT_SM;
   @StorageLink('currentWidthBreakpoint') @Watch('breakPointChange')
   widthBreakpoint: WidthBreakpoint = WidthBreakpoint.WIDTH_XS;
+  @StorageLink('currentBreakpoint') breakpoint: string = 'sm';
 
   @StorageLink('cutout') @Watch('cutoutChange')
   avoidAreas: window.AvoidAreaOptions | undefined = undefined;
   @StorageLink('windowHeight') windowHeight: number = 0;
   @StorageLink('windowWidth') windowWidth: number = 0;
 
-  private xComponentId = 'tetrahedron';
+  private xComponentId: string = 'tetrahedron';
   private panOption: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.All });
 
   breakPointChange() {
@@ -618,7 +741,6 @@ struct Index {
       top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
       heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
     };
-
     this.localPadding = {
       top: LengthMetrics.px(topPX),
       end: LengthMetrics.px(rightPX),
@@ -642,15 +764,43 @@ struct Index {
       top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
       heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
     };
-
     this.localPadding = {
       top: LengthMetrics.px(topPX),
       end: LengthMetrics.px(rightPX),
       bottom: LengthMetrics.px(bottomPX),
       start: LengthMetrics.px(leftPX)
     };
-
     tetrahedron_napi.objectPassing(this.cutoutAreas);
+
+    let isCont = AppStorage.get('isContinuation') as boolean | undefined;
+    if (isCont) {
+      let state = AppStorage.get('continuationState') as ModelState | undefined;
+      AppStorage.setOrCreate('isContinuation', false);
+      AppStorage.setOrCreate('continuationState', null);
+      if (state) {
+        this.isFromContinuation = true;
+        this.restoreFromContinuation(state);
+      }
+    }
+  }
+
+  restoreFromContinuation(state: ModelState): void {
+    Logger.info('restoreFromContinuation shape=' + state.shapeType);
+    this.currentShapeType = state.shapeType;
+    this.modelScale = state.scale;
+    this.angleArray[0] = state.angleX;
+    this.angleArray[1] = state.angleY;
+    this.isWireframe = state.wireframe;
+
+    tetrahedron_napi.selectShape(state.shapeType);
+    tetrahedron_napi.setScale(state.scale);
+    if (state.wireframe) {
+      tetrahedron_napi.toggleWireframe();
+    }
+    let names = ['å››é¢ä½“', 'çƒä½“', 'æ­£æ–¹ä½“', 'åœ†é”¥'];
+    if (state.shapeType >= 0 && state.shapeType < names.length) {
+      this.currentShapeName = names[state.shapeType];
+    }
   }
 
   onPageShow(): void {
@@ -664,66 +814,69 @@ struct Index {
 
   applyShapeSelection(shapeType: number): void {
     Logger.info('applyShapeSelection type=' + shapeType);
+    this.currentShapeType = shapeType;
     tetrahedron_napi.selectShape(shapeType);
-
     let names = ['å››é¢ä½“', 'çƒä½“', 'æ­£æ–¹ä½“', 'åœ†é”¥'];
     if (shapeType >= 0 && shapeType < names.length) {
       this.currentShapeName = names[shapeType];
     }
   }
 
-  build() {
-    Stack({ alignContent: Alignment.Bottom }) {
+  getModelState(): ModelState {
+    let state = new ModelState();
+    state.shapeType = this.currentShapeType;
+    state.scale = this.modelScale;
+    state.angleX = this.angleArray[0] || 30;
+    state.angleY = this.angleArray[1] || 45;
+    state.wireframe = this.isWireframe;
+    return state;
+  }
+
+  @Builder
+  canvasView() {
+    Column() {
       Column() {
-        Column() {
-          XComponent({
-            id: this.xComponentId,
-            type: XComponentType.SURFACE,
-            libraryname: 'tetrahedron_napi'
-          })
-            .onLoad(() => {
-              Logger.info('onLoad');
-            })
-            .id('tetrahedron')
-            .onDestroy(() => {
-              Logger.info('onDestroy');
-            })
-            .id('xComponent')
-            .backgroundColor('#FFFFFF')
-        }
-        .justifyContent(FlexAlign.SpaceAround)
-        .alignItems(HorizontalAlign.Center)
-        .height('100%')
-        .width('100%')
-        .backgroundColor('#FFFFFF')
-        .borderRadius(24)
+        XComponent({
+          id: this.xComponentId,
+          type: XComponentType.SURFACE,
+          libraryname: 'tetrahedron_napi'
+        })
+          .onLoad(() => { Logger.info('onLoad'); })
+          .id('tetrahedron')
+          .onDestroy(() => { Logger.info('onDestroy'); })
+          .id('xComponent')
+          .backgroundColor('#FFFFFF')
       }
-      .gesture(
-        PanGesture(this.panOption)
-          .onActionStart(() => {
-            Logger.info('Gesture onActionStart');
-          })
-          .onActionUpdate((event: GestureEvent) => {
-            tetrahedron_napi.setRotate(RotationType.STOP);
-            this.enableRotate = false;
-            this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
-            Logger.info('Gesture onActionUpdate : offSet ' + event.offsetX + ',' + event.offsetY);
-          })
-          .onActionEnd(() => {
-            Logger.info('Gesture onActionEnd');
-          })
-      )
+      .justifyContent(FlexAlign.SpaceAround)
+      .alignItems(HorizontalAlign.Center)
       .height('100%')
-      .justifyContent(FlexAlign.SpaceBetween)
+      .width('100%')
+      .backgroundColor('#FFFFFF')
+      .borderRadius(this.breakpoint === 'sm' ? 0 : 24)
+    }
+  }
+
+  @Builder
+  controlsPanel() {
+    Column() {
+      if (this.isFromContinuation) {
+        Text('å·²ä»å…¶ä»–è®¾å¤‡æ¢å¤')
+          .fontSize(11)
+          .fontColor('#4caf50')
+          .backgroundColor('#1A4caf50')
+          .borderRadius(6)
+          .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+          .margin({ bottom: this.breakpoint === 'sm' ? 6 : 10 })
+      }
 
       Row() {
         Button() {
           Row({ space: 6 }) {
             Text('\u2630')
-              .fontSize(18)
+              .fontSize(this.breakpoint === 'sm' ? 16 : 18)
               .fontColor('#FFFFFF')
             Text('æ¨¡å‹')
-              .fontSize(14)
+              .fontSize(this.breakpoint === 'sm' ? 13 : 14)
               .fontColor('#FFFFFF')
               .fontWeight(FontWeight.Medium)
           }
@@ -736,24 +889,20 @@ struct Index {
         })
       }
       .width('100%')
-      .justifyContent(FlexAlign.Start)
-      .padding({ left: 16, top: 16 })
-      .hitTestBehavior(HitTestMode.Transparent)
-      .position({ x: 0, y: 0 })
-      .zIndex(10)
+      .justifyContent(FlexAlign.Center)
+      .margin({ bottom: this.breakpoint === 'sm' ? 6 : 10 })
 
       Text('å½“å‰: ' + this.currentShapeName)
-        .fontSize(11)
+        .fontSize(this.breakpoint === 'sm' ? 11 : 13)
         .fontColor('#99FFFFFF')
         .backgroundColor('#40000000')
         .borderRadius(10)
         .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-        .position({ x: 16, y: 56 })
-        .zIndex(10)
+        .margin({ bottom: this.breakpoint === 'sm' ? 8 : 14 })
 
       Row() {
         Text('ç¼©å°')
-          .fontSize(11)
+          .fontSize(this.breakpoint === 'sm' ? 10 : 12)
           .fontColor('#999999')
           .margin({ right: 8 })
 
@@ -774,18 +923,18 @@ struct Index {
           })
 
         Text('æ”¾å¤§')
-          .fontSize(11)
+          .fontSize(this.breakpoint === 'sm' ? 10 : 12)
           .fontColor('#999999')
           .margin({ left: 8 })
       }
       .width('100%')
-      .padding({ left: 24, right: 24 })
-      .hitTestBehavior(HitTestMode.Transparent)
+      .margin({ bottom: this.breakpoint === 'sm' ? 6 : 12 })
 
-      Row({ space: 12 }) {
-        Button(this.enableRotate ? $r('app.string.btn_stop_rotation') : $r('app.string.btn_auto_rotation'),
+      Row({ space: 8 }) {
+        Button(this.enableRotate ? 'åœæ­¢' : 'è‡ªåŠ¨',
           { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(16)
+          .fontSize(this.breakpoint === 'sm' ? 13 : 14)
+          .layoutWeight(1)
           .onClick(() => {
             if (this.enableRotate) {
               tetrahedron_napi.setRotate(RotationType.STOP);
@@ -795,85 +944,173 @@ struct Index {
               this.enableRotate = true;
             }
           })
-          .layoutWeight(1)
 
-        Button($r('app.string.btn_damping_rotation'), { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(16)
+        Button('é˜»å°¼', { type: ButtonType.Capsule, stateEffect: true })
+          .fontSize(this.breakpoint === 'sm' ? 13 : 14)
+          .layoutWeight(1)
           .onClick(() => {
             this.enableRotate = false;
             tetrahedron_napi.setRotate(RotationType.DAMPING);
           })
-          .layoutWeight(1)
 
-        Button('çº¿æ¡†', { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(14)
+        Button(this.isWireframe ? 'å®ä½“' : 'çº¿æ¡†',
+          { type: ButtonType.Capsule, stateEffect: true })
+          .fontSize(this.breakpoint === 'sm' ? 12 : 13)
+          .layoutWeight(0.6)
           .onClick(() => {
+            this.isWireframe = !this.isWireframe;
             tetrahedron_napi.toggleWireframe();
           })
-          .layoutWeight(0.5)
       }
-      .hitTestBehavior(HitTestMode.Transparent)
-      .padding({
-        left: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-        right: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-        bottom: 50
-      })
+      .width('100%')
     }
-    .padding(this.localPadding)
+  }
+
+  build() {
+    Stack() {
+      if (this.breakpoint === 'sm') {
+        Column() {
+          Column() {
+            this.canvasView()
+          }
+          .gesture(
+            PanGesture(this.panOption)
+              .onActionStart(() => { Logger.info('Gesture onActionStart'); })
+              .onActionUpdate((event: GestureEvent) => {
+                tetrahedron_napi.setRotate(RotationType.STOP);
+                this.enableRotate = false;
+                this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+              })
+              .onActionEnd(() => { Logger.info('Gesture onActionEnd'); })
+          )
+          .height('58%')
+          .width('100%')
+
+          Column() {
+            this.controlsPanel()
+          }
+          .width('92%')
+          .margin({ top: 12 })
+        }
+        .height('100%')
+        .width('100%')
+        .backgroundColor('#1A1A2E')
+        .padding(this.localPadding)
+      } else {
+        Row() {
+          Column() {
+            this.canvasView()
+          }
+          .gesture(
+            PanGesture(this.panOption)
+              .onActionStart(() => { Logger.info('Gesture onActionStart'); })
+              .onActionUpdate((event: GestureEvent) => {
+                tetrahedron_napi.setRotate(RotationType.STOP);
+                this.enableRotate = false;
+                this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+              })
+              .onActionEnd(() => { Logger.info('Gesture onActionEnd'); })
+          )
+          .layoutWeight(1)
+          .height('100%')
+
+          Column() {
+            this.controlsPanel()
+          }
+          .width(this.breakpoint === 'md' ? 220 : 280)
+          .height('100%')
+          .justifyContent(FlexAlign.Center)
+          .padding({ left: 16, right: 16, top: 40, bottom: 40 })
+          .backgroundColor('#16213E')
+        }
+        .height('100%')
+        .width('100%')
+        .backgroundColor('#1A1A2E')
+        .padding(this.localPadding)
+      }
+    }
   }
 }
-ÀÔrD–°@ohos.arkui.node¬@ohos.router«@ohos.hilog¶libtetrahedron_napi.so¯../utils/Logger²../utils/ConstantsÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÔrF‘¯hostModulesInfo‘ÔrG’²hostDependencyName®hostModuleName°@ohos.arkui.node¥entryÃªoh-resolveÂEAÃÙ_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsAÃªoh-resolveÂEAÃÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsAÃªoh-resolveÂEAÃÙ% hvigor_ignore_libtetrahedron_napi.soF‘G¶libtetrahedron_napi.so¥entryÃªoh-resolveÂEAÂÙDD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂEAÂÙGD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsAÃªoh-resolveÂ“ÔrH–§version¤fileªsourceRoot§sources¥names¨mappings¨Index.js ‘©Index.etsÜâ‘”    ‘” ˜”   ” 	”	 	” ” ” .”0 :”1 ;‘”    ‘” –”   ”  ” &” .”! :”" ;–”   ” 	” ” ” 3”  4˜”   ” ”	 	” ” ” ”( (”) )–”   ” ” ” ”5 5”6 6˜”   ” ”	 	” ” ” ”1 1”2 2•”  # ”	 #	” #” #” #>–” $” $” $” $” $” $–” %” %” %” %” %”! %š” &” &” &” &” &” &”" &”# &”) &%”+ &'Ü ” '” '” '” '” '”# '”$ '”+ '%”, '&”/ ')”2 ',”; '5”< '6”Ì@ ':”ÌA ';”ÌH 'ÌB”ÌI 'ÌC”ÌO 'ÌI”ÌP 'ÌJ‘”	 (‘” )‘”	 )	œ” *” *	” *
-” *” *” *” *”  *”" *”ÌY *ÌU”ÌZ *ÌV”Ì[ *ÌW‘” +”” ,” ,	” ,” ,’”  - ” -—”  / ”	 /	” /” /” /ÌA” /ÌC”* /ÌW–” 0” 0” 0” 0” 0” 0–” 1” 1” 1” 1” 1”! 1š” 2” 2” 2” 2” 2” 2”% 2!”& 2"”, 2(”. 2*” 3” 3” 3”! 3”$ 3”- 3'”. 3(”2 3,”3 3-”= 37”> 38”ÌA 3;”ÌB 3<‘”	 4‘” 5‘”	 5	œ” 6” 6	” 6
-” 6” 6” 6” 6”  6”" 6”Ì\ 6ÌX”Ì] 6ÌY”Ì^ 6ÌZ‘” 7”” 8” 8	” 8” 8’”  9 ” 9•”  ; ”	 ;	” ;” ;” ;?–” <” <” <” <” <” <–” =” =” =” =” =”! =š” >” >” >” >” >” >”# >”$ > ”) >%”+ >'Ü ” ?” ?” ?” ?” ?”# ?”$ ?”, ?&”- ?'”1 ?+”4 ?.”= ?7”> ?8”ÌB ?<”ÌC ?=”ÌK ?ÌE”ÌL ?ÌF”ÌQ ?ÌK”ÌR ?ÌL‘”	 Ì@‘” ÌA‘”	 ÌA	œ” ÌB” ÌB	” ÌB
-” ÌB” ÌB” ÌB” ÌB”  ÌB”" ÌB”ÌZ ÌBÌV”Ì[ ÌBÌW”Ì\ ÌBÌX‘” ÌC”” ÌD” ÌD	” ÌD” ÌD’”  ÌE ” ÌE—”  ÌG ”	 ÌG	” ÌG” ÌG” ÌGÌ@” ÌGÌB”( ÌGÌU–” ÌH” ÌH” ÌH” ÌH” ÌH” ÌH–” ÌI” ÌI” ÌI” ÌI” ÌI”! ÌIš” ÌJ” ÌJ” ÌJ” ÌJ” ÌJ” ÌJ”$ ÌJ ”% ÌJ!”* ÌJ&”, ÌJ(” ÌK” ÌK” ÌK”  ÌK”# ÌK”, ÌK&”- ÌK'”1 ÌK+”2 ÌK,”; ÌK5”< ÌK6”Ì@ ÌK:”ÌA ÌK;‘”	 ÌL‘” ÌM‘”	 ÌM	œ” ÌN” ÌN	” ÌN
-” ÌN” ÌN” ÌN” ÌN”  ÌN”" ÌN”Ì[ ÌNÌW”Ì\ ÌNÌX”Ì] ÌNÌY‘” ÌO”” ÌP” ÌP	” ÌP” ÌP’”  ÌQ ” ÌQ’” ÌU” ÌU‘” ÌS ””9 ÌV%”= ÌV)”ÌB ÌV.”ÌD ÌV8’”; ÌW!”Ì@ ÌW&’”? ÌX$”ÌD ÌX)’”9 ÌY”< ÌY!‘”: Ì[Ü ” Ì\” Ì\” Ì\	” Ì\
-” Ì\” Ì\” Ì\” Ì\” Ì\”$ Ì\”& Ì\”' Ì\”) Ì\!”- Ì\%”/ Ì\'”0 Ì\(˜” Ì]” Ì]” Ì]” Ì]”! Ì]”0 Ì](”2 Ì]*”3 Ì]+‘”	 Ì^‘”; Ì`*™” Ìa” Ìa” Ìa	” Ìa” Ìa”! Ìa”" Ìa”# Ìa”$ Ìa™” Ìb” Ìb	” Ìb”  Ìb”! Ìb”# Ìb”$ Ìb”% Ìb”& Ìb‘”	 Ìc–”9 Ìe”ÌR Ìe(”ÌT Ìf'”Ìd Ìf7”Ìe Ìf8”Ìn ÌfÌA–”8 Ìg”ÌP Ìg'”ÌR Ìh%”Ìa Ìh4”Ìb Ìh5”Ìj Ìh=””3 Ìj”; Ìj”= Ìk4”ÌF Ìk=””5 Ìl”ÌC Ìl”ÌE Ìl6”ÌF Ìl7””4 Ìm”ÌA Ìm”ÌC Ìm4”ÌD Ìm5’” Ìo”) Ìo&œ” Ìp)” Ìp-”. Ìp>”/ Ìp?”1 ÌpÌA”: ÌpÌJ”< ÌpÌL”ÌH ÌpÌX”ÌI ÌpÌY”ÌL ÌpÌ\”ÌN ÌpÌ^”ÌO ÌpÌ_‘” ÌQ’” ÌV	” ÌV’” ÌV	” ÌV’” ÌW	” ÌW’” ÌW	” ÌW’” ÌX	” ÌX’” ÌX	” ÌX’” ÌY	” ÌY’” ÌY	” ÌY’” Ì[	” Ì[’” Ì[	” Ì[’” Ì`	” Ì`’” Ì`	” Ì`’” Ìf” Ìf’” Ìf” Ìf’” Ìh” Ìh’” Ìh” Ìh’” Ìk” Ìk’” Ìk” Ìk’” Ìl” Ìl+’” Ìl” Ìl+’” Ìm” Ìm)’” Ìm” Ìm)’” Ìr” Ìr›” Ìs” Ìs” Ìs	” Ìs” Ìs”) Ìs%”, Ìs(”0 Ìs,”1 Ìs-”ÌA Ìs=”ÌB Ìs>›” Ìt” Ìt” Ìt	” Ìt” Ìt”( Ìt$”+ Ìt'”/ Ìt+”0 Ìt,”? Ìt;”Ì@ Ìt<š” Ìu” Ìu” Ìu”& Ìu"”' Ìu#”+ Ìu'”, Ìu(”7 Ìu3”8 Ìu4”9 Ìu5’” Ìv” Ìv’” Ìx” Ìx›” Ìy” Ìy” Ìy” Ìy” Ìy” Ìy” Ìy”  Ìy”* Ìy&”+ Ìy'”, Ìy(Ÿ” Ìz” Ìz” Ìz” Ìz” Ìz” Ìz”# Ìz”$ Ìz ”. Ìz*”0 Ìz,”4 Ìz0”5 Ìz1”Ì@ Ìz<”ÌA Ìz=”ÌB Ìz>Ÿ” Ì{” Ì{” Ì{” Ì{”  Ì{”! Ì{”% Ì{!”& Ì{"”0 Ì{,”2 Ì{.”6 Ì{2”7 Ì{3”ÌC Ì{?”ÌD Ì{Ì@”ÌE Ì{ÌA›” Ì|” Ì|” Ì|” Ì|” Ì|” Ì|”! Ì|”" Ì|”, Ì|(”- Ì|)”. Ì|*•” Ì~” Ì~” Ì~	” Ì~” Ì~Ü ” Ì” Ì	” Ì” Ì” Ì” Ì” Ì”& Ì ”( Ì"”. Ì(”0 Ì*”8 Ì2”: Ì4”> Ì8”Ì@ Ì:”ÌF ÌÌ@œ” Ì€” Ì€” Ì€”" Ì€”# Ì€”3 Ì€-”5 Ì€/”ÌD Ì€>”ÌF Ì€Ì@”ÌJ Ì€ÌD”ÌK Ì€ÌE”ÌZ Ì€ÌT’”	 Ì”
- Ì•” Ìƒ” Ìƒ” Ìƒ	” Ìƒ” Ìƒ™” Ì„” Ì„	” Ì„” Ì„” Ì„”! Ì„”" Ì„”' Ì„!”( Ì„"™” Ì…” Ì…	” Ì…” Ì…” Ì…”! Ì…”" Ì…”) Ì…#”* Ì…$™” Ì†” Ì†” Ì†”! Ì†”" Ì†”$ Ì†”% Ì†”- Ì†'”. Ì†(™” Ì‡” Ì‡” Ì‡”  Ì‡”! Ì‡”# Ì‡”$ Ì‡”* Ì‡$”+ Ì‡%’”	 Ìˆ”
- Ìˆš” Ì‰” Ì‰” Ì‰”& Ì‰"”' Ì‰#”+ Ì‰'”, Ì‰(”7 Ì‰3”8 Ì‰4”9 Ì‰5’” ÌŠ” ÌŠ”” ÌŒ”	 ÌŒ”
- ÌŒ” ÌŒ˜” Ì” Ì
-” Ì” Ì” Ì”# Ì”$ Ì ”% Ì!š” Ì” Ì” Ì	” Ì” Ì” Ì” Ì” Ì” Ì”  Ìš” Ì” Ì” Ì	” Ì” Ì” Ì” Ì” Ì” Ì”  Ì›” Ì‘” Ì‘” Ì‘” Ì‘” Ì‘” Ì‘” Ì‘”  Ì‘”* Ì‘&”+ Ì‘'”, Ì‘(Ÿ” Ì’” Ì’” Ì’” Ì’” Ì’” Ì’”# Ì’”$ Ì’ ”. Ì’*”0 Ì’,”4 Ì’0”5 Ì’1”Ì@ Ì’<”ÌA Ì’=”ÌB Ì’>Ÿ” Ì“” Ì“” Ì“” Ì“”  Ì“”! Ì“”% Ì“!”& Ì“"”0 Ì“,”2 Ì“.”6 Ì“2”7 Ì“3”ÌC Ì“?”ÌD Ì“Ì@”ÌE Ì“ÌA›” Ì”” Ì”” Ì”” Ì”” Ì”” Ì””! Ì””" Ì””, Ì”(”- Ì”)”. Ì”*•” Ì–” Ì–” Ì–	” Ì–” Ì–Ü ” Ì—” Ì—	” Ì—” Ì—” Ì—” Ì—” Ì—”& Ì— ”( Ì—"”. Ì—(”0 Ì—*”8 Ì—2”: Ì—4”> Ì—8”Ì@ Ì—:”ÌF Ì—Ì@œ” Ì˜” Ì˜” Ì˜”" Ì˜”# Ì˜”3 Ì˜-”5 Ì˜/”ÌD Ì˜>”ÌF Ì˜Ì@”ÌJ Ì˜ÌD”ÌK Ì˜ÌE”ÌZ Ì˜ÌT’”	 Ì™”
- Ì™•” Ì›” Ì›” Ì›	” Ì›” Ì›™” Ìœ” Ìœ	” Ìœ” Ìœ” Ìœ”! Ìœ”" Ìœ”' Ìœ!”( Ìœ"™” Ì” Ì	” Ì” Ì” Ì”! Ì”" Ì”) Ì#”* Ì$™” Ì” Ì” Ì”! Ì”" Ì”$ Ì”% Ì”- Ì'”. Ì(™” ÌŸ” ÌŸ” ÌŸ”  ÌŸ”! ÌŸ”# ÌŸ”$ ÌŸ”* ÌŸ$”+ ÌŸ%’”	 Ì ”
- Ì š” Ì¢” Ì¢” Ì¢”& Ì¢"”' Ì¢#”+ Ì¢'”, Ì¢(”7 Ì¢3”8 Ì¢4”9 Ì¢5’” Ì£” Ì£’” Ì¥” Ì¥˜” Ì¦” Ì¦
-” Ì¦” Ì¦” Ì¦”  Ì¦”! Ì¦”" Ì¦™” Ì§” Ì§” Ì§” Ì§” Ì§” Ì§”% Ì§!”' Ì§2”( Ì§3š” Ì¨” Ì¨” Ì¨” Ì¨” Ì¨” Ì¨”& Ì¨"”+ Ì¨'”4 Ì¨0”6 Ì¨2š” Ì©” Ì©
-” Ì©”$ Ì©”% Ì©”+ Ì©%”, Ì©&”5 Ì©/”6 Ì©0”7 Ì©1–” Ìª” Ìª” Ìª” Ìª” Ìª” Ìª‘”	 Ì«’” Ì¬” Ì¬”” Ì®” Ì®” Ì®”! Ì®'š” Ì¯” Ì¯
-” Ì¯” Ì¯” Ì¯”/ Ì¯+”2 Ì¯.”; Ì¯7”< Ì¯8”= Ì¯9˜” Ì°” Ì°” Ì°”$ Ì° ”% Ì°!”. Ì°*”/ Ì°+”0 Ì°,” Ì²” Ì²” Ì²” Ì²” Ì²” Ì²” Ì²”  Ì²”" Ì²”' Ì²#”) Ì²%”- Ì²)”. Ì²*”/ Ì²+œ” Ì³” Ì³” Ì³” Ì³” Ì³” Ì³”' Ì³#”* Ì³&”/ Ì³+”0 Ì³,”6 Ì³2”8 Ì³4š” Ì´” Ì´
-” Ì´”! Ì´”$ Ì´”) Ì´#”* Ì´$”3 Ì´-”4 Ì´.”5 Ì´/‘”	 Ìµ’” Ì¶” Ì¶‘” Ì¸š” Ì¹” Ì¹	” Ì¹
-” Ì¹”' Ì¹”) Ì¹”2 Ì¹#”3 Ì¹$”9 Ì¹*”; Ì¹,˜” Ì¹” Ì¹	” ÍK” ÍK”6 ÍK”: ÍK”; ÍK”ÌG ÍK’” Ìº” Ìº–” ÌÓ” ÌÓ” ÌÓ”" ÌÓ”# ÌÓ”, ÌÓ!—” ÌÓ” ÌÓ” ÌÔ”$ ÌÔ”% ÌÔ”( ÌÔ”* ÌÔ˜” ÌÕ” ÌÕ” ÌÕ” ÌÕ” ÌÕ”3 ÌÕ/”4 ÌÕ0”5 ÌÕ1’” ÌÖ
-” ÌÖ™” ÌÓ” ÌÓ” Ì×”% Ì×”& Ì×”' Ì×”, Ì×.”. Ì×0”0 Ì×2š” ÌØ”  ÌØ”! ÌØ”* ÌØ&”+ ÌØ'”7 ÌØ3”8 ÌØ4”< ÌØ8”= ÌØ9”> ÌØ:—” ÌÙ” ÌÙ” ÌÙ”! ÌÙ”$ ÌÙ ”) ÌÙ%”* ÌÙ&Ü ” ÌÚ” ÌÚ” ÌÚ” ÌÚ”" ÌÚ”2 ÌÚ.”3 ÌÚ/”> ÌÚ:”? ÌÚ;”ÌD ÌÚÌ@”ÌE ÌÚÌA”ÌL ÌÚÌH”ÌN ÌÚÌJ”ÌS ÌÚÌO”ÌT ÌÚÌP”Ì[ ÌÚÌW”Ì\ ÌÚÌX”Ì] ÌÚÌYÜ ” ÌÛ” ÌÛ” ÌÛ” ÌÛ” ÌÛ”> ÌÛ:”ÌA ÌÛ=”ÌF ÌÛÌB”ÌG ÌÛÌC”ÌN ÌÛÌJ”ÌQ ÌÛÌM”ÌT ÌÛÌP”ÌW ÌÛÌS”Ì\ ÌÛÌX”Ì] ÌÛÌY”Ìd ÌÛÌ`”Ìe ÌÛÌa”Ìf ÌÛÌb’” ÌÜ
-” ÌÜ—” ÌÓ” ÌÓ” Ìİ”" Ìİ”# Ìİ”& Ìİ”( Ìİ˜” ÌŞ” ÌŞ” ÌŞ” ÌŞ” ÌŞ”1 ÌŞ-”2 ÌŞ.”3 ÌŞ/’” Ìß
-” Ìß’” ÌÓ” ÌÓ–” Ìº” Ìº” Ìá” Ìá” Ìá”  Ìá˜” Ìº” Ìº” Ìâ”! Ìâ”" Ìâ”+ Ìâ”, Ìâ ”8 Ìâ,’” Ì»” Ì»˜” Ì»” Ì»” ÌË	”! ÌË”" ÌË”+ ÌË!”, ÌË"”7 ÌË-˜” Ì»” Ì»” ÌÌ	” ÌÌ” ÌÌ”- ÌÌ#”. ÌÌ$”4 ÌÌ*–” Ì»” Ì»” ÌÍ	” ÌÍ” ÌÍ”  ÌÍ–” Ì»” Ì»” ÌÎ	” ÌÎ” ÌÎ” ÌÎ–” Ì»” Ì»” ÌÏ	”" ÌÏ”# ÌÏ”, ÌÏ"–” Ì»” Ì»” ÌĞ	” ÌĞ”  ÌĞ”" ÌĞ“” Ì¼
-” Ì¼” Ì¼–” Ì½” Ì½” Ì½” Ì½” Ì½”% Ì½!–” Ì¾” Ì¾” Ì¾”$ Ì¾ ”% Ì¾!”, Ì¾(”” Ì¿” Ì¿” Ì¿”/ Ì¿+‘” ÌÀ—” Ì¼
-” Ì¼” ÌÁ” ÌÁ” ÌÁ”! ÌÁ”# ÌÁ˜” ÌÂ” ÌÂ” ÌÂ” ÌÂ” ÌÂ”$ ÌÂ"”% ÌÂ#”& ÌÂ$’” ÌÃ” ÌÃ–” Ì¼
-” Ì¼” ÌÄ” ÌÄ” ÌÄ”' ÌÄ—” Ì¼
-” Ì¼” ÌÅ”  ÌÅ”! ÌÅ”$ ÌÅ”& ÌÅ˜” ÌÆ” ÌÆ” ÌÆ” ÌÆ” ÌÆ”' ÌÆ%”( ÌÆ&”) ÌÆ'’” ÌÇ” ÌÇ–” Ì¼
-” Ì¼” ÌÈ” ÌÈ” ÌÈ”& ÌÈ–” Ì¼
-” Ì¼” ÌÉ”& ÌÉ”' ÌÉ”0 ÌÉ&’” Ì»” Ì»’” Ìº” Ìº’” Ìä” Ìä	–” Ìä” Ìä	” Ì÷” Ì÷” Ì÷” Ì÷˜” Ìä” Ìä	” Ìø” Ìø” Ìø”( Ìø”) Ìø ”. Ìø%” Ìä” Ìä	” Ìù” Ìù” Ìù” Ìù” Ìù”  Ìù”" Ìù”$ Ìù”' Ìù”) Ìù ”+ Ìù"”- Ìù$˜” Ìä” Ìä	” Ìú” Ìú”  Ìú”+ Ìú"”, Ìú#”7 Ìú.” Ìä” Ìä	” Ìû” Ìû” Ìû” Ìû” Ìû” Ìû” Ìû”! Ìû”" Ìû”$ Ìû”% Ìû”' Ìû–” Ìä” Ìä	” Ìü” Ìü” Ìü” Ìü’” Ìå” Ìå˜” Ìå” Ìå” Ìğ	” Ìğ” Ìğ”" Ìğ”# Ìğ”* Ìğ –” Ìå” Ìå” Ìñ	”" Ìñ”# Ìñ”. Ìñ$–” Ìå” Ìå” Ìò	” Ìò”  Ìò”" Ìò—” Ìå” Ìå” Ìó	” Ìó” Ìó” Ìó”  Ìóœ” Ìô
-” Ìô” Ìô” Ìô” Ìô”! Ìô”$ Ìô”& Ìô ”= Ìô7”? Ìô9”Ì@ Ìô:”ÌA Ìô;’” Ìõ” Ìõ	˜” Ìæ
-” Ìæ” Ìæ” Ìæ” Ìæ”  Ìæ”! Ìæ”# Ìæ”” Ìç” Ìç” Ìç”  Ìç–” Ìç” Ìç” Ìè” Ìè” Ìè” Ìè–” Ìç” Ìç” Ìé” Ìé” Ìé”$ Ìé"’” Ìç” Ìç”” Ìê” Ìê” Ìê” Ìê–” Ìê” Ìê” Ìë” Ìë” Ìë” Ìë–” Ìê” Ìê” Ìì” Ìì” Ìì”$ Ìì"˜” Ìê” Ìê” Ìí” Ìí” Ìí”& Ìí$”' Ìí%”- Ìí+’” Ìê” Ìê’” Ìæ
-” Ìæ’” Ìå” Ìå’” Ìä” Ìä	˜” Ìş” Ìş
-” Ìş” Ìş”! Ìş”% Ìş”& Ìş”6 Ìş)–” Ìş” Ìş
-” Ìÿ	” Ìÿ” Ìÿ” Ìÿ–” Ìş” Ìş
-” Í 	” Í ” Í ”& Í –” Ìş” Ìş
-” Í	”  Í”! Í”, Í$–” Ìş” Ìş
-” Í	” Í” Í”  ÍÜ ” Ìş” Ìş
-” Í	” Í” Í” Í” Í”! Í”# Í”% Í”* Í"”, Í$”. Í&”0 Í(”3 Í+”5 Í-”6 Í.”8 Í0”> Í6”Ì@ Í8”ÌA Í9”ÌC Í;” Ìş” Ìş
-” Í	” Í” Í” Í” Í” Í”! Í”# Í”$ Í”& Í”( Í ”* Í"–” Ìş” Ìş
-” Í	” Í” Í” Í’” Ìş” Ìş
-’” Í” Í	–” Í” Í	” Í"” Í"” Í"” Í"” Í” Í	” Í#” Í#” Í#” Í#” Í#”  Í#”" Í#”$ Í#”) Í# ”+ Í#"”- Í#$”/ Í#&˜” Í” Í	” Í$” Í$”  Í$”+ Í$"”, Í$#”7 Í$.”” Í” Í” Í” Í–” Í” Í” Í	” Í	” Í	” Í	–” Í” Í” Í
-” Í
-” Í
-”$ Í
-š” Í” Í” Í” Í” Í” Í” Í”! Í”" Í”$ Í’” Í” Í“” Í” Í” Í–” Í
-” Í” Í” Í” Í”& Í ”” Í
-” Í” Í” Í”” Í
-” Í” Í” Í”” Í
-” Í” Í” Í–” Í
-” Í” Í”" Í”# Í”( Í"‘” Í	–” Í” Í” Í” Í” Í”  Í–” Í” Í” Í” Í” Í”) Í!–” Í” Í” Í”  Í”! Í”* Í"–” Í” Í” Í” Í”  Í”! Í™” Í” Í” Í” Í” Í” Í”" Í"”$ Í$”& Í&—” Í” Í” Í” Í”" Í”' Í#”( Í$˜” Í”  Í”! Í”) Í%”* Í&”/ Í+”0 Í,”1 Í-’” Í
-” Í”” Í” Í” Í” Í–” Í” Í” Í” Í” Í” Í–” Í” Í” Í” Í” Í”$ Íš” Í” Í” Í ” Í ” Í ” Í ” Í ”  Í ”! Í ”# Í ’” Í” Í’” Í” Í	˜” Í&” Í&	” Í&
-” Í&” Í&”  Í&”" Í&”$ Í&˜” Í&” Í&	” ÍD” ÍD”  ÍD”+ ÍD"”, ÍD#”7 ÍD.•” Í&” Í&	” ÍE” ÍE” ÍEÜ ” ÍF” ÍF” ÍF” ÍF” ÍF”* ÍF"”/ ÍF'”> ÍF6”? ÍF7”ÌG ÍF?”ÌH ÍFÌ@”ÌI ÍFÌA”ÌJ ÍFÌB”ÌL ÍFÌD”ÌM ÍFÌE”ÌN ÍFÌF”ÌO ÍFÌG”ÌQ ÍFÌIÜ ” ÍG” ÍG” ÍG” ÍG” ÍG”+ ÍG#”0 ÍG(”? ÍG7”Ì@ ÍG8”ÌH ÍGÌ@”ÌI ÍGÌA”ÌJ ÍGÌB”ÌK ÍGÌC”ÌM ÍGÌE”ÌN ÍGÌF”ÌO ÍGÌG”ÌP ÍGÌH”ÌR ÍGÌJ”” ÍH” ÍH” ÍH” ÍH‘” ÍIÜ ” Í'” Í'”# Í'”' Í'”( Í'”4 Í' ”5 Í'!”6 Í'"”Ì£ Í'ÌF”Ì¤ Í'ÌG”Í Í'Ìj”Í Í(
-”Í Í(”Í Í(”Í Í(”Í$ Í(”Í% Í(”Í, Í($”Í. Í(&”Í9 Í(1”Í; Í(3”Í? Í(7”ÍA Í(9–” Í'” Í'” Í)” Í)” Í)” Í)—” Í'” Í'” Í*” Í*” Í*” Í*”  Í*–” Í+” Í+” Í+” Í+”% Í+!”' Í+#š” Í,”$ Í,”% Í,”. Í,(”/ Í,)”; Í,5”< Í,6”Ì@ Í,:”ÌA Í,;”ÌB Í,<—” Í-” Í-” Í-”% Í-”( Í-"”- Í-'”. Í-(‘” Í.‘” Í.š” Í/”$ Í/”% Í/”. Í/(”/ Í/)”; Í/5”< Í/6”Ì@ Í/:”ÌA Í/;”ÌB Í/<—” Í0” Í0” Í0”% Í0”( Í0"”, Í0&”- Í0'‘” Í1’” Í2
-” Í2–” Í'” Í'” Í3” Í3”  Í3”! Í3’” Í'” Í'” Í5” Í5”Ì Í56”Ì’ Í58”Ì– Í5<”Ì˜ Í5>”Ì¢ Í5ÌH”Ì£ Í5ÌI”Ìª Í5ÌP”Ì¬ Í5ÌR”Ì· Í5Ì]”Ì¹ Í5Ì_”Ì½ Í5Ìc”Ì¿ Í5Ìe–” Í5” Í5” Í6” Í6” Í6” Í6—” Í5” Í5” Í7” Í7” Í7” Í7”  Í7—” Í8” Í8” Í8”! Í8”$ Í8 ”) Í8%”* Í8&š” Í9”  Í9”! Í9”* Í9&”+ Í9'”7 Í93”8 Í94”? Í9;”Ì@ Í9<”ÌA Í9=’” Í:
-” Í:–” Í5” Í5” Í;” Í;”  Í;”! Í;’” Í5” Í5Ü ” Í=” Í=”# Í=”' Í=”) Í=”+ Í=”/ Í=”1 Í=”; Í='”< Í=(”ÌC Í=/”ÌE Í=1”ÌP Í=<”ÌR Í=>”ÌV Í=ÌB”ÌX Í=ÌD–” Í=” Í=” Í>” Í>” Í>” Í>—” Í=” Í=” Í?” Í?” Í?” Í?”  Í?–” Í@”  Í@”! Í@”0 Í@,”2 Í@.”3 Í@/’” ÍA
-” ÍA–” Í=” Í=” ÍB” ÍB”  ÍB”# ÍB’” Í=” Í=’” Í&” Í&	’” Ì¹” Ì¹	‘” ÍLÔrI–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜë‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ÀÔrD—°@ohos.arkui.node¬@ohos.router«@ohos.hilog¶libtetrahedron_napi.so¯../utils/Logger»../utils/ContinuationHelper²../utils/ConstantsÔrE—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙc hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.arkui.node.d.tsÔrF‘¯hostModulesInfo‘ÔrG’²hostDependencyName®hostModuleName°@ohos.arkui.node¥entryÃªoh-resolveÂEAÃÙ_ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.router.d.tsF’G¬@ohos.router¥entryG¬@ohos.router¥entryÃªoh-resolveÂEAÃÙ^ hvigor_ignore_D:_HUAWEI_DevEco_DevEco Studio_sdk_default_openharmony_ets_api_@ohos.hilog.d.tsAÃªoh-resolveÂEAÃÙ% hvigor_ignore_libtetrahedron_napi.soF‘G¶libtetrahedron_napi.so¥entryÃªoh-resolveÂEAÂÙID:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Logger.etsAÃªoh-resolveÂEAÂÙUD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\ets\utils\ContinuationHelper.etsAÃªoh-resolveÂEAÂÙLD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\ets\utils\Constants.etsAÃªoh-resolveÂ“ÔrH–§version¤fileªsourceRoot§sources¥names¨mappings¨Index.js ‘©Index.etsÜh˜”    ”  	”	  	”  ”  ”  .”0  :”1  ;–”    ”   ”  &”  .”!  :”"  ;–”   ” 	” ” ” 3”  4˜”   ” ”	 	” ” ” ”( (”) )–”   ” ” ” ”5 5”6 6˜”   ” ”	 	” ” ” ”1 1”2 2˜”   ” ”	 	” ” )” /”8 ÌL”9 ÌM•”   ”	 	” ” ” >–” ” ” ” ” ” –” ” ” ” ” ”! š” ” ” ” ” ” ”" ”# ”) %”+ 'Ü ” ” ” ” ” ”# ”$ ”+ %”, &”/ )”2 ,”; 5”< 6”Ì@ :”ÌA ;”ÌH ÌB”ÌI ÌC”ÌO ÌI”ÌP ÌJ‘”	 ‘” ‘”	 	œ” ” 	” 
+” ” ” ” ”  ”" ”ÌY ÌU”ÌZ ÌV”Ì[ ÌW‘” ”” ” 	” ” ’”   ” —”  ! ”	 !	” !” !” !ÌA” !ÌC”* !ÌW–” "” "” "” "” "” "–” #” #” #” #” #”! #š” $” $” $” $” $” $”% $!”& $"”, $(”. $*” %” %” %”! %”$ %”- %'”. %(”2 %,”3 %-”= %7”> %8”ÌA %;”ÌB %<‘”	 &‘” '‘”	 '	œ” (” (	” (
+” (” (” (” (”  (”" (”Ì\ (ÌX”Ì] (ÌY”Ì^ (ÌZ‘” )”” *” *	” *” *’”  + ” +•”  - ”	 -	” -” -” -?–” .” .” .” .” .” .–” /” /” /” /” /”! /š” 0” 0” 0” 0” 0” 0”# 0”$ 0 ”) 0%”+ 0'Ü ” 1” 1” 1” 1” 1”# 1”$ 1”, 1&”- 1'”1 1+”4 1.”= 17”> 18”ÌB 1<”ÌC 1=”ÌK 1ÌE”ÌL 1ÌF”ÌQ 1ÌK”ÌR 1ÌL‘”	 2‘” 3‘”	 3	œ” 4” 4	” 4
+” 4” 4” 4” 4”  4”" 4”ÌZ 4ÌV”Ì[ 4ÌW”Ì\ 4ÌX‘” 5”” 6” 6	” 6” 6’”  7 ” 7—”  9 ”	 9	” 9” 9” 9Ì@” 9ÌB”( 9ÌU–” :” :” :” :” :” :–” ;” ;” ;” ;” ;”! ;š” <” <” <” <” <” <”$ < ”% <!”* <&”, <(” =” =” =”  =”# =”, =&”- ='”1 =+”2 =,”; =5”< =6”Ì@ =:”ÌA =;‘”	 >‘” ?‘”	 ?	œ” Ì@” Ì@	” Ì@
+” Ì@” Ì@” Ì@” Ì@”  Ì@”" Ì@”Ì[ Ì@ÌW”Ì\ Ì@ÌX”Ì] Ì@ÌY‘” ÌA”” ÌB” ÌB	” ÌB” ÌB’”  ÌC ” ÌC’” ÌG” ÌG‘” ÌE ””9 ÌH%”= ÌH)”ÌB ÌH.”ÌD ÌH8’”; ÌI!”Ì@ ÌI&’”? ÌJ$”ÌD ÌJ)’”? ÌK$”Ì@ ÌK%’”9 ÌL”< ÌL!’”: ÌM ”? ÌM%’”ÌA ÌN'”ÌF ÌN,‘”: ÌPÜ ” ÌQ” ÌQ” ÌQ	” ÌQ
+” ÌQ” ÌQ” ÌQ” ÌQ” ÌQ”$ ÌQ”& ÌQ”' ÌQ”) ÌQ!”- ÌQ%”/ ÌQ'”0 ÌQ(˜” ÌR” ÌR” ÌR” ÌR”! ÌR”0 ÌR(”2 ÌR*”3 ÌR+‘”	 ÌS‘”; ÌT*™” ÌU” ÌU” ÌU	” ÌU” ÌU”! ÌU”" ÌU”# ÌU”$ ÌU™” ÌV” ÌV	” ÌV”  ÌV”! ÌV”# ÌV”$ ÌV”% ÌV”& ÌV‘”	 ÌW–”9 ÌY”ÌR ÌY(”ÌT ÌZ'”Ìd ÌZ7”Ìe ÌZ8”Ìn ÌZÌA–”8 Ì[”ÌP Ì['”ÌR Ì\%”Ìa Ì\4”Ìb Ì\5”Ìj Ì\=””3 Ì]”ÌF Ì]"”ÌH Ì]9”ÌL Ì]=””3 Ì_”; Ì_”= Ì`4”ÌF Ì`=””5 Ìa”ÌC Ìa”ÌE Ìa6”ÌF Ìa7””4 Ìb”ÌA Ìb”ÌC Ìb4”ÌD Ìb5’” Ìd!”) Ìd.œ” Ìe)” Ìe-”. Ìe>”/ Ìe?”1 ÌeÌA”: ÌeÌJ”< ÌeÌL”ÌH ÌeÌX”ÌI ÌeÌY”ÌL ÌeÌ\”ÌN ÌeÌ^”ÌO ÌeÌ_‘” ÌC’” ÌH	” ÌH’” ÌH	” ÌH’” ÌI	” ÌI’” ÌI	” ÌI’” ÌJ	” ÌJ’” ÌJ	” ÌJ’” ÌK	” ÌK’” ÌK	” ÌK’” ÌL	” ÌL’” ÌL	” ÌL’” ÌM	” ÌM’” ÌM	” ÌM’” ÌN	” ÌN’” ÌN	” ÌN’” ÌP	” ÌP’” ÌP	” ÌP’” ÌT	” ÌT’” ÌT	” ÌT’” ÌZ” ÌZ’” ÌZ” ÌZ’” Ì\” Ì\’” Ì\” Ì\’” Ì]$” Ì].’” Ì]$” Ì].’” Ì`” Ì`’” Ì`” Ì`’” Ìa” Ìa+’” Ìa” Ìa+’” Ìb” Ìb)’” Ìb” Ìb)’” Ìg” Ìg›” Ìh” Ìh” Ìh	” Ìh” Ìh”) Ìh%”, Ìh(”0 Ìh,”1 Ìh-”ÌA Ìh=”ÌB Ìh>›” Ìi” Ìi” Ìi	” Ìi” Ìi”( Ìi$”+ Ìi'”/ Ìi+”0 Ìi,”? Ìi;”Ì@ Ìi<š” Ìj” Ìj” Ìj”& Ìj"”' Ìj#”+ Ìj'”, Ìj(”7 Ìj3”8 Ìj4”9 Ìj5’” Ìk” Ìk’” Ìm” Ìm›” Ìn” Ìn” Ìn” Ìn” Ìn” Ìn” Ìn”  Ìn”* Ìn&”+ Ìn'”, Ìn(Ÿ” Ìo” Ìo” Ìo” Ìo” Ìo” Ìo”# Ìo”$ Ìo ”. Ìo*”0 Ìo,”4 Ìo0”5 Ìo1”Ì@ Ìo<”ÌA Ìo=”ÌB Ìo>Ÿ” Ìp” Ìp” Ìp” Ìp”  Ìp”! Ìp”% Ìp!”& Ìp"”0 Ìp,”2 Ìp.”6 Ìp2”7 Ìp3”ÌC Ìp?”ÌD ÌpÌ@”ÌE ÌpÌA›” Ìq” Ìq” Ìq” Ìq” Ìq” Ìq”! Ìq”" Ìq”, Ìq(”- Ìq)”. Ìq*•” Ìs” Ìs” Ìs	” Ìs” ÌsÜ ” Ìt” Ìt	” Ìt” Ìt” Ìt” Ìt” Ìt”& Ìt ”( Ìt"”. Ìt(”0 Ìt*”8 Ìt2”: Ìt4”> Ìt8”Ì@ Ìt:”ÌF ÌtÌ@œ” Ìu” Ìu” Ìu”" Ìu”# Ìu”3 Ìu-”5 Ìu/”ÌD Ìu>”ÌF ÌuÌ@”ÌJ ÌuÌD”ÌK ÌuÌE”ÌZ ÌuÌT’”	 Ìv”
+ Ìv•” Ìw” Ìw” Ìw	” Ìw” Ìw™” Ìx” Ìx	” Ìx” Ìx” Ìx”! Ìx”" Ìx”' Ìx!”( Ìx"™” Ìy” Ìy	” Ìy” Ìy” Ìy”! Ìy”" Ìy”) Ìy#”* Ìy$™” Ìz” Ìz” Ìz”! Ìz”" Ìz”$ Ìz”% Ìz”- Ìz'”. Ìz(™” Ì{” Ì{” Ì{”  Ì{”! Ì{”# Ì{”$ Ì{”* Ì{$”+ Ì{%’”	 Ì|”
+ Ì|š” Ì}” Ì}” Ì}”& Ì}"”' Ì}#”+ Ì}'”, Ì}(”7 Ì}3”8 Ì}4”9 Ì}5’” Ì~” Ì~”” Ì€”	 Ì€”
+ Ì€” Ì€˜” Ì” Ì
+” Ì” Ì” Ì”# Ì”$ Ì ”% Ì!š” Ì‚” Ì‚” Ì‚	” Ì‚” Ì‚” Ì‚” Ì‚” Ì‚” Ì‚”  Ì‚š” Ìƒ” Ìƒ” Ìƒ	” Ìƒ” Ìƒ” Ìƒ” Ìƒ” Ìƒ” Ìƒ”  Ìƒ›” Ì…” Ì…” Ì…” Ì…” Ì…” Ì…” Ì…”  Ì…”* Ì…&”+ Ì…'”, Ì…(Ÿ” Ì†” Ì†” Ì†” Ì†” Ì†” Ì†”# Ì†”$ Ì† ”. Ì†*”0 Ì†,”4 Ì†0”5 Ì†1”Ì@ Ì†<”ÌA Ì†=”ÌB Ì†>Ÿ” Ì‡” Ì‡” Ì‡” Ì‡”  Ì‡”! Ì‡”% Ì‡!”& Ì‡"”0 Ì‡,”2 Ì‡.”6 Ì‡2”7 Ì‡3”ÌC Ì‡?”ÌD Ì‡Ì@”ÌE Ì‡ÌA›” Ìˆ” Ìˆ” Ìˆ” Ìˆ” Ìˆ” Ìˆ”! Ìˆ”" Ìˆ”, Ìˆ(”- Ìˆ)”. Ìˆ*•” ÌŠ” ÌŠ” ÌŠ	” ÌŠ” ÌŠÜ ” Ì‹” Ì‹	” Ì‹” Ì‹” Ì‹” Ì‹” Ì‹”& Ì‹ ”( Ì‹"”. Ì‹(”0 Ì‹*”8 Ì‹2”: Ì‹4”> Ì‹8”Ì@ Ì‹:”ÌF Ì‹Ì@œ” ÌŒ” ÌŒ” ÌŒ”" ÌŒ”# ÌŒ”3 ÌŒ-”5 ÌŒ/”ÌD ÌŒ>”ÌF ÌŒÌ@”ÌJ ÌŒÌD”ÌK ÌŒÌE”ÌZ ÌŒÌT’”	 Ì”
+ Ì•” Ì” Ì” Ì	” Ì” Ì™” Ì” Ì	” Ì” Ì” Ì”! Ì”" Ì”' Ì!”( Ì"™” Ì” Ì	” Ì” Ì” Ì”! Ì”" Ì”) Ì#”* Ì$™” Ì‘” Ì‘” Ì‘”! Ì‘”" Ì‘”$ Ì‘”% Ì‘”- Ì‘'”. Ì‘(™” Ì’” Ì’” Ì’”  Ì’”! Ì’”# Ì’”$ Ì’”* Ì’$”+ Ì’%’”	 Ì“”
+ Ì“š” Ì”” Ì”” Ì””& Ì”"”' Ì”#”+ Ì”'”, Ì”(”7 Ì”3”8 Ì”4”9 Ì”5›” Ì–” Ì–” Ì–” Ì–” Ì–”  Ì–”# Ì–”$ Ì– ”4 Ì–0”5 Ì–ÌH”6 Ì–ÌI”” Ì—” Ì—” Ì—” Ì—›” Ì˜” Ì˜
+” Ì˜” Ì˜”" Ì˜”# Ì˜”& Ì˜ ”' Ì˜!”: Ì˜4”; Ì˜ÌO”< Ì˜ÌPš” Ì™” Ì™” Ì™”" Ì™”# Ì™”3 Ì™-”5 Ì™/”: Ì™4”; Ì™5”< Ì™6š” Ìš” Ìš” Ìš”" Ìš”# Ìš”6 Ìš0”8 Ìš2”< Ìš6”= Ìš7”> Ìš8”” Ì›” Ì›
+” Ì›” Ì›—” Ìœ” Ìœ” Ìœ”' Ìœ”* Ìœ"”. Ìœ&”/ Ìœ'˜” Ì” Ì” Ì”, Ì$”- Ì%”2 Ì*”3 Ì+”4 Ì,‘” Ì‘”	 ÌŸ’” Ì ” Ì ”” Ì¢” Ì¢” Ì¢”! Ì¢+œ” Ì£” Ì£
+” Ì£” Ì£” Ì£”4 Ì£0”7 Ì£3”< Ì£8”= Ì£9”ÌF Ì£ÌB”ÌG Ì£ÌC”ÌH Ì£ÌD™” Ì¤” Ì¤” Ì¤	” Ì¤”  Ì¤”% Ì¤!”& Ì¤"”/ Ì¤+”0 Ì¤,™” Ì¥” Ì¥” Ì¥	” Ì¥” Ì¥” Ì¥”  Ì¥”% Ì¥!”& Ì¥"œ” Ì¦” Ì¦” Ì¦	” Ì¦” Ì¦” Ì¦” Ì¦” Ì¦”" Ì¦”# Ì¦”) Ì¦%”* Ì¦&œ” Ì§” Ì§” Ì§	” Ì§” Ì§” Ì§” Ì§” Ì§”" Ì§”# Ì§”) Ì§%”* Ì§&™” Ì¨” Ì¨” Ì¨	” Ì¨” Ì¨”  Ì¨”! Ì¨”* Ì¨&”+ Ì¨'š” Ìª” Ìª” Ìª”$ Ìª ”% Ìª!”* Ìª&”+ Ìª'”4 Ìª0”5 Ìª1”6 Ìª2š” Ì«” Ì«” Ì«”! Ì«”" Ì«”' Ì«#”( Ì«$”- Ì«)”. Ì«*”/ Ì«+–” Ì¬” Ì¬” Ì¬” Ì¬” Ì¬” Ì¬–” Ì­” Ì­” Ì­”, Ì­&”. Ì­(”/ Ì­)‘”	 Ì®” Ì¯” Ì¯” Ì¯” Ì¯” Ì¯” Ì¯” Ì¯”  Ì¯”" Ì¯”' Ì¯#”) Ì¯%”- Ì¯)”. Ì¯*”/ Ì¯+Ü ” Ì°” Ì°” Ì°” Ì°” Ì°” Ì°”  Ì°”$ Ì° ”) Ì°%”* Ì°&”3 Ì°/”6 Ì°2”; Ì°7”< Ì°8”ÌB Ì°>”ÌD Ì°Ì@œ” Ì±” Ì±
+” Ì±”! Ì±”$ Ì±”) Ì±#”* Ì±$”/ Ì±)”0 Ì±*”9 Ì±3”: Ì±4”; Ì±5‘”	 Ì²’” Ì³” Ì³’” Ìµ” Ìµ˜” Ì¶” Ì¶
+” Ì¶” Ì¶” Ì¶”  Ì¶”! Ì¶”" Ì¶™” Ì·” Ì·” Ì·” Ì·” Ì·” Ì·”% Ì·!”' Ì·2”( Ì·3š” Ì¸” Ì¸” Ì¸” Ì¸” Ì¸” Ì¸”& Ì¸"”+ Ì¸'”4 Ì¸0”6 Ì¸2š” Ì¹” Ì¹
+” Ì¹”$ Ì¹”% Ì¹”+ Ì¹%”, Ì¹&”5 Ì¹/”6 Ì¹0”7 Ì¹1–” Ìº” Ìº” Ìº” Ìº” Ìº” Ìº‘”	 Ì»’” Ì¼” Ì¼”” Ì¾” Ì¾” Ì¾”! Ì¾'š” Ì¿” Ì¿
+” Ì¿” Ì¿” Ì¿”/ Ì¿+”2 Ì¿.”; Ì¿7”< Ì¿8”= Ì¿9—” ÌÀ” ÌÀ” ÌÀ	” ÌÀ”  ÌÀ”) ÌÀ%”* ÌÀ&˜” ÌÁ” ÌÁ” ÌÁ”$ ÌÁ ”% ÌÁ!”. ÌÁ*”/ ÌÁ+”0 ÌÁ,” ÌÂ” ÌÂ” ÌÂ” ÌÂ” ÌÂ” ÌÂ” ÌÂ”  ÌÂ”" ÌÂ”' ÌÂ#”) ÌÂ%”- ÌÂ)”. ÌÂ*”/ ÌÂ+œ” ÌÃ” ÌÃ” ÌÃ” ÌÃ” ÌÃ” ÌÃ”' ÌÃ#”* ÌÃ&”/ ÌÃ+”0 ÌÃ,”6 ÌÃ2”8 ÌÃ4š” ÌÄ” ÌÄ
+” ÌÄ”! ÌÄ”$ ÌÄ”) ÌÄ#”* ÌÄ$”3 ÌÄ-”4 ÌÄ.”5 ÌÄ/‘”	 ÌÅ’” ÌÆ” ÌÆ’” ÌÈ” ÌÈ˜” ÌÉ” ÌÉ” ÌÉ” ÌÉ” ÌÉ”" ÌÉ”$ ÌÉ ”% ÌÉ!™” ÌÊ” ÌÊ	” ÌÊ
+” ÌÊ” ÌÊ” ÌÊ” ÌÊ”/ ÌÊ+”0 ÌÊ,™” ÌË” ÌË	” ÌË
+” ÌË” ÌË” ÌË” ÌË”% ÌË!”& ÌË"” ÌÌ” ÌÌ	” ÌÌ
+” ÌÌ” ÌÌ” ÌÌ” ÌÌ”& ÌÌ"”' ÌÌ#”( ÌÌ$”) ÌÌ%”- ÌÌ)”/ ÌÌ+”0 ÌÌ,” ÌÍ” ÌÍ	” ÌÍ
+” ÌÍ” ÌÍ” ÌÍ” ÌÍ”& ÌÍ"”' ÌÍ#”( ÌÍ$”) ÌÍ%”- ÌÍ)”/ ÌÍ+”0 ÌÍ,™” ÌÎ” ÌÎ	” ÌÎ
+” ÌÎ” ÌÎ” ÌÎ” ÌÎ”* ÌÎ&”+ ÌÎ'”” ÌÏ” ÌÏ” ÌÏ” ÌÏ’” ÌĞ” ÌĞ’” ÌÓ” ÌÓ’” ÌÔ” ÌÔ
+’” ÌÕ” ÌÕ˜” ÌÕ” ÌÕ” Ìá”! Ìá”" Ìá”+ Ìá”, Ìá ”7 Ìá+˜” ÌÕ” ÌÕ” Ìâ” Ìâ” Ìâ”- Ìâ!”. Ìâ"”4 Ìâ(–” ÌÕ” ÌÕ” Ìã” Ìã” Ìã”  Ìã–” ÌÕ” ÌÕ” Ìä” Ìä” Ìä” Ìä–” ÌÕ” ÌÕ” Ìå”" Ìå”# Ìå”, Ìå Ü ” ÌÕ” ÌÕ” Ìæ” Ìæ”  Ìæ”$ Ìæ”% Ìæ”/ Ìæ#”4 Ìæ(”8 Ìæ,”9 Ìæ-”: Ìæ.”; Ìæ/”< Ìæ0”= Ìæ1”> Ìæ2”? Ìæ3”ÌA Ìæ5“” ÌÖ” ÌÖ” ÌÖ–” Ì×
+” Ì×” Ì×” Ì×” Ì×”% Ì×–” ÌØ
+” ÌØ” ÌØ”$ ÌØ”% ÌØ”, ÌØ&”” ÌÙ
+” ÌÙ” ÌÙ”/ ÌÙ)‘” ÌÚ	Ü ” ÌÖ” ÌÖ” ÌÛ” ÌÛ” ÌÛ”! ÌÛ”# ÌÛ”& ÌÛ”, ÌÛ ”- ÌÛ!”1 ÌÛ%”2 ÌÛ&”: ÌÛ.”; ÌÛ/”< ÌÛ0”= ÌÛ1”> ÌÛ2–” ÌÖ” ÌÖ” ÌÜ” ÌÜ” ÌÜ”' ÌÜÜ ” ÌÖ” ÌÖ” Ìİ”  Ìİ”! Ìİ”$ Ìİ”& Ìİ”) Ìİ”/ Ìİ#”0 Ìİ$”4 Ìİ(”5 Ìİ)”Ì@ Ìİ4”ÌA Ìİ5”ÌB Ìİ6”ÌC Ìİ7”ÌD Ìİ8–” ÌÖ” ÌÖ” ÌŞ” ÌŞ” ÌŞ”& ÌŞ–” ÌÖ” ÌÖ” Ìß”& Ìß”' Ìß”0 Ìß$’” ÌÕ” ÌÕ’” ÌÔ” ÌÔ
+‘” Ìè’” Ìë” Ìë’” Ìì” Ìì
+–” Ìí” Ìí
+” Ìí” Ìí”' Ìí!”) Ìí#”” Ìî” Ìî”$ Ìî”. Ìî–” Ìî” Ìî” Ìï”% Ìï”& Ìï”( Ìï–” Ìî” Ìî” Ìğ”& Ìğ”' Ìğ”0 Ìğ–” Ìî” Ìî” Ìñ”, Ìñ”- Ìñ”8 Ìñ&–” Ìî” Ìî” Ìò”) Ìò”* Ìò”+ ÌòÜ ” Ìî” Ìî” Ìó”$ Ìó”% Ìó”' Ìó”+ Ìó”- Ìó”. Ìó”0 Ìó”5 Ìó#”7 Ìó%”8 Ìó&”: Ìó(”= Ìó+”? Ìó-”Ì@ Ìó.”ÌB Ìó0”ÌH Ìó6”ÌJ Ìó8”ÌK Ìó9”ÌM Ìó;Ü ” Ìî” Ìî” Ìô”# Ìô”$ Ìô”& Ìô”, Ìô”. Ìô”2 Ìô ”3 Ìô!”= Ìô+”ÌB Ìô0”ÌF Ìô4”ÌG Ìô5”ÌH Ìô6”ÌI Ìô7”ÌJ Ìô8”ÌK Ìô9”ÌL Ìô:”ÌM Ìô;”ÌO Ìô=”ÌQ Ìô?’” Ìî” Ìî‘” Ìõ‘” Ìõ’” Ì÷” Ì÷	–” Ì÷” Ì÷	” Í
+” Í
+” Í
+” Í
+˜” Ì÷” Ì÷	” Í” Í” Í”( Í”) Í ”/ Í&Ü ” Ì÷” Ì÷	” Í” Í” Í” Í” Í”! Í”% Í”& Í”0 Í'”5 Í,”9 Í0”: Í1”; Í2”< Í3”= Í4”> Í5”? Í6”Ì@ Í7”ÌB Í9”ÌD Í;’” Ìø” Ìø˜” Ìø” Ìø” Í	” Í” Í”" Í”# Í”* Í –” Ìø” Ìø” Í	”" Í”# Í”. Í$–” Ìø” Ìø” Í	” Í”  Í”" Í—” Ìø” Ìø” Í	” Í” Í” Í”  Íœ” Í
+” Í” Í” Í” Í”! Í”$ Í”& Í ”= Í7”? Í9”Ì@ Í:”ÌA Í;’” Í” Í	˜” Ìù
+” Ìù” Ìù” Ìù” Ìù”  Ìù”! Ìù”# Ìù”” Ìú” Ìú” Ìú”  ÌúÜ ” Ìú” Ìú” Ìû” Ìû” Ìû” Ìû” Ìû”) Ìû'”. Ìû,”2 Ìû0”3 Ìû1”4 Ìû2”5 Ìû3”7 Ìû5”8 Ìû6”9 Ìû7”: Ìû8”< Ìû:–” Ìú” Ìú” Ìü” Ìü” Ìü”$ Ìü"’” Ìú” Ìú”” Ìı” Ìı” Ìı” ÌıÜ ” Ìı” Ìı” Ìş” Ìş” Ìş” Ìş” Ìş”) Ìş'”. Ìş,”2 Ìş0”3 Ìş1”4 Ìş2”5 Ìş3”7 Ìş5”8 Ìş6”9 Ìş7”: Ìş8”< Ìş:–” Ìı” Ìı” Ìÿ” Ìÿ” Ìÿ”$ Ìÿ"˜” Ìı” Ìı” Í ” Í ” Í ”& Í $”' Í %”- Í +’” Ìı” Ìı’” Ìù
+” Ìù’” Ìø” Ìø’” Ì÷” Ì÷	˜” Í” Í
+” Í” Í”! Í”% Í”& Í”6 Í)Ü ” Í” Í
+” Í	” Í” Í” Í” Í”) Í!”. Í&”2 Í*”3 Í+”4 Í,”5 Í-”7 Í/”8 Í0”9 Í1”: Í2”< Í4–” Í” Í
+” Í	” Í” Í”& Í–” Í” Í
+” Í	”  Í”! Í”, Í$–” Í” Í
+” Í	” Í” Í”  ÍÜ ” Í” Í
+” Í	” Í” Í” Í” Í”! Í”# Í”% Í”* Í"”, Í$”. Í&”0 Í(”3 Í+”5 Í-”6 Í.”8 Í0”> Í6”Ì@ Í8”ÌA Í9”ÌC Í;Ü ” Í” Í
+” Í	” Í” Í” Í”  Í”" Í”& Í”' Í”1 Í)”6 Í.”: Í2”; Í3”< Í4”= Í5”> Í6”? Í7”Ì@ Í8”ÌA Í9”ÌC Í;”ÌE Í=’” Í” Í
+’” Í” Í	–” Í” Í	” Í1” Í1” Í1” Í1Ü ” Í” Í	” Í2” Í2” Í2” Í2” Í2”! Í2”% Í2”& Í2”0 Í2'”5 Í2,”9 Í20”: Í21”; Í22”< Í23”= Í24”> Í25”? Í26”Ì@ Í27”ÌB Í29”ÌD Í2;”” Í” Í” Í” ÍÜ ” Í” Í” Í” Í” Í” Í” Í”) Í#”. Í(”2 Í,”3 Í-”4 Í.”5 Í/”7 Í1”8 Í2”9 Í3”: Í4”< Í6–” Í” Í” Í” Í” Í”$ Íš” Í” Í” Í” Í” Í” Í” Í”! Í”" Í”$ Í’” Í” Í“” Í” Í” Í–” Í
+” Í” Í” Í” Í”& Í ”” Í
+” Í” Í” Í”” Í
+” Í” Í” Í”” Í 
+” Í ” Í ” Í –” Í!
+” Í!” Í!”" Í!”# Í!”( Í!"‘” Í"	–” Í” Í” Í#” Í#” Í#”  Í#–” Í” Í” Í$” Í$” Í$”) Í$!–” Í” Í” Í%”  Í%”! Í%”* Í%"–” Í” Í” Í&” Í&”  Í&”! Í&™” Í” Í” Í'” Í'” Í'” Í'”" Í'"”$ Í'$”& Í'&—” Í(” Í(” Í(” Í(”" Í(”' Í(#”( Í($˜” Í)”  Í)”! Í)”) Í)%”* Í)&”/ Í)+”0 Í),”1 Í)-’” Í*
+” Í*”” Í,” Í,” Í,” Í,Ü ” Í,” Í,” Í-” Í-” Í-” Í-” Í-”) Í-#”. Í-(”2 Í-,”3 Í--”4 Í-.”5 Í-/”7 Í-1”8 Í-2”9 Í-3”: Í-4”< Í-6–” Í,” Í,” Í.” Í.” Í.”$ Í.š” Í,” Í,” Í/” Í/” Í/” Í/” Í/”  Í/”! Í/”# Í/’” Í,” Í,’” Í” Í	˜” Í4” Í4	” Í4
+” Í4” Í4”  Í4”! Í4”# Í4–” Í4” Í4	” ÍT” ÍT” ÍT” ÍTÜ ” Í5” Í5”# Í5”' Í5”( Í5”4 Í5 ”5 Í5!”6 Í5"”7 Í5#”; Í5'”< Í5(”= Í5)”> Í5*”ÌB Í5.”ÌD Í6
+”ÌF Í6”ÌJ Í6”ÌL Í6”ÌV Í6”ÌW Í6”Ì^ Í6$”Ì` Í6&”Ìk Í61”Ìm Í63”Ìq Í67”Ìs Í69Ü ” Í5” Í5” Í7” Í7” Í7”  Í7”! Í7”+ Í7#”0 Í7(”4 Í7,”5 Í7-”6 Í7.”7 Í7/”9 Í71”: Í72”; Í73”< Í74”> Í76–” Í5” Í5” Í8” Í8”  Í8”! Í8—” Í5” Í5” Í9” Í9” Í9” Í9”  Í9–” Í:” Í:” Í:” Í:”% Í:!”' Í:#š” Í;”$ Í;”% Í;”. Í;(”/ Í;)”; Í;5”< Í;6”Ì@ Í;:”ÌA Í;;”ÌB Í;<—” Í<” Í<” Í<”% Í<”( Í<"”- Í<'”. Í<(‘” Í=‘” Í=š” Í>”$ Í>”% Í>”. Í>(”/ Í>)”; Í>5”< Í>6”Ì@ Í>:”ÌA Í>;”ÌB Í><—” Í?” Í?” Í?”% Í?”( Í?"”, Í?&”- Í?'‘” Í@’” ÍA
+” ÍA’” Í5” Í5Ü ” ÍC” ÍC”# ÍC”' ÍC”) ÍC”+ ÍC”/ ÍC”1 ÍC”; ÍC'”< ÍC(”ÌC ÍC/”ÌE ÍC1”ÌP ÍC<”ÌR ÍC>”ÌV ÍCÌB”ÌX ÍCÌDÜ ” ÍC” ÍC” ÍD” ÍD” ÍD”  ÍD”! ÍD”+ ÍD#”0 ÍD(”4 ÍD,”5 ÍD-”6 ÍD.”7 ÍD/”9 ÍD1”: ÍD2”; ÍD3”< ÍD4”> ÍD6–” ÍC” ÍC” ÍE” ÍE”  ÍE”! ÍE—” ÍC” ÍC” ÍF” ÍF” ÍF” ÍF”  ÍF—” ÍG” ÍG” ÍG”! ÍG”$ ÍG ”) ÍG%”* ÍG&š” ÍH”  ÍH”! ÍH”* ÍH&”+ ÍH'”7 ÍH3”8 ÍH4”? ÍH;”Ì@ ÍH<”ÌA ÍH=’” ÍI
+” ÍI’” ÍC” ÍCÜ ” ÍK” ÍK”# ÍK”' ÍK”( ÍK”3 ÍK”4 ÍK ”5 ÍK!”6 ÍK"”: ÍK&”; ÍK'”< ÍK(”= ÍK)”ÌA ÍK-”ÌC ÍL
+”ÌE ÍL”ÌI ÍL”ÌK ÍL”ÌU ÍL”ÌV ÍL”Ì] ÍL$”Ì_ ÍL&”Ìj ÍL1”Ìl ÍL3”Ìp ÍL7”Ìr ÍL9Ü ” ÍK” ÍK” ÍM” ÍM” ÍM”  ÍM”! ÍM”+ ÍM#”0 ÍM(”4 ÍM,”5 ÍM-”6 ÍM.”7 ÍM/”9 ÍM1”: ÍM2”; ÍM3”< ÍM4”> ÍM6–” ÍK” ÍK” ÍN” ÍN”  ÍN”# ÍN—” ÍK” ÍK” ÍO” ÍO” ÍO” ÍO”  ÍOš” ÍP” ÍP” ÍP”  ÍP”# ÍP”$ ÍP ”( ÍP$”) ÍP%”4 ÍP0”5 ÍP1–” ÍQ”  ÍQ”! ÍQ”0 ÍQ,”2 ÍQ.”3 ÍQ/’” ÍR
+” ÍR’” ÍK” ÍK’” Í4” Í4	’” Ìì” Ìì
+‘” ÍV‘” ÍX’” ÍY” ÍY	˜” ÍZ” ÍZ
+” ÍZ” ÍZ” ÍZ”$ ÍZ”( ÍZ"”* ÍZ$’” Í[” Í[–” Í[” Í[” Ír	”% Ír”& Ír”, Ír–” Í[” Í[” Ís	”$ Ís”% Ís”+ Ís–” Í[” Í[” Ít	”. Ít”/ Ít”8 Ít"˜” Í[” Í[” Íu	”& Íu”ÌC Íu”ÌG Íu”ÌH Íu”ÌT Íu"’” Í\
+” Í\–” Í`”" Í`”* Í`”. Í`”/ Í`”8 Í`%Ü ” Í`”" Í`”# Ía”0 Ía”1 Ía”4 Ía ”6 Ía"”9 Ía%”? Ía+”Ì@ Ía,”ÌD Ía0”ÌE Ía1”Ì\ ÍaÌH”Ì] ÍaÌI”Ì^ ÍaÌJ”Ì_ ÍaÌK”Ì` ÍaÌL™” Í`”" Í`”# Íb”1 Íb”2 Íb”3 Íb”8 Íb2”: Íb4”< Íb6š” Íc”, Íc ”- Íc!”6 Íc*”7 Íc+”ÌC Íc7”ÌD Íc8”ÌH Íc<”ÌI Íc=”ÌJ Íc>—” Íd”  Íd”! Íd”- Íd!”0 Íd$”5 Íd)”6 Íd*Ü ” Íe”  Íe”! Íe”+ Íe”. Íe"”> Íe2”? Íe3”ÌJ Íe>”ÌK Íe?”ÌP ÍeÌD”ÌQ ÍeÌE”ÌX ÍeÌL”ÌZ ÍeÌN”Ì_ ÍeÌS”Ì` ÍeÌT”Ìg ÍeÌ[”Ìh ÍeÌ\”Ìi ÍeÌ]’” Íf” ÍfÜ ” Í`”" Í`”# Íg”. Íg”/ Íg”2 Íg”4 Íg ”7 Íg#”= Íg)”> Íg*”ÌB Íg.”ÌC Íg/”ÌX ÍgÌD”ÌY ÍgÌE”ÌZ ÍgÌF”Ì[ ÍgÌG”Ì\ ÍgÌH’” Í`”" Í`–” Í\
+” Í\” Íi”% Íi”& Íi”+ Íi–” Í\
+” Í\” Íj”$ Íj”% Íj”+ Íj•” Í]” Í]” Í]”# Í]”0 Í]’” Í\
+” Í\’” Íl
+” Íl–” Íl
+” Íl” Ío”$ Ío”% Ío”* Íoš” Íl
+” Íl” Íp”% Íp”& Íp”( Íp”+ Íp”- Íp”/ Íp”1 Íp•” Ím” Ím” Ím”& Ím”3 Ím ’” Íl
+” Íl’” Í[” Í[‘” Ív‘” Ív’” Íw” Íw–” Íw” Íw” Í‘	”" Í‘”# Í‘”) Í‘–” Íw” Íw” Í’	”! Í’”" Í’”( Í’–” Íw” Íw” Í“	”+ Í“”, Í“”5 Í“"˜” Íw” Íw” Í”	”# Í””Ì@ Í””ÌD Í””ÌE Í””ÌQ Í”"’” Íx
+” Íx–” Í|”" Í|”* Í|”. Í|”/ Í|”8 Í|%Ü ” Í|”" Í|”# Í}”0 Í}”1 Í}”4 Í} ”6 Í}"”9 Í}%”? Í}+”Ì@ Í},”ÌD Í}0”ÌE Í}1”Ì\ Í}ÌH”Ì] Í}ÌI”Ì^ Í}ÌJ”Ì_ Í}ÌK”Ì` Í}ÌL™” Í|”" Í|”# Í~”1 Í~”2 Í~”3 Í~”8 Í~2”: Í~4”< Í~6š” Í”, Í ”- Í!”6 Í*”7 Í+”ÌC Í7”ÌD Í8”ÌH Í<”ÌI Í=”ÌJ Í>—” Í€”  Í€”! Í€”- Í€!”0 Í€$”5 Í€)”6 Í€*Ü ” Í”  Í”! Í”+ Í”. Í"”> Í2”? Í3”ÌJ Í>”ÌK Í?”ÌP ÍÌD”ÌQ ÍÌE”ÌX ÍÌL”ÌZ ÍÌN”Ì_ ÍÌS”Ì` ÍÌT”Ìg ÍÌ[”Ìh ÍÌ\”Ìi ÍÌ]’” Í‚” Í‚Ü ” Í|”" Í|”# Íƒ”. Íƒ”/ Íƒ”2 Íƒ”4 Íƒ ”7 Íƒ#”= Íƒ)”> Íƒ*”ÌB Íƒ.”ÌC Íƒ/”ÌX ÍƒÌD”ÌY ÍƒÌE”ÌZ ÍƒÌF”Ì[ ÍƒÌG”Ì\ ÍƒÌH’” Í|”" Í|–” Íx
+” Íx” Í…”+ Í…”, Í…”- Í…–” Íx
+” Íx” Í†”% Í†”& Í†”, Í†•” Íy” Íy” Íy”# Íy”0 Íy’” Íx
+” Íx’” Íˆ
+” ÍˆÜ ” Íˆ
+” Íˆ” Í‹”$ Í‹”% Í‹”) Í‹”* Í‹”4 Í‹ ”9 Í‹%”= Í‹)”> Í‹*”? Í‹+”Ì@ Í‹,”ÌC Í‹/”ÌD Í‹0”ÌE Í‹1”ÌF Í‹2”ÌI Í‹5–” Íˆ
+” Íˆ” ÍŒ”% ÍŒ”& ÍŒ”, ÍŒ˜” Íˆ
+” Íˆ” Í”- Í”. Í”7 Í#”8 Í$”> Í*Ü ” Íˆ
+” Íˆ” Í”& Í”' Í”) Í”- Í”/ Í”1 Í”3 Í”8 Í$”: Í&”< Í(”> Í*”ÌA Í-”ÌC Í/”ÌE Í1”ÌG Í3”ÌM Í9”ÌO Í;”ÌQ Í=”ÌS Í?–” Íˆ
+” Íˆ” Í”. Í”/ Í”8 Í$•” Í‰” Í‰” Í‰”& Í‰”3 Í‰ ’” Íˆ
+” Íˆ’” Íw” Íw‘” Í•’” ÍY” ÍY	‘” Í—ÔrI–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜq‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
  ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ì ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌĞ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  Ìİ ‘”  ÌŞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìğ ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìı ‘”  Ìş ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
- ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Í ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ‘”  Í¼ ‘”  Í½ ‘”  Í¾ ‘”  Í¿ ‘”  ÍÀ ‘”  ÍÁ ‘”  ÍÂ ‘”  ÍÃ ‘”  ÍÄ ‘”  ÍÅ ‘”  ÍÆ ‘”  ÍÇ ‘”  ÍÈ ‘”  ÍÉ ‘”  ÍÊ ‘”  ÍË ‘”  ÍÌ ‘”  ÍÍ ‘”  ÍÎ ‘”  ÍÏ ‘”  ÍĞ ‘”  ÍÑ ‘”  ÍÒ ‘”  ÍÓ ‘”  ÍÔ ‘”  ÍÕ ‘”  ÍÖ ‘”  Í× ‘”  ÍØ ‘”  ÍÙ ‘”  ÍÚ ‘”  ÍÛ ‘”  ÍÜ ‘”  Íİ ‘”  ÍŞ ‘”  Íß ‘”  Íà ‘”  Íá ‘”  Íâ ‘”  Íã ‘”  Íä ‘”  Íå ‘”  Íæ ‘”  Íç ‘”  Íè ‘”  Íé ‘”  Íê ÔrJ’§missing¦pluginÃ¦genAbcÂÔ  ÔrK”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache–ÔrL•¤type¥start£endªspecifiers¦source±ImportDeclarationÍîÍ‘ÔrM•¤type¥start£end¨imported¥local¯ImportSpecifierÍ÷ÍÔrN”¤type¥start£end¤nameªIdentifierÍ÷Í­LengthMetricsNªIdentifierÍ÷Í­LengthMetricsÔrO•¤type¥start£end¥value£raw§LiteralÍÍ°@ohos.arkui.node²"@ohos.arkui.node"L±ImportDeclarationÍÍ±‘ÔrP”¤type¥start£end¥local¶ImportDefaultSpecifierÍ–ÍœNªIdentifierÍ–Íœ¦routerO§LiteralÍ¢Í°¬@ohos.router®"@ohos.router"L±ImportDeclarationÍ³ÍÓ‘P¶ImportDefaultSpecifierÍºÍ¿NªIdentifierÍºÍ¿¥hilogO§LiteralÍÅÍÒ«@ohos.hilog­"@ohos.hilog"L±ImportDeclarationÍÕÍş‘M¯ImportSpecifierÍŞÍäNªIdentifierÍŞÍä¦LoggerNªIdentifierÍŞÍä¦LoggerO§LiteralÍìÍı¯../utils/Logger±'../utils/Logger'L±ImportDeclarationÍ Í6‘P¶ImportDefaultSpecifierÍÍNªIdentifierÍÍ°tetrahedron_napiO§LiteralÍÍ5¶libtetrahedron_napi.so¸'libtetrahedron_napi.so'L±ImportDeclarationÍ8Íj‘M¯ImportSpecifierÍAÍMNªIdentifierÍAÍM¬RotationTypeNªIdentifierÍAÍM¬RotationTypeO§LiteralÍUÍi²../utils/Constants´'../utils/Constants'
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Í ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ‘”  Í¦ ‘”  Í§ ‘”  Í¨ ‘”  Í© ‘”  Íª ‘”  Í« ‘”  Í¬ ‘”  Í­ ‘”  Í® ‘”  Í¯ ‘”  Í° ‘”  Í± ‘”  Í² ‘”  Í³ ‘”  Í´ ‘”  Íµ ‘”  Í¶ ‘”  Í· ‘”  Í¸ ‘”  Í¹ ‘”  Íº ‘”  Í» ‘”  Í¼ ‘”  Í½ ‘”  Í¾ ‘”  Í¿ ‘”  ÍÀ ‘”  ÍÁ ‘”  ÍÂ ‘”  ÍÃ ‘”  ÍÄ ‘”  ÍÅ ‘”  ÍÆ ‘”  ÍÇ ‘”  ÍÈ ‘”  ÍÉ ‘”  ÍÊ ‘”  ÍË ‘”  ÍÌ ‘”  ÍÍ ‘”  ÍÎ ‘”  ÍÏ ‘”  ÍĞ ‘”  ÍÑ ‘”  ÍÒ ‘”  ÍÓ ‘”  ÍÔ ‘”  ÍÕ ‘”  ÍÖ ‘”  Í× ‘”  ÍØ ‘”  ÍÙ ‘”  ÍÚ ‘”  ÍÛ ‘”  ÍÜ ‘”  Íİ ‘”  ÍŞ ‘”  Íß ‘”  Íà ‘”  Íá ‘”  Íâ ‘”  Íã ‘”  Íä ‘”  Íå ‘”  Íæ ‘”  Íç ‘”  Íè ‘”  Íé ‘”  Íê ‘”  Íë ‘”  Íì ‘”  Íí ‘”  Íî ‘”  Íï ‘”  Íğ ‘”  Íñ ‘”  Íò ‘”  Íó ‘”  Íô ‘”  Íõ ‘”  Íö ‘”  Í÷ ‘”  Íø ‘”  Íù ‘”  Íú ‘”  Íû ‘”  Íü ‘”  Íı ‘”  Íş ‘”  Íÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ÔrJ’§missing¦pluginÃ¦genAbcÂÔ  ÔrK”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache—ÔrL•¤type¥start£endªspecifiers¦source±ImportDeclarationÌ€Ì±‘ÔrM•¤type¥start£end¨imported¥local¯ImportSpecifierÌ‰Ì–ÔrN”¤type¥start£end¤nameªIdentifierÌ‰Ì–­LengthMetricsNªIdentifierÌ‰Ì–­LengthMetricsÔrO•¤type¥start£end¥value£raw§LiteralÌÌ°°@ohos.arkui.node²"@ohos.arkui.node"L±ImportDeclarationÌ³ÌÕ‘ÔrP”¤type¥start£end¥local¶ImportDefaultSpecifierÌºÌÀNªIdentifierÌºÌÀ¦routerO§LiteralÌÆÌÔ¬@ohos.router®"@ohos.router"L±ImportDeclarationÌ×Ì÷‘P¶ImportDefaultSpecifierÌŞÌãNªIdentifierÌŞÌã¥hilogO§LiteralÌéÌö«@ohos.hilog­"@ohos.hilog"L±ImportDeclarationÌùÍ"‘M¯ImportSpecifierÍÍNªIdentifierÍÍ¦LoggerNªIdentifierÍÍ¦LoggerO§LiteralÍÍ!¯../utils/Logger±'../utils/Logger'L±ImportDeclarationÍ$ÍZ‘P¶ImportDefaultSpecifierÍ+Í;NªIdentifierÍ+Í;°tetrahedron_napiO§LiteralÍAÍY¶libtetrahedron_napi.so¸'libtetrahedron_napi.so'L±ImportDeclarationÍ\Í‘M¯ImportSpecifierÍeÍqNªIdentifierÍeÍq¬RotationTypeNªIdentifierÍeÍq¬RotationTypeO§LiteralÍyÍ²../utils/Constants´'../utils/Constants'L±ImportDeclarationÍÍÉ‘M¯ImportSpecifierÍ™Í£NªIdentifierÍ™Í£ªModelStateNªIdentifierÍ™Í£ªModelStateO§LiteralÍ«ÍÈ»../utils/ContinuationHelper½'../utils/ContinuationHelper'

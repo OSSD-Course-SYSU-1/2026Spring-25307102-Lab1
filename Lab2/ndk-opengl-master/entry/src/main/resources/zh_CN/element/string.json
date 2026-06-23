@@ -2,11 +2,11 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "模块描述"
+      "value": "3D 几何体查看器，支持跨设备流转"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "OpenGL 三棱锥"
+      "value": "OpenGL 3D 几何体查看器"
     },
     {
       "name": "x_shaft_rotation",
@@ -18,19 +18,23 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "三棱锥"
+      "value": "3D 几何体"
     },
     {
       "name": "btn_auto_rotation",
-      "value": "自动旋转"
+      "value": "自动"
     },
     {
       "name": "btn_stop_rotation",
-      "value": "停止旋转"
+      "value": "停止"
     },
     {
       "name": "btn_damping_rotation",
-      "value": "阻尼旋转"
+      "value": "阻尼"
+    },
+    {
+      "name": "distributed_reason",
+      "value": "用于在不同设备间流转 3D 模型查看状态"
     }
   ]
 }

@@ -91,7 +91,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "d:/HUAWEI/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/x86_64"
+			"value" : "d:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/x86_64"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -639,7 +639,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/x86_64/CMakeFiles/pkgRedirects"
+			"value" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/x86_64/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_FIND_ROOT_PATH",
@@ -651,7 +651,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\.cxx\\default\\default\\debug\\hvigor\\x86_64"
+			"value" : "D:\\HUAWEI\\Lab2\\Lab2\\ndk-opengl-master\\entry\\.cxx\\default\\default\\debug\\hvigor\\x86_64"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -711,7 +711,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/src/main/cpp"
+			"value" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/src/main/cpp"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -747,7 +747,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\cmake\\default\\obj\\x86_64"
+			"value" : "D:\\HUAWEI\\Lab2\\Lab2\\ndk-opengl-master\\entry\\build\\default\\intermediates\\cmake\\default\\obj\\x86_64"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -1331,7 +1331,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "D:\\HUAWEI\\Lab2\\ndk-opengl-master\\entry\\.cxx\\default\\default\\debug\\hvigor\\x86_64\\summary.cmake"
+			"value" : "D:\\HUAWEI\\Lab2\\Lab2\\ndk-opengl-master\\entry\\.cxx\\default\\default\\debug\\hvigor\\x86_64\\summary.cmake"
 		},
 		{
 			"name" : "Tetrahedron_BINARY_DIR",
@@ -1343,7 +1343,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/x86_64"
+			"value" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/.cxx/default/default/debug/x86_64"
 		},
 		{
 			"name" : "Tetrahedron_IS_TOP_LEVEL",
@@ -1367,7 +1367,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/src/main/cpp"
+			"value" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/src/main/cpp"
 		},
 		{
 			"name" : "UNIX",

@@ -1,32 +1,18 @@
-/*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { LengthMetrics, window, router } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Logger } from '../utils/Logger';
 import tetrahedron_napi from 'libtetrahedron_napi.so';
 import { RotationType } from '../utils/Constants';
 import { ShapeType } from '../utils/ModelTypes';
+import { ModelState, ContinuationHelper } from '../utils/ContinuationHelper';
 
 interface Areas {
-  top: number,
-  right: number,
-  bottom: number,
-  left: number,
-  heightBreakpoint: number,
-  widthBreakpoint: number
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+  heightBreakpoint: number;
+  widthBreakpoint: number;
 }
 
 interface RouteResult {
@@ -87,13 +73,15 @@ struct Index {
   @State angleArray: Array<number> = new Array<number>();
   @State enableRotate: boolean = false;
   @State currentShapeName: string = '四面体';
+  @State currentShapeType: number = 0;
   @State modelScale: number = 1.0;
+  @State isWireframe: boolean = false;
+  @State isFromContinuation: boolean = false;
 
   @State cutoutAreas: Areas = {
     top: 0, right: 0, bottom: 0, left: 0,
     heightBreakpoint: 0, widthBreakpoint: 0
   };
-
   @State localPadding: LocalizedPadding = {
     top: LengthMetrics.vp(0),
     start: LengthMetrics.vp(0)
@@ -103,13 +91,14 @@ struct Index {
   heightBreakpoint: HeightBreakpoint = HeightBreakpoint.HEIGHT_SM;
   @StorageLink('currentWidthBreakpoint') @Watch('breakPointChange')
   widthBreakpoint: WidthBreakpoint = WidthBreakpoint.WIDTH_XS;
+  @StorageLink('currentBreakpoint') breakpoint: string = 'sm';
 
   @StorageLink('cutout') @Watch('cutoutChange')
   avoidAreas: window.AvoidAreaOptions | undefined = undefined;
   @StorageLink('windowHeight') windowHeight: number = 0;
   @StorageLink('windowWidth') windowWidth: number = 0;
 
-  private xComponentId = 'tetrahedron';
+  private xComponentId: string = 'tetrahedron';
   private panOption: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.All });
 
   breakPointChange() {
@@ -128,7 +117,6 @@ struct Index {
       top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
       heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
     };
-
     this.localPadding = {
       top: LengthMetrics.px(topPX),
       end: LengthMetrics.px(rightPX),
@@ -152,15 +140,43 @@ struct Index {
       top: topPX, right: rightPX, bottom: bottomPX, left: leftPX,
       heightBreakpoint: this.heightBreakpoint, widthBreakpoint: this.widthBreakpoint
     };
-
     this.localPadding = {
       top: LengthMetrics.px(topPX),
       end: LengthMetrics.px(rightPX),
       bottom: LengthMetrics.px(bottomPX),
       start: LengthMetrics.px(leftPX)
     };
-
     tetrahedron_napi.objectPassing(this.cutoutAreas);
+
+    let isCont = AppStorage.get('isContinuation') as boolean | undefined;
+    if (isCont) {
+      let state = AppStorage.get('continuationState') as ModelState | undefined;
+      AppStorage.setOrCreate('isContinuation', false);
+      AppStorage.setOrCreate('continuationState', null);
+      if (state) {
+        this.isFromContinuation = true;
+        this.restoreFromContinuation(state);
+      }
+    }
+  }
+
+  restoreFromContinuation(state: ModelState): void {
+    Logger.info('restoreFromContinuation shape=' + state.shapeType);
+    this.currentShapeType = state.shapeType;
+    this.modelScale = state.scale;
+    this.angleArray[0] = state.angleX;
+    this.angleArray[1] = state.angleY;
+    this.isWireframe = state.wireframe;
+
+    tetrahedron_napi.selectShape(state.shapeType);
+    tetrahedron_napi.setScale(state.scale);
+    if (state.wireframe) {
+      tetrahedron_napi.toggleWireframe();
+    }
+    let names = ['四面体', '球体', '正方体', '圆锥'];
+    if (state.shapeType >= 0 && state.shapeType < names.length) {
+      this.currentShapeName = names[state.shapeType];
+    }
   }
 
   onPageShow(): void {
@@ -174,66 +190,69 @@ struct Index {
 
   applyShapeSelection(shapeType: number): void {
     Logger.info('applyShapeSelection type=' + shapeType);
+    this.currentShapeType = shapeType;
     tetrahedron_napi.selectShape(shapeType);
-
     let names = ['四面体', '球体', '正方体', '圆锥'];
     if (shapeType >= 0 && shapeType < names.length) {
       this.currentShapeName = names[shapeType];
     }
   }
 
-  build() {
-    Stack({ alignContent: Alignment.Bottom }) {
+  getModelState(): ModelState {
+    let state = new ModelState();
+    state.shapeType = this.currentShapeType;
+    state.scale = this.modelScale;
+    state.angleX = this.angleArray[0] || 30;
+    state.angleY = this.angleArray[1] || 45;
+    state.wireframe = this.isWireframe;
+    return state;
+  }
+
+  @Builder
+  canvasView() {
+    Column() {
       Column() {
-        Column() {
-          XComponent({
-            id: this.xComponentId,
-            type: XComponentType.SURFACE,
-            libraryname: 'tetrahedron_napi'
-          })
-            .onLoad(() => {
-              Logger.info('onLoad');
-            })
-            .id('tetrahedron')
-            .onDestroy(() => {
-              Logger.info('onDestroy');
-            })
-            .id('xComponent')
-            .backgroundColor('#FFFFFF')
-        }
-        .justifyContent(FlexAlign.SpaceAround)
-        .alignItems(HorizontalAlign.Center)
-        .height('100%')
-        .width('100%')
-        .backgroundColor('#FFFFFF')
-        .borderRadius(24)
+        XComponent({
+          id: this.xComponentId,
+          type: XComponentType.SURFACE,
+          libraryname: 'tetrahedron_napi'
+        })
+          .onLoad(() => { Logger.info('onLoad'); })
+          .id('tetrahedron')
+          .onDestroy(() => { Logger.info('onDestroy'); })
+          .id('xComponent')
+          .backgroundColor('#FFFFFF')
       }
-      .gesture(
-        PanGesture(this.panOption)
-          .onActionStart(() => {
-            Logger.info('Gesture onActionStart');
-          })
-          .onActionUpdate((event: GestureEvent) => {
-            tetrahedron_napi.setRotate(RotationType.STOP);
-            this.enableRotate = false;
-            this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
-            Logger.info('Gesture onActionUpdate : offSet ' + event.offsetX + ',' + event.offsetY);
-          })
-          .onActionEnd(() => {
-            Logger.info('Gesture onActionEnd');
-          })
-      )
+      .justifyContent(FlexAlign.SpaceAround)
+      .alignItems(HorizontalAlign.Center)
       .height('100%')
-      .justifyContent(FlexAlign.SpaceBetween)
+      .width('100%')
+      .backgroundColor('#FFFFFF')
+      .borderRadius(this.breakpoint === 'sm' ? 0 : 24)
+    }
+  }
+
+  @Builder
+  controlsPanel() {
+    Column() {
+      if (this.isFromContinuation) {
+        Text('已从其他设备恢复')
+          .fontSize(11)
+          .fontColor('#4caf50')
+          .backgroundColor('#1A4caf50')
+          .borderRadius(6)
+          .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+          .margin({ bottom: this.breakpoint === 'sm' ? 6 : 10 })
+      }
 
       Row() {
         Button() {
           Row({ space: 6 }) {
             Text('\u2630')
-              .fontSize(18)
+              .fontSize(this.breakpoint === 'sm' ? 16 : 18)
               .fontColor('#FFFFFF')
             Text('模型')
-              .fontSize(14)
+              .fontSize(this.breakpoint === 'sm' ? 13 : 14)
               .fontColor('#FFFFFF')
               .fontWeight(FontWeight.Medium)
           }
@@ -246,24 +265,20 @@ struct Index {
         })
       }
       .width('100%')
-      .justifyContent(FlexAlign.Start)
-      .padding({ left: 16, top: 16 })
-      .hitTestBehavior(HitTestMode.Transparent)
-      .position({ x: 0, y: 0 })
-      .zIndex(10)
+      .justifyContent(FlexAlign.Center)
+      .margin({ bottom: this.breakpoint === 'sm' ? 6 : 10 })
 
       Text('当前: ' + this.currentShapeName)
-        .fontSize(11)
+        .fontSize(this.breakpoint === 'sm' ? 11 : 13)
         .fontColor('#99FFFFFF')
         .backgroundColor('#40000000')
         .borderRadius(10)
         .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-        .position({ x: 16, y: 56 })
-        .zIndex(10)
+        .margin({ bottom: this.breakpoint === 'sm' ? 8 : 14 })
 
       Row() {
         Text('缩小')
-          .fontSize(11)
+          .fontSize(this.breakpoint === 'sm' ? 10 : 12)
           .fontColor('#999999')
           .margin({ right: 8 })
 
@@ -284,18 +299,18 @@ struct Index {
           })
 
         Text('放大')
-          .fontSize(11)
+          .fontSize(this.breakpoint === 'sm' ? 10 : 12)
           .fontColor('#999999')
           .margin({ left: 8 })
       }
       .width('100%')
-      .padding({ left: 24, right: 24 })
-      .hitTestBehavior(HitTestMode.Transparent)
+      .margin({ bottom: this.breakpoint === 'sm' ? 6 : 12 })
 
-      Row({ space: 12 }) {
-        Button(this.enableRotate ? $r('app.string.btn_stop_rotation') : $r('app.string.btn_auto_rotation'),
+      Row({ space: 8 }) {
+        Button(this.enableRotate ? '停止' : '自动',
           { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(16)
+          .fontSize(this.breakpoint === 'sm' ? 13 : 14)
+          .layoutWeight(1)
           .onClick(() => {
             if (this.enableRotate) {
               tetrahedron_napi.setRotate(RotationType.STOP);
@@ -305,30 +320,90 @@ struct Index {
               this.enableRotate = true;
             }
           })
-          .layoutWeight(1)
 
-        Button($r('app.string.btn_damping_rotation'), { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(16)
+        Button('阻尼', { type: ButtonType.Capsule, stateEffect: true })
+          .fontSize(this.breakpoint === 'sm' ? 13 : 14)
+          .layoutWeight(1)
           .onClick(() => {
             this.enableRotate = false;
             tetrahedron_napi.setRotate(RotationType.DAMPING);
           })
-          .layoutWeight(1)
 
-        Button('线框', { type: ButtonType.Capsule, stateEffect: true })
-          .fontSize(14)
+        Button(this.isWireframe ? '实体' : '线框',
+          { type: ButtonType.Capsule, stateEffect: true })
+          .fontSize(this.breakpoint === 'sm' ? 12 : 13)
+          .layoutWeight(0.6)
           .onClick(() => {
+            this.isWireframe = !this.isWireframe;
             tetrahedron_napi.toggleWireframe();
           })
-          .layoutWeight(0.5)
       }
-      .hitTestBehavior(HitTestMode.Transparent)
-      .padding({
-        left: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-        right: this.widthBreakpoint === WidthBreakpoint.WIDTH_SM ? 12 : 24,
-        bottom: 50
-      })
+      .width('100%')
     }
-    .padding(this.localPadding)
+  }
+
+  build() {
+    Stack() {
+      if (this.breakpoint === 'sm') {
+        Column() {
+          Column() {
+            this.canvasView()
+          }
+          .gesture(
+            PanGesture(this.panOption)
+              .onActionStart(() => { Logger.info('Gesture onActionStart'); })
+              .onActionUpdate((event: GestureEvent) => {
+                tetrahedron_napi.setRotate(RotationType.STOP);
+                this.enableRotate = false;
+                this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+              })
+              .onActionEnd(() => { Logger.info('Gesture onActionEnd'); })
+          )
+          .height('58%')
+          .width('100%')
+
+          Column() {
+            this.controlsPanel()
+          }
+          .width('92%')
+          .margin({ top: 12 })
+        }
+        .height('100%')
+        .width('100%')
+        .backgroundColor('#1A1A2E')
+        .padding(this.localPadding)
+      } else {
+        Row() {
+          Column() {
+            this.canvasView()
+          }
+          .gesture(
+            PanGesture(this.panOption)
+              .onActionStart(() => { Logger.info('Gesture onActionStart'); })
+              .onActionUpdate((event: GestureEvent) => {
+                tetrahedron_napi.setRotate(RotationType.STOP);
+                this.enableRotate = false;
+                this.angleArray = tetrahedron_napi.updateAngle(event.offsetX, event.offsetY);
+              })
+              .onActionEnd(() => { Logger.info('Gesture onActionEnd'); })
+          )
+          .layoutWeight(1)
+          .height('100%')
+
+          Column() {
+            this.controlsPanel()
+          }
+          .width(this.breakpoint === 'md' ? 220 : 280)
+          .height('100%')
+          .justifyContent(FlexAlign.Center)
+          .padding({ left: 16, right: 16, top: 40, bottom: 40 })
+          .backgroundColor('#16213E')
+        }
+        .height('100%')
+        .width('100%')
+        .backgroundColor('#1A1A2E')
+        .padding(this.localPadding)
+      }
+    }
   }
 }

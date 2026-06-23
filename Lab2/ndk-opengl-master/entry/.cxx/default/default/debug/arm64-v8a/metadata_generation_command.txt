@@ -1,8 +1,8 @@
 D:\HUAWEI\DevEco\DevEco Studio\sdk\default\openharmony\native\build-tools\cmake\bin\cmake.exe
--HD:\HUAWEI\Lab2\ndk-opengl-master\entry\src\main\cpp
--BD:\HUAWEI\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\arm64-v8a
+-HD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\src\main\cpp
+-BD:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\arm64-v8a
 -DOHOS_ARCH=arm64-v8a
--DCMAKE_LIBRARY_OUTPUT_DIRECTORY=D:\HUAWEI\Lab2\ndk-opengl-master\entry\build\default\intermediates\cmake\default\obj\arm64-v8a
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=D:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\build\default\intermediates\cmake\default\obj\arm64-v8a
 -DCMAKE_BUILD_TYPE=Debug
 -DOHOS_SDK_NATIVE=D:\HUAWEI\DevEco\DevEco Studio\sdk\default\openharmony\native
 -DCMAKE_SYSTEM_NAME=OHOS
@@ -11,7 +11,7 @@ D:\HUAWEI\DevEco\DevEco Studio\sdk\default\openharmony\native\build-tools\cmake\
 -DCMAKE_TOOLCHAIN_FILE=D:\HUAWEI\DevEco\DevEco Studio\sdk\default\hms\native\build\cmake\hmos.toolchain.cmake
 -GNinja
 -DCMAKE_MAKE_PROGRAM=D:\HUAWEI\DevEco\DevEco Studio\sdk\default\openharmony\native\build-tools\cmake\bin\ninja.exe
--DCMAKE_FIND_ROOT_PATH=D:\HUAWEI\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\hvigor\arm64-v8a
--DPACKAGE_FIND_FILE=D:\HUAWEI\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\hvigor\arm64-v8a\summary.cmake
+-DCMAKE_FIND_ROOT_PATH=D:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\hvigor\arm64-v8a
+-DPACKAGE_FIND_FILE=D:\HUAWEI\Lab2\Lab2\ndk-opengl-master\entry\.cxx\default\default\debug\hvigor\arm64-v8a\summary.cmake
 --no-warn-unused-cli
 -DHMOS_SDK_NATIVE=D:\HUAWEI\DevEco\DevEco Studio\sdk\default\hms\native

@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/build/default/intermediates/cmake/default/obj/arm64-v8a/libtetrahedron_napi.so"
+			"path" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/build/default/intermediates/cmake/default/obj/arm64-v8a/libtetrahedron_napi.so"
 		}
 	],
 	"backtrace" : 1,
@@ -144,15 +144,15 @@
 				},
 				{
 					"backtrace" : 16,
-					"path" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/src/main/cpp"
+					"path" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/src/main/cpp"
 				},
 				{
 					"backtrace" : 16,
-					"path" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/src/main/cpp/include"
+					"path" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/src/main/cpp/include"
 				},
 				{
 					"backtrace" : 16,
-					"path" : "D:/HUAWEI/Lab2/ndk-opengl-master/entry/src/main/cpp/include/util"
+					"path" : "D:/HUAWEI/Lab2/Lab2/ndk-opengl-master/entry/src/main/cpp/include/util"
 				}
 			],
 			"language" : "CXX",

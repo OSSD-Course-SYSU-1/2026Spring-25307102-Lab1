@@ -9,7 +9,7 @@
 		"SELECT_BUILD_PRODUCT":"default",
 		"BUNDLE_NAME":"com.samples.ndkopengl",
 		"BUILD_PATH":{
-			"OUTPUT_PATH":"D:\\HUAWEI\\Lab2\\ndk-opengl-master\\build\\outputs\\default"
+			"OUTPUT_PATH":"D:\\HUAWEI\\Lab2\\Lab2\\ndk-opengl-master\\build\\outputs\\default"
 		},
 		"SELECT_BUILD_MODE":""
 	}
